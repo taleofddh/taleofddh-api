@@ -8,7 +8,7 @@ var core = require('./api');
 let atlas_connection_uri;
 let cachedDb = null;
 
-exports.handler = async (event, context, callback) => {
+exports.handler = (event, context, callback) => {
     var uri = process.env['MONGODB_ATLAS_CLUSTER_URI'];
 
     if (atlas_connection_uri != null) {
