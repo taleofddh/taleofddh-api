@@ -1,6 +1,6 @@
 {
   "event" : "core",
-  "action" : "findActiveMenuList",
+  "action" : "findActivePromotionList",
   "filters" : [
     {
       "active" : true

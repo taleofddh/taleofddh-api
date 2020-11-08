@@ -64,6 +64,21 @@ const executeDbQuery = (db, json, callback) => {
         case 'findActivePromotionList':
             result = core.findActivePromotionList(cachedDb, json, callback);
             break;
+        case 'findAllTermsAndConditionsList':
+            result = core.findAllTermsAndConditionsList(cachedDb, json, callback);
+            break;
+        case 'findAllPrivacyPolicyList':
+            result = core.findAllPrivacyPolicyList(cachedDb, json, callback);
+            break;
+        case 'findAllFrequentlyAskedQuestionList':
+            result = core.findAllFrequentlyAskedQuestionList(cachedDb, json, callback);
+            break;
+        case 'findCountryByName':
+            result = core.findCountryByName(cachedDb, json, callback);
+            break;
+        case 'findCountryByCode':
+            result = core.findCountryByCode(cachedDb, json, callback);
+            break;
         default:
             result = core.createDoc(cachedDb, json, callback);
             break;

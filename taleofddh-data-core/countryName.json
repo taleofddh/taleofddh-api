@@ -1,0 +1,9 @@
+{
+  "event" : "core",
+  "action" : "findCountryByName",
+  "filters" : [
+    {
+      "name" : "United Kingdom"
+    }
+  ]
+}
