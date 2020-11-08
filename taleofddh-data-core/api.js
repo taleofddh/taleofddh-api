@@ -61,6 +61,26 @@ module.exports = {
             callback(null, docs);
         });
     },
+    findCountryByName : function(db, json, callback)  {
+        const name = 'country';
+        const collection = db.collection(name);
+        collection.find( {"name": json.filters[0].name}).toArray(function(err, docs) {
+            assert.equal(err, null);
+            console.log("Found the following frequentlyAskedQuestion list");
+            console.log(docs);
+            callback(null, docs);
+        });
+    },
+    findCountryByCode : function(db, json, callback)  {
+        const name = 'country';
+        const collection = db.collection(name);
+        collection.find( {"code": json.filters[0].code}).toArray(function(err, docs) {
+            assert.equal(err, null);
+            console.log("Found the following frequentlyAskedQuestion list");
+            console.log(docs);
+            callback(null, docs);
+        });
+    },
     createDoc : function(db, json, callback) {
         db.collection('restaurants').insertOne( json, function(err, result) {
             if(err!=null) {
