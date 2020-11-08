@@ -17,7 +17,7 @@ exports.handler = async (event, context, callback) => {
         //comment this line when running from AWS with KMS
         atlas_connection_uri = uri;
         //Uncomment this line when running from AWS with KMS
-        //atlas_connection_uri = await decrypt(uri);
+        //atlas_connection_uri = await decrypt('MONGODB_ATLAS_CLUSTER_URI');
         //console.log('the Atlas connection string is ' + atlas_connection_uri);
         processEvent(event, context, callback);
     }
