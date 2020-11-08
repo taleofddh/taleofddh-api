@@ -1,12 +1,13 @@
 'use strict'
 
 var MongoClient = require('mongodb').MongoClient;
+const decrypt = require("./decrypt");
 var core = require('./api');
 
 let atlas_connection_uri;
 let cachedDb = null;
 
-exports.handler = (event, context, callback) => {
+exports.handler = async (event, context, callback) => {
     var uri = process.env['MONGODB_ATLAS_CLUSTER_URI'];
 
     if (atlas_connection_uri != null) {
@@ -14,7 +15,7 @@ exports.handler = (event, context, callback) => {
     }
     else {
         atlas_connection_uri = uri;
-        console.log('the Atlas connection string is ' + atlas_connection_uri);
+        //console.log('the Atlas connection string is ' + atlas_connection_uri);
         processEvent(event, context, callback);
     }
 };
