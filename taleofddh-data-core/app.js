@@ -14,7 +14,10 @@ exports.handler = async (event, context, callback) => {
         processEvent(event, context, callback);
     }
     else {
+        //comment this line when running from AWS with KMS
         atlas_connection_uri = uri;
+        //Uncomment this line when running from AWS with KMS
+        //atlas_connection_uri = await decrypt(uri);
         //console.log('the Atlas connection string is ' + atlas_connection_uri);
         processEvent(event, context, callback);
     }
