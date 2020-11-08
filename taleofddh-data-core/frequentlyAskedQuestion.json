@@ -1,0 +1,7 @@
+{
+  "event" : "core",
+  "action" : "findAllFrequentlyAskedQuestionList",
+  "filters" : [
+    {}
+  ]
+}
