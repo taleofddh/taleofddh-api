@@ -1,0 +1,7 @@
+{
+  "event" : "core",
+  "action" : "findAllPrivacyPolicyList",
+  "filters" : [
+    {}
+  ]
+}
