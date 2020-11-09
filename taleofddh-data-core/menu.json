@@ -1,9 +1,7 @@
 {
-  "event" : "core",
+  "event" : "menu",
   "action" : "findActiveMenuList",
-  "filters" : [
-    {
-      "active" : true
-    }
-  ]
+  "filters" : {
+    "active" : true
+  }
 }

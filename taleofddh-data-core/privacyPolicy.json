@@ -1,7 +1,5 @@
 {
-  "event" : "core",
+  "event" : "privacyPolicy",
   "action" : "findAllPrivacyPolicyList",
-  "filters" : [
-    {}
-  ]
+  "filters" : {}
 }
