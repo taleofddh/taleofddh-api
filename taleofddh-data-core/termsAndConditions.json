@@ -1,7 +1,5 @@
 {
-  "event" : "core",
+  "event" : "termsAndConditions",
   "action" : "findAllTermsAndConditionsList",
-  "filters" : [
-    {}
-  ]
+  "filters" : {}
 }

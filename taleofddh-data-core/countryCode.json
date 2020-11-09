@@ -1,9 +1,7 @@
 {
-  "event" : "core",
+  "event" : "country",
   "action" : "findCountryByCode",
-  "filters" : [
-    {
-      "code" : "IN"
-    }
-  ]
+  "filters" : {
+    "code" : "IN"
+  }
 }

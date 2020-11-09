@@ -1,9 +1,7 @@
 {
   "event" : "core",
   "action" : "findActivePromotionList",
-  "filters" : [
-    {
-      "active" : true
-    }
-  ]
+  "filters" : {
+    "active" : true
+  }
 }
