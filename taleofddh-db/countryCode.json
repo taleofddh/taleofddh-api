@@ -1,5 +1,6 @@
 {
-  "event" : "country",
+  "event" : "find",
+  "collection" : "country",
   "action" : "findCountryByCode",
   "filters" : {
     "code" : "IN"

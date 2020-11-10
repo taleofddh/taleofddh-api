@@ -1,5 +1,6 @@
 {
-  "event" : "core",
+  "event" : "find",
+  "collection" : "core",
   "action" : "findAllFrequentlyAskedQuestionList",
   "filters" : [
     {}

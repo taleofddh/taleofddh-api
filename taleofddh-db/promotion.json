@@ -1,5 +1,6 @@
 {
-  "event" : "core",
+  "event" : "find",
+  "collection" : "core",
   "action" : "findActivePromotionList",
   "filters" : {
     "active" : true

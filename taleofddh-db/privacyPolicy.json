@@ -1,5 +1,6 @@
 {
-  "event" : "privacyPolicy",
+  "event" : "find",
+  "collection" : "privacyPolicy",
   "action" : "findAllPrivacyPolicyList",
   "filters" : {}
 }
