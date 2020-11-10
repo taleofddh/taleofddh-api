@@ -116,3 +116,20 @@ functions:
 #     NewOutput:
 #       Description: "Description for the output"
 #       Value: "Some output value"
+
+plugins:
+  - serverless-domain-manager
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  domains:
+    prod: api.taleofddh.com
+    staging: staging-api.taleofddh.com
+    dev: dev-api.taleofddh.com
+  customDomain:
+    domainName: ${self:custom.domains.${self:custom.stage}}
+    basePath: ""
+    stage: ${self:custom.stage}
+    certificateName: "*.taleofddh.com"
+    hostedZoneId: Z044305914KLOWN7PAF5E
+    createRoute53Record: true
