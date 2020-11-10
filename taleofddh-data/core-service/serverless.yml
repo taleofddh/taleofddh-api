@@ -27,6 +27,9 @@ provider:
 # you can overwrite defaults here
 #  stage: dev
   region: eu-west-1
+  environment:
+    MONGODB_ATLAS_CLUSTER_URI: ${opt:MONGODB_ATLAS_CLUSTER_URI}
+    DB_NAME: "ddhome-data"
 
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
@@ -102,9 +105,83 @@ functions:
 
 #    Define function environment variables here
     environment:
-      MONGODB_ATLAS_CLUSTER_URI: "AQICAHg5bdmtlsjwkHNXoDU5Nn4tfvwwYaJPLMsJl2HvMdSxKgFQ8jn7j+WVc979jFLRFS6OAAAA1zCB1AYJKoZIhvcNAQcGoIHGMIHDAgEAMIG9BgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDCaPdzkPA6yHqePJZAIBEICBj4vP33iMxlADya40utSU0BlCl2eOZiIzchYzt/ei7tRgbDMSFedhcibG7ucj7Qwrc/WyKu77lZSUvvpy1shQMs3lt3zuQKKIyBO8xYE6BhvZnjxZPJrZLolxUa0D24Y+PzKtpvpk/sIyNhq5+g25Q9UXXAa7DbW6ESnIi4AGUXhyvnCrG+gBFuDZz2eoF4ZK"
-      DB_NAME: "ddhome-data"
       COLLECTION_NAME: "menu"
+
+  promotionList:
+    handler: handler.promotionList
+    events:
+      - http:
+          path: core/promotionList/{active}
+          method: get
+          request:
+            parameters:
+              paths:
+                active: true
+    environment:
+      COLLECTION_NAME: "promotion"
+
+  aboutUsList:
+    handler: handler.aboutUsList
+    events:
+      - http:
+          path: core/aboutUsList
+          method: get
+    environment:
+      COLLECTION_NAME: "aboutUs"
+
+  termsAndConditionsList:
+    handler: handler.termsAndConditionsList
+    events:
+      - http:
+          path: core/termsAndConditionsList
+          method: get
+    environment:
+      COLLECTION_NAME: "termsAndConditions"
+
+  privacyPolicyList:
+    handler: handler.privacyPolicyList
+    events:
+      - http:
+          path: core/privacyPolicyList
+          method: get
+    environment:
+      COLLECTION_NAME: "privacyPolicy"
+
+  frequentlyAskedQuestionList:
+    handler: handler.frequentlyAskedQuestionList
+    events:
+      - http:
+          path: core/frequentlyAskedQuestionList
+          method: get
+    environment:
+      COLLECTION_NAME: "frequentlyAskedQuestion"
+
+  countryByCode:
+    handler: handler.countryByCode
+    events:
+      - http:
+          path: core/countryByCode/{countryCode}
+          method: get
+          request:
+            parameters:
+              paths:
+                countryCode: true
+    environment:
+      COLLECTION_NAME: "country"
+
+  countryByName:
+    handler: handler.countryByName
+    events:
+      - http:
+          path: core/countryByName/{countryName}
+          method: get
+          request:
+            parameters:
+              paths:
+                countryName: true
+    environment:
+      COLLECTION_NAME: "country"
+
 # you can add CloudFormation resource templates here
 #resources:
 #  Resources:
@@ -131,5 +208,8 @@ custom:
     basePath: ""
     stage: ${self:custom.stage}
     certificateName: "*.taleofddh.com"
-    hostedZoneId: Z044305914KLOWN7PAF5E
+    hostedZoneId: ${opt:HOSTED_ZONE_ID}
     createRoute53Record: true
+    endpointType: edge
+    securityPolicy: tls_1_2
+    apiType: rest
