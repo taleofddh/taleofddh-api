@@ -1,5 +1,6 @@
 {
-  "event" : "termsAndConditions",
+  "event" : "find",
+  "collection" : "termsAndConditions",
   "action" : "findAllTermsAndConditionsList",
   "filters" : {}
 }

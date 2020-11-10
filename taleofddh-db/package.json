@@ -1,7 +1,7 @@
 {
-  "name": "taleofddh-data-core",
+  "name": "taleofddh-db",
   "version": "1.0.0",
-  "description": "Tale of DDH Data Core API",
+  "description": "Tale of DDH DB Function",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,8 +13,10 @@
   "keywords": [
     "taleofddh",
     "ddhome",
-    "core",
-    "data"
+    "db",
+    "find",
+    "insert",
+    "update"
   ],
   "author": "Devadyuti Das",
   "license": "GPL-3.0-or-later",
