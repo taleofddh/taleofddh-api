@@ -35,6 +35,7 @@ provider:
     - Effect: "Allow"
       Action:
         - lambda:InvokeFunction
+        - secretsmanager:GetSecretValue
       Resource: "*"
 #      Action:
 #        - "s3:ListBucket"
