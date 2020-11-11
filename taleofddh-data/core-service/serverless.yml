@@ -28,12 +28,14 @@ provider:
 #  stage: dev
   region: eu-west-1
   environment:
-    MONGODB_ATLAS_CLUSTER_URI: ${opt:MONGODB_ATLAS_CLUSTER_URI}
     DB_NAME: "ddhome-data"
 
 # you can add statements to the Lambda function's IAM Role here
-#  iamRoleStatements:
-#    - Effect: "Allow"
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - lambda:InvokeFunction
+      Resource: "*"
 #      Action:
 #        - "s3:ListBucket"
 #      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }

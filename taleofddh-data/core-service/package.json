@@ -23,8 +23,9 @@
   },
   "homepage": "https://github.com/devadyuti/taleofddh-com#readme",
   "dependencies": {
-    "mongodb": "^3.6.3",
-    "serverless-domain-manager": "^5.1.0"
+    "mongodb": "^3.6.3"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "serverless-domain-manager": "^5.1.0"
+  }
 }
