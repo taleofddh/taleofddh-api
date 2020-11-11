@@ -10,7 +10,7 @@ module.exports.get = async function () {
     //Getting Secret Response for Key
     var response = JSON.parse(await secret('MONGODB_ATLAS_CLUSTER_URI'));
     atlas_connection_uri = response.MONGODB_ATLAS_CLUSTER_URI;
-    console.log('the Atlas connection string is ' + atlas_connection_uri);
+    //console.log('the Atlas connection string is ' + atlas_connection_uri);
 
     //the following line is critical for performance reasons to allow re-use of database connections across calls to this Lambda function and avoid closing the database connection. The first call to this lambda function takes about 5 seconds to complete, while subsequent, close calls will only take a few hundred milliseconds.
     var database = process.env['DB_NAME'];
