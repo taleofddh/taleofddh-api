@@ -1,7 +1,7 @@
 'use strict';
 const db = require('./db');
 
-module.exports.menuList = async event => {
+module.exports.menuList = async (event) => {
     const collection = process.env['COLLECTION_NAME'];
     let active  = (event.pathParameters.active === 'true');
 
@@ -12,7 +12,7 @@ module.exports.menuList = async event => {
     };
 };
 
-module.exports.promotionList = async event => {
+module.exports.promotionList = async (event) => {
     const collection = process.env['COLLECTION_NAME'];
     let active  = (event.pathParameters.active === 'true');
 
@@ -23,7 +23,7 @@ module.exports.promotionList = async event => {
     };
 };
 
-module.exports.aboutUsList = async event => {
+module.exports.aboutUsList = async (event) => {
     const collection = process.env['COLLECTION_NAME'];
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {});
@@ -32,7 +32,7 @@ module.exports.aboutUsList = async event => {
     };
 };
 
-module.exports.termsAndConditionsList = async event => {
+module.exports.termsAndConditionsList = async (event) => {
     const collection = process.env['COLLECTION_NAME'];
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {});
@@ -41,7 +41,7 @@ module.exports.termsAndConditionsList = async event => {
     };
 };
 
-module.exports.privacyPolicyList = async event => {
+module.exports.privacyPolicyList = async (event) => {
     const collection = process.env['COLLECTION_NAME'];
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {});
@@ -50,7 +50,7 @@ module.exports.privacyPolicyList = async event => {
     };
 };
 
-module.exports.frequentlyAskedQuestionList = async event => {
+module.exports.frequentlyAskedQuestionList = async (event) => {
     const collection = process.env['COLLECTION_NAME'];
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {});
@@ -59,7 +59,7 @@ module.exports.frequentlyAskedQuestionList = async event => {
     };
 };
 
-module.exports.countryByCode = async event => {
+module.exports.countryByCode = async (event) => {
     const collection = process.env['COLLECTION_NAME'];
     let countryCode  = event.pathParameters.countryCode;
 
@@ -70,7 +70,7 @@ module.exports.countryByCode = async event => {
     };
 };
 
-module.exports.countryByName = async event => {
+module.exports.countryByName = async (event) => {
     const collection = process.env['COLLECTION_NAME'];
     let countryName  = event.pathParameters.countryName;
 
