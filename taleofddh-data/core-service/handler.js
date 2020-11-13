@@ -1,4 +1,3 @@
-'use strict';
 const db = require('./db');
 const collection = process.env['COLLECTION_NAME'];
 

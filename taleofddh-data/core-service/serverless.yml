@@ -202,6 +202,7 @@ plugins:
   - serverless-domain-manager
   - serverless-offline
   - serverless-dotenv-plugin
+  - serverless-bundle
 
 custom:
   stage: ${opt:stage, self:provider.stage}
