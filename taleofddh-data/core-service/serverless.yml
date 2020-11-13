@@ -199,6 +199,8 @@ functions:
 
 plugins:
   - serverless-domain-manager
+  - serverless-offline
+  - serverless-dotenv-plugin
 
 custom:
   stage: ${opt:stage, self:provider.stage}
