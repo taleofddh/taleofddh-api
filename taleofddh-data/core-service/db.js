@@ -1,4 +1,3 @@
-"use strict";
 const MongoClient = require('mongodb').MongoClient;
 //uncomment this line when running from AWS with KMS
 const secret = require("./secret");
@@ -25,4 +24,4 @@ module.exports.get = async function () {
 
 module.exports.findDocuments = async function (db, collection, query) {
     return await db.collection(collection).find(query).toArray();
-}
+};
