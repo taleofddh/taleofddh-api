@@ -55,7 +55,8 @@ provider:
 #    variable1: value1
 
 # you can add packaging information here
-#package:
+package:
+  individually: true
 #  include:
 #    - include-me.js
 #    - include-me-dir/**
