@@ -1,0 +1,131 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: gallery
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+# you can overwrite defaults here
+#  stage: dev
+  region: eu-west-1
+  environment:
+    DB_NAME: "ddhome-data"
+
+# you can add statements to the Lambda function's IAM Role here
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - lambda:InvokeFunction
+        - secretsmanager:GetSecretValue
+      Resource: "*"
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+
+# you can add packaging information here
+package:
+  individually: true
+
+functions:
+  albumList:
+    handler: handler.albumList
+    events:
+      - http:
+          path: albumList
+          method: get
+    environment:
+      COLLECTION_NAME: "album"
+
+  albumListByRestrictedFlag:
+    handler: handler.albumListByRestrictedFlag
+    events:
+      - http:
+          path: albumList/{restrictedFlag}
+          method: get
+          request:
+            parameters:
+              paths:
+                restrictedFlag: true
+    environment:
+      COLLECTION_NAME: "album"
+
+  photoListByAlbumName:
+    handler: handler.photoListByAlbumName
+    events:
+      - http:
+          path: photoList/{albumName}
+          method: get
+          request:
+            parameters:
+              paths:
+                albumName: true
+    environment:
+      COLLECTION_NAME: "photo"
+
+  photoListByAlbumNameAndRestrictedFlag:
+    handler: handler.photoListByAlbumNameAndRestrictedFlag
+    events:
+      - http:
+          path: photoList/{albumName}/{restrictedFlag}
+          method: get
+          request:
+            parameters:
+              paths:
+                albumName: true
+                restrictedFlag: true
+    environment:
+      COLLECTION_NAME: "photo"
+
+# you can add CloudFormation resource templates here
+#resources:
+#  Resources:
+#    NewResource:
+#      Type: AWS::S3::Bucket
+#      Properties:
+#        BucketName: my-new-bucket
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"
+
+plugins:
+  - serverless-domain-manager
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  domains:
+    prod: api.taleofddh.com
+    staging: staging-api.taleofddh.com
+    dev: dev-api.taleofddh.com
+  customDomain:
+    domainName: ${self:custom.domains.${self:custom.stage}}
+    basePath: "gallery"
+    stage: ${self:custom.stage}
+    certificateName: "*.taleofddh.com"
+    hostedZoneId: ${opt:HOSTED_ZONE_ID}
+    createRoute53Record: true
+    endpointType: edge
+    securityPolicy: tls_1_2
+    apiType: rest
