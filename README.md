@@ -1,2 +1,2 @@
-# taleofddh-com
+# taleofddh
 Repository for taleofddh.com application
