@@ -72,7 +72,7 @@ functions:
 #    Check the event documentation for details
     events:
       - http:
-          path: core/menuList/{active}
+          path: menuList/{active}
           method: get
           request:
             parameters:
@@ -115,7 +115,7 @@ functions:
     handler: handler.promotionList
     events:
       - http:
-          path: core/promotionList/{active}
+          path: promotionList/{active}
           method: get
           request:
             parameters:
@@ -128,7 +128,7 @@ functions:
     handler: handler.aboutUsList
     events:
       - http:
-          path: core/aboutUsList
+          path: aboutUsList
           method: get
     environment:
       COLLECTION_NAME: "aboutUs"
@@ -137,7 +137,7 @@ functions:
     handler: handler.termsAndConditionsList
     events:
       - http:
-          path: core/termsAndConditionsList
+          path: termsAndConditionsList
           method: get
     environment:
       COLLECTION_NAME: "termsAndConditions"
@@ -146,7 +146,7 @@ functions:
     handler: handler.privacyPolicyList
     events:
       - http:
-          path: core/privacyPolicyList
+          path: privacyPolicyList
           method: get
     environment:
       COLLECTION_NAME: "privacyPolicy"
@@ -155,7 +155,7 @@ functions:
     handler: handler.frequentlyAskedQuestionList
     events:
       - http:
-          path: core/frequentlyAskedQuestionList
+          path: frequentlyAskedQuestionList
           method: get
     environment:
       COLLECTION_NAME: "frequentlyAskedQuestion"
@@ -164,7 +164,7 @@ functions:
     handler: handler.countryByCode
     events:
       - http:
-          path: core/countryByCode/{countryCode}
+          path: countryByCode/{countryCode}
           method: get
           request:
             parameters:
@@ -177,7 +177,7 @@ functions:
     handler: handler.countryByName
     events:
       - http:
-          path: core/countryByName/{countryName}
+          path: countryByName/{countryName}
           method: get
           request:
             parameters:
@@ -211,7 +211,7 @@ custom:
     dev: dev-api.taleofddh.com
   customDomain:
     domainName: ${self:custom.domains.${self:custom.stage}}
-    basePath: ""
+    basePath: "core"
     stage: ${self:custom.stage}
     certificateName: "*.taleofddh.com"
     hostedZoneId: ${opt:HOSTED_ZONE_ID}
