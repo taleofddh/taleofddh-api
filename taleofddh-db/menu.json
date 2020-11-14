@@ -1,8 +1,0 @@
-{
-  "event" : "find",
-  "collection" : "menu",
-  "action" : "findActiveMenuList",
-  "filters" : {
-    "active" : true
-  }
-}
