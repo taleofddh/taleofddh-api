@@ -75,6 +75,7 @@ functions:
       - http:
           path: photoList/{albumName}
           method: get
+          authorizer: aws_iam
           request:
             parameters:
               paths:
@@ -88,6 +89,7 @@ functions:
       - http:
           path: photoList/{albumName}/{restrictedFlag}
           method: get
+          authorizer: aws_iam
           request:
             parameters:
               paths:
