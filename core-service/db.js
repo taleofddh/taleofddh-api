@@ -22,6 +22,6 @@ module.exports.get = async function () {
     return cachedDb;
 };
 
-module.exports.findDocuments = async function (db, collection, query) {
-    return await db.collection(collection).find(query).toArray();
+module.exports.findDocuments = async function (db, collection, query, sort) {
+    return await sort ? db.collection(collection).find(query).sort(sort).toArray() : db.collection(collection).find(query).toArray();
 };

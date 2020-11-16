@@ -5,7 +5,7 @@ const collection = process.env['COLLECTION_NAME'];
 module.exports.menuList = async (event) => {
     let active  = (event.pathParameters.active === 'true');
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {"active" : active});
+    const docs = await db.findDocuments(database, collection, {"active" : active}, {"sequence": 1});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
@@ -19,7 +19,7 @@ module.exports.menuList = async (event) => {
 module.exports.promotionList = async (event) => {
     let active  = (event.pathParameters.active === 'true');
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {"active" : active});
+    const docs = await db.findDocuments(database, collection, {"active" : active}, {"sequence": 1});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
@@ -32,7 +32,7 @@ module.exports.promotionList = async (event) => {
 
 module.exports.aboutUsList = async (event) => {
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {});
+    const docs = await db.findDocuments(database, collection, {}, {"sequence": 1});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
@@ -45,7 +45,7 @@ module.exports.aboutUsList = async (event) => {
 
 module.exports.termsAndConditionsList = async (event) => {
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {});
+    const docs = await db.findDocuments(database, collection, {}, {"_id": 1});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
@@ -58,7 +58,7 @@ module.exports.termsAndConditionsList = async (event) => {
 
 module.exports.privacyPolicyList = async (event) => {
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {});
+    const docs = await db.findDocuments(database, collection, {}, {"_id": 1});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
@@ -71,7 +71,7 @@ module.exports.privacyPolicyList = async (event) => {
 
 module.exports.frequentlyAskedQuestionList = async (event) => {
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {});
+    const docs = await db.findDocuments(database, collection, {}, {"_id": 1, "questionAndAnswerList.sequence": 1});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
