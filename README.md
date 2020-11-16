@@ -8,7 +8,6 @@ The APIs are written in NodeJS and deployed as AWS Lambda functions using server
  ## AWS Cognito
  ## AWS Route53
  ## AWS Certificate Manager
- ## AWS Secret Manager
+ ## AWS Secrets Manager
  ## AWS CloudFront
  ## AWS S3
- 
