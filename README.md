@@ -1,2 +1,2 @@
-# taleofddh
-Repository for taleofddh.com application
+# taleofddh-api
+Repository for APIs for taleofddh.com application
