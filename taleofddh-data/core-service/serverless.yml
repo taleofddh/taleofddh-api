@@ -74,6 +74,7 @@ functions:
       - http:
           path: menuList/{active}
           method: get
+          cors: true
           request:
             parameters:
               paths:
@@ -117,6 +118,7 @@ functions:
       - http:
           path: promotionList/{active}
           method: get
+          cors: true
           request:
             parameters:
               paths:
@@ -130,6 +132,7 @@ functions:
       - http:
           path: aboutUsList
           method: get
+          cors: true
     environment:
       COLLECTION_NAME: "aboutUs"
 
@@ -139,6 +142,7 @@ functions:
       - http:
           path: termsAndConditionsList
           method: get
+          cors: true
     environment:
       COLLECTION_NAME: "termsAndConditions"
 
@@ -148,6 +152,7 @@ functions:
       - http:
           path: privacyPolicyList
           method: get
+          cors: true
     environment:
       COLLECTION_NAME: "privacyPolicy"
 
@@ -157,6 +162,7 @@ functions:
       - http:
           path: frequentlyAskedQuestionList
           method: get
+          cors: true
     environment:
       COLLECTION_NAME: "frequentlyAskedQuestion"
 
@@ -166,6 +172,7 @@ functions:
       - http:
           path: countryByCode/{countryCode}
           method: get
+          cors: true
           request:
             parameters:
               paths:
@@ -179,6 +186,7 @@ functions:
       - http:
           path: countryByName/{countryName}
           method: get
+          cors: true
           request:
             parameters:
               paths:
@@ -187,7 +195,9 @@ functions:
       COLLECTION_NAME: "country"
 
 # you can add CloudFormation resource templates here
-#resources:
+resources:
+  # API Gateway Errors
+  - ${file(resources/api-gateway-errors.yml)}
 #  Resources:
 #    NewResource:
 #      Type: AWS::S3::Bucket
