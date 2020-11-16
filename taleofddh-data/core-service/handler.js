@@ -7,7 +7,12 @@ module.exports.menuList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {"active" : active});
     return {
-        statusCode: 200, body: JSON.stringify(docs)
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
     };
 };
 
@@ -16,7 +21,12 @@ module.exports.promotionList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {"active" : active});
     return {
-        statusCode: 200, body: JSON.stringify(docs)
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
     };
 };
 
@@ -24,7 +34,12 @@ module.exports.aboutUsList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {});
     return {
-        statusCode: 200, body: JSON.stringify(docs)
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
     };
 };
 
@@ -32,7 +47,12 @@ module.exports.termsAndConditionsList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {});
     return {
-        statusCode: 200, body: JSON.stringify(docs)
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
     };
 };
 
@@ -40,7 +60,12 @@ module.exports.privacyPolicyList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {});
     return {
-        statusCode: 200, body: JSON.stringify(docs)
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
     };
 };
 
@@ -48,7 +73,12 @@ module.exports.frequentlyAskedQuestionList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {});
     return {
-        statusCode: 200, body: JSON.stringify(docs)
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
     };
 };
 
@@ -57,7 +87,12 @@ module.exports.countryByCode = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {"code" : countryCode});
     return {
-        statusCode: 200, body: JSON.stringify(docs)
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
     };
 };
 
@@ -66,6 +101,11 @@ module.exports.countryByName = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {"name" : countryName});
     return {
-        statusCode: 200, body: JSON.stringify(docs)
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
     };
 };
