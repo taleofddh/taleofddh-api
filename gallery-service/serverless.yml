@@ -28,7 +28,7 @@ provider:
 #  stage: dev
   region: eu-west-1
   environment:
-    DB_NAME: "ddhome-data"
+    DB_NAME: "ddhome-gallery"
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
