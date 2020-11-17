@@ -85,7 +85,7 @@ module.exports.frequentlyAskedQuestionList = async (event) => {
 module.exports.countryByCode = async (event) => {
     let countryCode  = event.pathParameters.countryCode;
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {"code" : countryCode});
+    const docs = await db.findDocument(database, collection, {"code" : countryCode});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
@@ -99,7 +99,7 @@ module.exports.countryByCode = async (event) => {
 module.exports.countryByName = async (event) => {
     let countryName  = event.pathParameters.countryName;
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {"name" : countryName});
+    const docs = await db.findDocument(database, collection, {"name" : countryName});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
