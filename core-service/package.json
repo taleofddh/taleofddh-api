@@ -10,7 +10,7 @@
   "license": "GPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/devadyuti/taleofddh-com.git"
+    "url": "git+ssh://git@github.com/devadyuti/taleofddh-api.git"
   },
   "keywords": [
     "taleofddh",
@@ -19,9 +19,9 @@
     "core"
   ],
   "bugs": {
-    "url": "https://github.com/devadyuti/taleofddh-com/issues"
+    "url": "https://github.com/devadyuti/taleofddh-api/issues"
   },
-  "homepage": "https://github.com/devadyuti/taleofddh-com#readme",
+  "homepage": "https://github.com/devadyuti/taleofddh-api#readme",
   "dependencies": {
     "mongodb": "^3.6.3"
   },
