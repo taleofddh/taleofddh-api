@@ -25,7 +25,7 @@ provider:
   runtime: nodejs12.x
 
 # you can overwrite defaults here
-#  stage: dev
+  stage: prod
   region: eu-west-1
   environment:
     DB_NAME: "ddhome-gallery"
