@@ -1,0 +1,31 @@
+{
+  "name": "email-service",
+  "version": "1.0.0",
+  "description": "Email API for Tale of DDH",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Devadyuti Das",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/devadyuti/taleofddh-api.git"
+  },
+  "keywords": [
+    "taleofddh",
+    "ddhome",
+    "email",
+    "integration"
+  ],
+  "bugs": {
+    "url": "https://github.com/devadyuti/taleofddh-api/issues"
+  },
+  "homepage": "https://github.com/devadyuti/taleofddh-api#readme",
+  "devDependencies": {
+    "aws-sdk": "^2.791.0",
+    "serverless-domain-manager": "^5.1.0",
+    "serverless-dotenv-plugin": "^3.1.0",
+    "serverless-offline": "^6.8.0"
+  }
+}

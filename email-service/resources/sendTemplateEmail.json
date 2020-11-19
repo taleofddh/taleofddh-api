@@ -1,0 +1,10 @@
+{
+  "Source":"TaleOfDDH Helpdesk <helpdesk@taleofddh.com>",
+  "Template": "Enquiry",
+  "ConfigurationSetName": "taleofddh-configset",
+  "Destination": {
+    "ToAddresses": [ "test@taleofddh.com"
+    ]
+  },
+  "TemplateData": "{ \"name\":\"Test User\", \"number\": \"REQ0000001\", \"subject\": \"Your Enquiry\", \"message\": \"Test Message\" }"
+}
