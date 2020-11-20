@@ -14,3 +14,17 @@ module.exports.sendEnquiryMessage = async (event) => {
         }
     };
 };
+
+module.exports.sendSubscriptionMessage = async (event) => {
+    const subscription = JSON.parse(event.body);
+    const data = JSON.stringify({ "subject": subscription.subject });
+    const messageId = await email.send(subscription.to, process.env['TEMPLATE_NAME'], data);
+    return {
+        statusCode: 200,
+        body: JSON.stringify(messageId),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};

@@ -29,6 +29,7 @@ provider:
   region: eu-west-1
   environment:
     FROM_ADDRESS: "helpdesk@taleofddh.com"
+    CONFIG_SET: "taleofddh-configset"
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
@@ -61,6 +62,15 @@ functions:
           cors: true
     environment:
       TEMPLATE_NAME: "Enquiry"
+  sendSubscriptionMessage:
+    handler: handler.sendSubscriptionMessage
+    events:
+      - http:
+          path: sendSubscriptionMessage
+          method: post
+          cors: true
+    environment:
+      TEMPLATE_NAME: "Subscription"
 
 # you can add CloudFormation resource templates here
 resources:
