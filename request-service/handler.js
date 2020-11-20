@@ -1,4 +1,5 @@
 'use strict';
+const fetch = require('node-fetch');
 const db = require('./db');
 const collection = process.env['COLLECTION_NAME'];
 
@@ -48,9 +49,23 @@ module.exports.createEnquiry = async (event) => {
         "message": message
     }
 
-    db.insertDocument(database, collection, request);
+    const emailData = {
+        "name" : requestor,
+        "subject": "Your Enquiry",
+        "number": number,
+        "message": enquiry,
+        "to": email
+    };
 
-    db.insertDocument(database, "auditTrail", auditTrail);
+    await db.insertDocument(database, collection, request);
+
+    await db.insertDocument(database, "auditTrail", auditTrail);
+
+    const sendMessage = await sendEnquiry(JSON.stringify(emailData));
+
+    if (sendMessage.MessageId) {
+        console.log("Attempted to send email to " + email + " for request # " + number);
+    }
 
     return {
         statusCode: 200,
@@ -61,3 +76,21 @@ module.exports.createEnquiry = async (event) => {
         }
     };
 };
+
+const sendEnquiry = async (data) => {
+    const url = process.env['SEND_ENQUIRY_URL'];
+    const headers = {
+        "Content-Type": "application/json"
+    };
+
+    // for async it only works with Promise and resolve/reject
+    return new Promise( async (resolve, reject) => {
+        try {
+            const response = await fetch(url, { method: 'POST', headers: headers, body: data});
+            const json = await response.json();
+            resolve(json);
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
