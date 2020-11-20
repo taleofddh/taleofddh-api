@@ -16,7 +16,8 @@ module.exports.send = async (toAddress, templateName, templateData, ccAddress) =
         },
         Source: process.env['FROM_ADDRESS'], /* required */
         Template: templateName,
-        TemplateData: templateData
+        TemplateData: templateData,
+        ConfigurationSetName: process.env['CONFIG_SET']
     };
 
     // Create a SES client
