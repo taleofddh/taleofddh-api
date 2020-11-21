@@ -53,15 +53,15 @@ package:
   individually: true
 
 functions:
-  sendEnquiryMessage:
-    handler: handler.sendEnquiryMessage
+  sendRequestMessage:
+    handler: handler.sendRequestMessage
     events:
       - http:
-          path: sendEnquiryMessage
+          path: sendRequestMessage
           method: post
           cors: true
     environment:
-      TEMPLATE_NAME: "Enquiry"
+      TEMPLATE_NAME: "Request"
 
   sendSubscriptionMessage:
     handler: handler.sendSubscriptionMessage
