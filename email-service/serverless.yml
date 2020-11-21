@@ -62,6 +62,7 @@ functions:
           cors: true
     environment:
       TEMPLATE_NAME: "Enquiry"
+
   sendSubscriptionMessage:
     handler: handler.sendSubscriptionMessage
     events:
