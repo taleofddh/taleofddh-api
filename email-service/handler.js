@@ -4,7 +4,7 @@ const email = require('./email');
 module.exports.sendRequestMessage = async (event) => {
     const request = JSON.parse(event.body);
     const data = JSON.stringify({ "name" : request.name, "subject": request.subject, "number": request.number, "message": request.message });
-    const messageId = await email.send(enquiry.to, process.env['TEMPLATE_NAME'], data);
+    const messageId = await email.send(request.to, process.env['TEMPLATE_NAME'], data);
     return {
         statusCode: 200,
         body: JSON.stringify(messageId),
