@@ -47,16 +47,37 @@ package:
   individually: true
 
 functions:
-  createEnquiry:
-    handler: handler.createEnquiry
+  createRequest:
+    handler: handler.createRequest
     events:
       - http:
-          path: createEnquiry
+          path: createRequest
           method: post
           cors: true
     environment:
       COLLECTION_NAME: "request"
-      SEND_ENQUIRY_URL: "https://api.taleofddh.com/email/sendEnquiryMessage"
+      SEND_ENQUIRY_URL: "https://api.taleofddh.com/email/sendRequestMessage"
+
+  findRequest:
+    handler: handler.findRequest
+    events:
+      - http:
+          path: findRequest
+          method: post
+          cors: true
+    environment:
+      COLLECTION_NAME: "request"
+
+  updateSubscription:
+    handler: handler.updateSubscription
+    events:
+      - http:
+          path: updateSubscription
+          method: post
+          cors: true
+    environment:
+      COLLECTION_NAME: "subscription"
+      SEND_SUBSCRIPTION_URL: "https://api.taleofddh.com/email/sendSubscriptionMessage"
 
 # you can add CloudFormation resource templates here
 resources:

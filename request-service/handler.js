@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 const db = require('./db');
 const collection = process.env['COLLECTION_NAME'];
 
-module.exports.createEnquiry = async (event) => {
+module.exports.createRequest = async (event) => {
     const database = await db.get();
     const data = JSON.parse(event.body);
     var typeDoc = await db.findDocument(database, "type", {"type": data.type});
@@ -61,7 +61,7 @@ module.exports.createEnquiry = async (event) => {
 
     await db.insertDocument(database, "auditTrail", auditTrail);
 
-    const sendMessage = await sendEnquiry(JSON.stringify(emailData));
+    const sendMessage = await sendConfirmation(process.env['SEND_ENQUIRY_URL'], JSON.stringify(emailData));
 
     if (sendMessage.MessageId) {
         console.log("Attempted to send email to " + email + " for request # " + number);
@@ -77,8 +77,53 @@ module.exports.createEnquiry = async (event) => {
     };
 };
 
-const sendEnquiry = async (data) => {
-    const url = process.env['SEND_ENQUIRY_URL'];
+module.exports.findRequest = async (event) => {
+    const data = JSON.parse(event.body);
+    const database = await db.get();
+    const docs = await db.findDocument(database, collection, { "email" : data.email, "number": data.requestId });
+    return {
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
+module.exports.updateSubscription = async (event) => {
+    const data = JSON.parse(event.body);
+    const database = await db.get();
+    var existingSubscriptionDoc = await db.findDocument(database, collection, {"email": data.email});
+    if(existingSubscriptionDoc) {
+        const update = { "$set": { "subscribed": data.subscribed } };
+        await db.updateDocument(database, collection, {"email": data.email}, update)
+    } else {
+        await db.insertDocument(database, collection, data);
+    }
+
+    const emailData = {
+        "subject": "Acknowledgement",
+        "to": data.email
+    };
+
+    const sendMessage = await sendConfirmation(process.env['SEND_SUBSCRIPTION_URL'], JSON.stringify(emailData));
+
+    if (sendMessage.MessageId) {
+        console.log("Attempted to send email to " + data.email + " for subscription option " + data.subscribed);
+    }
+
+    return {
+        statusCode: 200,
+        body: JSON.stringify(data),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
+const sendConfirmation = async (url, data) => {
     const headers = {
         "Content-Type": "application/json"
     };

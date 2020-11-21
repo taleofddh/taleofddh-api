@@ -40,3 +40,7 @@ module.exports.findSequence = async function(db, collection, query) {
 module.exports.insertDocument = async function (db, collection, document) {
     return await db.collection(collection).insertOne(document);
 };
+
+module.exports.updateDocument = async function (db, collection, query, update) {
+    return await db.collection(collection).updateOne(query, update);
+};
