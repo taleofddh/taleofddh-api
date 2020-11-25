@@ -47,8 +47,8 @@ package:
   individually: true
 
 functions:
-  albumList:
-    handler: handler.albumList
+  findAlbumList:
+    handler: handler.findAlbumList
     events:
       - http:
           path: albumList
@@ -57,48 +57,36 @@ functions:
     environment:
       COLLECTION_NAME: "album"
 
-  albumListByRestrictedFlag:
-    handler: handler.albumListByRestrictedFlag
+  findRestrictedAlbumList:
+    handler: handler.findRestrictedAlbumList
     events:
       - http:
-          path: albumList/{restrictedFlag}
-          method: get
+          path: albumListRestricted
+          method: post
           cors: true
-          request:
-            parameters:
-              paths:
-                restrictedFlag: true
+          authorizer: aws_iam
     environment:
       COLLECTION_NAME: "album"
 
-  photoListByAlbumName:
-    handler: handler.photoListByAlbumName
+  findPhotoList:
+    handler: handler.findPhotoList
     events:
       - http:
-          path: photoList/{albumName}
-          method: get
+          path: photoList
+          method: post
           cors: true
           authorizer: aws_iam
-          request:
-            parameters:
-              paths:
-                albumName: true
     environment:
       COLLECTION_NAME: "photo"
 
-  photoListByAlbumNameAndRestrictedFlag:
-    handler: handler.photoListByAlbumNameAndRestrictedFlag
+  findRestrictedPhotoList:
+    handler: handler.findRestrictedPhotoList
     events:
       - http:
-          path: photoList/{albumName}/{restrictedFlag}
-          method: get
+          path: photoListRestricted
+          method: post
           cors: true
           authorizer: aws_iam
-          request:
-            parameters:
-              paths:
-                albumName: true
-                restrictedFlag: true
     environment:
       COLLECTION_NAME: "photo"
 
