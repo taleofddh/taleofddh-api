@@ -65,8 +65,8 @@ package:
 #    - exclude-me-dir/**
 
 functions:
-  menuList:
-    handler: handler.menuList
+  findMenuList:
+    handler: handler.findMenuList
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
@@ -112,8 +112,8 @@ functions:
     environment:
       COLLECTION_NAME: "menu"
 
-  promotionList:
-    handler: handler.promotionList
+  findPromotionList:
+    handler: handler.findPromotionList
     events:
       - http:
           path: promotionList/{active}
@@ -126,8 +126,8 @@ functions:
     environment:
       COLLECTION_NAME: "promotion"
 
-  aboutUsList:
-    handler: handler.aboutUsList
+  findAboutUsList:
+    handler: handler.findAboutUsList
     events:
       - http:
           path: aboutUsList
@@ -136,8 +136,8 @@ functions:
     environment:
       COLLECTION_NAME: "aboutUs"
 
-  termsAndConditionsList:
-    handler: handler.termsAndConditionsList
+  findTermsAndConditionsList:
+    handler: handler.findTermsAndConditionsList
     events:
       - http:
           path: termsAndConditionsList
@@ -146,8 +146,8 @@ functions:
     environment:
       COLLECTION_NAME: "termsAndConditions"
 
-  privacyPolicyList:
-    handler: handler.privacyPolicyList
+  findPrivacyPolicyList:
+    handler: handler.findPrivacyPolicyList
     events:
       - http:
           path: privacyPolicyList
@@ -156,8 +156,8 @@ functions:
     environment:
       COLLECTION_NAME: "privacyPolicy"
 
-  frequentlyAskedQuestionList:
-    handler: handler.frequentlyAskedQuestionList
+  findFrequentlyAskedQuestionList:
+    handler: handler.findFrequentlyAskedQuestionList
     events:
       - http:
           path: frequentlyAskedQuestionList
@@ -166,8 +166,8 @@ functions:
     environment:
       COLLECTION_NAME: "frequentlyAskedQuestion"
 
-  countryByCode:
-    handler: handler.countryByCode
+  findCountryByCode:
+    handler: handler.findCountryByCode
     events:
       - http:
           path: countryByCode/{countryCode}
@@ -180,8 +180,8 @@ functions:
     environment:
       COLLECTION_NAME: "country"
 
-  countryByName:
-    handler: handler.countryByName
+  findCountryByName:
+    handler: handler.findCountryByName
     events:
       - http:
           path: countryByName/{countryName}
