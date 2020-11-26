@@ -17,7 +17,8 @@ module.exports.findAlbumList = async (event) => {
 };
 
 module.exports.findRestrictedAlbumList = async (event) => {
-    let restrictedFlag  = (event.body.restrictedFlag === 'true');
+    const data = JSON.parse(event.body);
+    let restrictedFlag  = (data.restrictedFlag === 'true');
     let userId = event.requestContext.identity.cognitoIdentityId;
     const database = await db.get();
     const docs = (restrictedFlag && (!userId || userId === undefined)) ? [] : await db.findDocuments(database, collection, {"restrictedFlag": restrictedFlag});
@@ -32,10 +33,10 @@ module.exports.findRestrictedAlbumList = async (event) => {
 };
 
 module.exports.findPhotoList = async (event) => {
-    let albumName = event.body.albumName;
+    const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, (!userId || userId === undefined) ? {"albumName": albumName, "restrictedFlag": false} : {"albumName": albumName});
+    const docs = await db.findDocuments(database, collection, (!userId || userId === undefined) ? {"albumName": data.albumName, "restrictedFlag": false} : {"albumName": data.albumName});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
@@ -47,11 +48,11 @@ module.exports.findPhotoList = async (event) => {
 };
 
 module.exports.findRestrictedPhotoList = async (event) => {
-    let albumName = event.body.albumName;
-    let restrictedFlag  = (event.body.restrictedFlag === 'true');
+    const data = JSON.parse(event.body);
+    let restrictedFlag  = (data.restrictedFlag === 'true');
     let userId = event.requestContext.identity.cognitoIdentityId;
     const database = await db.get();
-    const docs = (restrictedFlag && (!userId || userId === undefined)) ? [] : await db.findDocuments(database, collection, restrictedFlag ? {"albumName": albumName} : {"albumName": albumName, "restrictedFlag": restrictedFlag});
+    const docs = (restrictedFlag && (!userId || userId === undefined)) ? [] : await db.findDocuments(database, collection, restrictedFlag ? {"albumName": data.albumName} : {"albumName": data.albumName, "restrictedFlag": restrictedFlag});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
