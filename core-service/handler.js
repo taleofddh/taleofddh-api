@@ -2,7 +2,7 @@
 const db = require('./db');
 const collection = process.env['COLLECTION_NAME'];
 
-module.exports.menuList = async (event) => {
+module.exports.findMenuList = async (event) => {
     let active  = (event.pathParameters.active === 'true');
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {"active" : active}, {"sequence": 1});
@@ -16,7 +16,7 @@ module.exports.menuList = async (event) => {
     };
 };
 
-module.exports.promotionList = async (event) => {
+module.exports.findPromotionList = async (event) => {
     let active  = (event.pathParameters.active === 'true');
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {"active" : active}, {"sequence": 1});
@@ -30,7 +30,7 @@ module.exports.promotionList = async (event) => {
     };
 };
 
-module.exports.aboutUsList = async (event) => {
+module.exports.findAboutUsList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {}, {"sequence": 1});
     return {
@@ -43,7 +43,7 @@ module.exports.aboutUsList = async (event) => {
     };
 };
 
-module.exports.termsAndConditionsList = async (event) => {
+module.exports.findTermsAndConditionsList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {}, {"_id": 1});
     return {
@@ -56,7 +56,7 @@ module.exports.termsAndConditionsList = async (event) => {
     };
 };
 
-module.exports.privacyPolicyList = async (event) => {
+module.exports.findPrivacyPolicyList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {}, {"_id": 1});
     return {
@@ -69,7 +69,7 @@ module.exports.privacyPolicyList = async (event) => {
     };
 };
 
-module.exports.frequentlyAskedQuestionList = async (event) => {
+module.exports.findFrequentlyAskedQuestionList = async (event) => {
     const database = await db.get();
     const docs = await db.findDocuments(database, collection, {}, {"_id": 1, "questionAndAnswerList.sequence": 1});
     return {
@@ -82,7 +82,7 @@ module.exports.frequentlyAskedQuestionList = async (event) => {
     };
 };
 
-module.exports.countryByCode = async (event) => {
+module.exports.findCountryByCode = async (event) => {
     let countryCode  = event.pathParameters.countryCode;
     const database = await db.get();
     const docs = await db.findDocument(database, collection, {"code" : countryCode});
@@ -96,7 +96,7 @@ module.exports.countryByCode = async (event) => {
     };
 };
 
-module.exports.countryByName = async (event) => {
+module.exports.findCountryByName = async (event) => {
     let countryName  = event.pathParameters.countryName;
     const database = await db.get();
     const docs = await db.findDocument(database, collection, {"name" : countryName});
