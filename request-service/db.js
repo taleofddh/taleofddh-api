@@ -30,6 +30,10 @@ module.exports.findDocuments = async function (db, collection, query, sort) {
     return await sort ? db.collection(collection).find(query).sort(sort).toArray() : db.collection(collection).find(query).toArray();
 };
 
+module.exports.findDistintValues = async function (db, collection, field, query) {
+    return await db.collection(collection).distinct(field, query);
+};
+
 module.exports.findSequence = async function(db, collection, query) {
     const update = { "$inc": { "sequence": 1 } };
     const options = { "returnNewDocument": true };
@@ -41,6 +45,22 @@ module.exports.insertDocument = async function (db, collection, document) {
     return await db.collection(collection).insertOne(document);
 };
 
+module.exports.insertDocuments = async function (db, collection, documents) {
+    return await db.collection(collection).insertMany(documents);
+};
+
 module.exports.updateDocument = async function (db, collection, query, update) {
     return await db.collection(collection).updateOne(query, update);
 };
+
+module.exports.updateDocuments = async function (db, collection, query, update) {
+    return await db.collection(collection).updateMany(query, update);
+};
+
+module.exports.deleteDocument = async function (db, collection, query) {
+    return await db.collection(collection).deleteOne(query);
+}
+
+module.exports.deleteDocuments = async function (db, collection, query) {
+    return await db.collection(collection).deleteMany(query);
+}
