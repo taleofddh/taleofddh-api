@@ -16,7 +16,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'menu.csv'))
         link: data.link,
         external: data.external.toUpperCase() === 'TRUE',
         icon: data.icon,
-        condtion: data.condition,
+        condition: data.condition,
         active: data.active.toUpperCase() === 'TRUE',
         position: data.position,
     }))
