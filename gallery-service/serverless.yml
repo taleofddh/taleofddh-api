@@ -27,8 +27,6 @@ provider:
 # you can overwrite defaults here
   stage: prod
   region: eu-west-1
-  environment:
-    DB_NAME: "ddhome-gallery"
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
@@ -110,6 +108,9 @@ plugins:
   - serverless-dotenv-plugin
 
 custom:
+  dotenv:
+    include:
+      - DB_NAME
   stage: ${opt:stage, self:provider.stage}
   domains:
     prod: api.taleofddh.com
