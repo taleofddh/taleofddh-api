@@ -1,0 +1,38 @@
+{
+  "name": "gallery-service",
+  "version": "1.0.0",
+  "description": "Gallery APIs for Tale of DDH",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Devadyuti Das",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/devadyuti/taleofddh-api.git"
+  },
+  "keywords": [
+    "taleofddh",
+    "ddhome",
+    "db",
+    "gallery"
+  ],
+  "bugs": {
+    "url": "https://github.com/devadyuti/taleofddh-api/issues"
+  },
+  "homepage": "https://github.com/devadyuti/taleofddh-api#readme",
+  "dependencies": {
+    "@fast-csv/format": "^4.3.5",
+    "@fast-csv/parse": "^4.3.3",
+    "dotenv": "^8.2.0",
+    "fast-csv": "^4.3.5",
+    "mongodb": "^3.6.3"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.792.0",
+    "serverless-domain-manager": "^5.1.0",
+    "serverless-dotenv-plugin": "^3.1.0",
+    "serverless-offline": "^6.8.0"
+  }
+}
