@@ -55,6 +55,16 @@ functions:
     environment:
       COLLECTION_NAME: "blog"
 
+  findCategorizedBlogList:
+    handler: handler.findCategorizedBlogList
+    events:
+      - http:
+          path: blogListCategorized
+          method: post
+          cors: true
+    environment:
+      COLLECTION_NAME: "blog"
+
   findArticleList:
     handler: handler.findArticleList
     events:
