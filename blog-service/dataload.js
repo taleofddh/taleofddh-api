@@ -18,9 +18,11 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'blog.csv'))
         endDate: new Date(data.endDate),
         homePageFlag: data.homePageFlag.toUpperCase() === 'TRUE',
         header: data.header,
+        title: data.title,
         summary: data.summary,
+        link: data.link,
         titlePhoto: data.titlePhoto,
-        viewCount: parseInt(data.viewCount),
+        viewCount: parseInt(data.viewCount)
     }))
     .on('error', error => console.error(error))
     .on('data', row => {
@@ -35,23 +37,29 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'blog.csv'))
         await console.log(`Parsed ${rowCount} rows`);
     });
 
-/*
 let articles = [];
-fs.createReadStream(path.resolve(__dirname, 'data', 'country.csv'))
+fs.createReadStream(path.resolve(__dirname, 'data', 'article.csv'))
     .pipe(csv.parse({ headers: true }))
+    .transform(data => ({
+        sequence: parseInt(data.sequence),
+        blogName: data.blogName,
+        sectionId: parseInt(data.sectionId),
+        type: data.type,
+        content: data.content,
+        styleClass: data.styleClass
+    }))
     .on('error', error => console.error(error))
     .on('data', row => {
-        countries.push(row)
+        articles.push(row)
     })
     .on('end', async rowCount => {
-        countries.sort((a, b) => a.code.localeCompare(b.code));
-        await dbOperation("deleteDocs", "country", [], {});
-        await dbOperation("insertDocs", "country", countries);
-        const docs = await dbOperation("findDocs", "country", [], {}, {"_id": 1});
+        articles.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
+        await dbOperation("deleteDocs", "article", [], {});
+        await dbOperation("insertDocs", "article", articles);
+        const docs = await dbOperation("findDocs", "article", [], {}, {"sequence": 1});
         await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
     });
-*/
 
 const dbOperation = async (operation, collection, data, query, sort) => {
     // for async it only works with Promise and resolve/reject
