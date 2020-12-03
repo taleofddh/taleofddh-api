@@ -33,7 +33,7 @@ module.exports.findCategorizedBlogList = async (event) => {
 module.exports.findArticleList = async (event) => {
     const data = JSON.parse(event.body);
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {"blogName": data.blogName});
+    const docs = await db.findDocuments(database, collection, {"blogName": data.blogName}, {"sectionId": 1});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
