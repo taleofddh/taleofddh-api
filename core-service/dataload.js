@@ -10,7 +10,7 @@ let menus = [];
 fs.createReadStream(path.resolve(__dirname, 'data', 'menu.csv'))
     .pipe(csv.parse({ headers: true }))
     .transform(data => ({
-        number: parseInt(data.number),
+        sequence: parseInt(data.sequence),
         name: data.name,
         type: data.type,
         link: data.link,
@@ -25,7 +25,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'menu.csv'))
         menus.push(row);
     })
     .on('end', async rowCount => {
-        menus.sort((a,b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
+        menus.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
         await dbOperation("deleteDocs", "menu", [], {});
         await dbOperation("insertDocs", "menu", menus);
         const docs = await dbOperation("findDocs", "menu", [], {"active": true}, {"sequence": 1});
