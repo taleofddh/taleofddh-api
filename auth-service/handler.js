@@ -67,9 +67,10 @@ module.exports.updateUser = async (event) => {
 };
 
 module.exports.findUserProfile = async (event) => {
+    const data = JSON.parse(event.body);
     const database = await db.get();
     let userId = event.requestContext.identity.cognitoIdentityId;
-    const userProfile = (!userId || userId === undefined) ? {} : await db.findDocuments(database, collection,  {"email": userId});
+    const userProfile = (!userId || userId === undefined) ? {} : await db.findDocuments(database, collection,  data.email ? {"email": data.email} : {"identityId": data.identityId});
     return {
         statusCode: 200,
         body: JSON.stringify(userProfile),
