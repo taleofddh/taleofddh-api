@@ -57,6 +57,28 @@ functions:
     environment:
       COLLECTION_NAME: "user"
 
+  createUser:
+    handler: handler.createUser
+    events:
+      - http:
+          path: createUser
+          method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      COLLECTION_NAME: "user"
+
+  updateUser:
+    handler: handler.updateUser
+    events:
+      - http:
+          path: updateUser
+          method: put
+          cors: true
+          authorizer: aws_iam
+    environment:
+      COLLECTION_NAME: "user"
+
   findUserProfile:
     handler: handler.findUserProfile
     events:
@@ -66,7 +88,29 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "photo"
+      COLLECTION_NAME: "userProfile"
+
+  createUserProfile:
+    handler: handler.createUserProfile
+    events:
+      - http:
+          path: createUserProfile
+          method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      COLLECTION_NAME: "userProfile"
+
+  updateUserProfile:
+    handler: handler.updateUserProfile
+    events:
+      - http:
+          path: updateUserProfile
+          method: put
+          cors: true
+          authorizer: aws_iam
+    environment:
+      COLLECTION_NAME: "userProfile"
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors
