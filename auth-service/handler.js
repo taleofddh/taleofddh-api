@@ -98,13 +98,13 @@ const createProfile = async (data) => {
     const database = await db.get();
     let userId = event.requestContext.identity.cognitoIdentityId;
     var sequence = await db.findSequence(database, "sequence", {"key": "user_seq"});
-    var communities = data.communities ? data.communities.split(',') : [];
     let communityList = []
-    for(let i in communities) {
-        communityList.push(await db.findDocument(database, "community", {"number": parseInt(communities[i])}));
+    const allCommunities = await dbOperation("findDocs", "community", [], {}, {"number": 1})
+    for(let i in allCommunities) {
+        communityList.push({"id": allCommunities[i].number, "name": allCommunities[i].name, "checked": false})
     }
     const profile = {
-        number: data.number,
+        number: sequence,
         identityId: data.identityId ? data.identityId : '',
         firstName: data.firstName ? data.firstName : '',
         lastName: data.lastName ? data.lastName : '',
@@ -118,7 +118,7 @@ const createProfile = async (data) => {
         countryCode: data.countryCode ? data.countryCode : '',
         phone: data.phone ? data.phone : '',
         about: data.about ? data.about : '',
-        communityList: communityList,
+        communityList: data.communityList ? data.communityList : communityList,
         mailingFlag: data.mailingFlag ? data.mailingFlag.toUpperCase() === 'TRUE' : true,
         updatedAt: new Date(),
         lastLogin: new Date()
@@ -128,6 +128,20 @@ const createProfile = async (data) => {
 
 module.exports.updateUserProfile = async (event) => {
     const data = JSON.parse(event.body);
+    if(data.dateOfBirth) {
+        data.dateOfBirth = new Date(data.dateOfBirth);
+    }
+    if(data.updatedAt) {
+        data.updatedAt = new Date(data.updatedAt);
+    }
+    if(data.communityList) {
+        let communities = data.communityList;
+        for(let i in communities) {
+            communities[i].id = parseInt(communities[i].id);
+            communities[i].checked = communities[i].checked.toUpperCase() === 'TRUE';
+        }
+        data.communityList = communities;
+    }
     const database = await db.get();
     let userId = event.requestContext.identity.cognitoIdentityId;
     const userProfile = (!userId || userId === undefined) ? {} : await db.updateDocument(database, collection,  data.email ? {"email": data.email} : {"identityId": data.identityId}, data);
