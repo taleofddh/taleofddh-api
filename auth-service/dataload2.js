@@ -49,9 +49,9 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
                     }
                 }
                 if(match) {
-                    communityList.push({"community": allCommunities[j].name, "checked": true});
+                    communityList.push({"id": allCommunities[j].number, "name": allCommunities[j].name, "checked": true});
                 } else {
-                    communityList.push({"community": allCommunities[j].name, "checked": false});
+                    communityList.push({"id": allCommunities[j].number, "name": allCommunities[j].name, "checked": false});
                 }
             }
             userProfiles[i].communityList = communityList;
