@@ -46,53 +46,6 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'role.csv'))
         await console.log(`Parsed ${rowCount} rows`);
     });
 
-let userProfiles = [];
-fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
-    .pipe(csv.parse({ headers: true, delimiter: '|' }))
-    .transform(data => ({
-        number: parseInt(data.number),
-        identityId: data.identityId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        dateOfBirth: new Date(data.dateOfBirth),
-        gender: data.gender,
-        email: data.email,
-        address1: data.address1,
-        address2: data.address2,
-        city: data.city,
-        postCode: data.postCode,
-        countryCode: data.countryCode,
-        phone: data.phone,
-        about: data.about,
-        communityList: data.communities,
-        mailingFlag: data.mailingFlag.toUpperCase() === 'TRUE',
-        updatedAt: new Date(data.updatedAt),
-        lastLogin: new Date(data.lastLogin)
-    }))
-    .on('error', error => console.error(error))
-    .on('data', row => {
-        userProfiles.push(row)
-    })
-    .on('end', async rowCount => {
-        userProfiles.sort((a,b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
-        await dbOperation("deleteDoc", "sequence", [], {"key": "user_seq"});
-        for(let i in userProfiles) {
-            let communities = userProfiles[i].communityList ? userProfiles[i].communityList.split(',') : [];
-            let communityList = []
-            for(let j in communities) {
-                //await console.log(communities[j]);
-                communityList.push(await dbOperation("findDoc", "community", [], {"number": parseInt(communities[j])}));
-            }
-            userProfiles[i].communityList = communityList;
-        }
-        await dbOperation("deleteDocs", "userProfile", [], {});
-        await dbOperation("insertDocs", "userProfile", userProfiles);
-        const docs = await dbOperation("findDocs", "userProfile", [], {}, {"number": 1}) ;
-        await console.log(docs);
-
-        await console.log(`Parsed ${rowCount} rows`);
-    });
-
 const dbOperation = async (operation, collection, data, query, sort) => {
     // for async it only works with Promise and resolve/reject
     return new Promise(async (resolve, reject) => {
