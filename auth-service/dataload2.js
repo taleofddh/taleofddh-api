@@ -36,12 +36,23 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
     .on('end', async rowCount => {
         userProfiles.sort((a,b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
         await dbOperation("deleteDoc", "sequence", [], {"key": "user_seq"});
-        for(let i in userProfiles) {
-            let communities = userProfiles[i].communityList ? userProfiles[i].communityList.split(',') : [];
+        const allCommunities = await dbOperation("findDocs", "community", [], {}, {"number": 1})
+        for(i in userProfiles) {
             let communityList = []
-            for(let j in communities) {
-                //await console.log(communities[j]);
-                communityList.push(await dbOperation("findDoc", "community", [], {"number": parseInt(communities[j])}));
+            for(let j in allCommunities) {
+                let match = false;
+                let communities = userProfiles[i].communityList ? userProfiles[i].communityList.split(',') : [];
+                for(let k in communities) {
+                    //await console.log(communities[j]);
+                    if(allCommunities[j].number === parseInt(communities[k])) {
+                        match = true;
+                    }
+                }
+                if(match) {
+                    communityList.push({"community": allCommunities[j].name, "checked": true});
+                } else {
+                    communityList.push({"community": allCommunities[j].name, "checked": false});
+                }
             }
             userProfiles[i].communityList = communityList;
         }
