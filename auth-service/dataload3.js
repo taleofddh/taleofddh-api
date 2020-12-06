@@ -6,50 +6,52 @@ const MongoClient = require('mongodb').MongoClient;
 
 dotenv.config();
 
-let userProfiles = [];
-fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
-    .pipe(csv.parse({ headers: true, delimiter: '|' }))
+let users = [];
+fs.createReadStream(path.resolve(__dirname, 'data', 'user.csv'))
+    .pipe(csv.parse({ headers: true }))
     .transform(data => ({
         number: parseInt(data.number),
-        identityId: data.identityId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        dateOfBirth: new Date(data.dateOfBirth),
-        gender: data.gender,
-        email: data.email,
-        address1: data.address1,
-        address2: data.address2,
-        city: data.city,
-        postCode: data.postCode,
-        countryCode: data.countryCode,
-        phone: data.phone,
-        about: data.about,
-        communityList: data.communities,
-        mailingFlag: data.mailingFlag.toUpperCase() === 'TRUE',
-        updatedAt: new Date(data.updatedAt),
-        lastLogin: new Date(data.lastLogin)
+        username: data.username,
+        password: data.password,
+        userProfile: data.userProfile
     }))
     .on('error', error => console.error(error))
     .on('data', row => {
-        userProfiles.push(row)
+        users.push(row);
     })
     .on('end', async rowCount => {
-        userProfiles.sort((a,b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
-        await dbOperation("deleteDoc", "sequence", [], {"key": "user_seq"});
-        for(let i in userProfiles) {
-            let communities = userProfiles[i].communityList ? userProfiles[i].communityList.split(',') : [];
-            let communityList = []
-            for(let j in communities) {
-                //await console.log(communities[j]);
-                communityList.push(await dbOperation("findDoc", "community", [], {"number": parseInt(communities[j])}));
-            }
-            userProfiles[i].communityList = communityList;
+        users.sort((a,b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
+        let count = 0;
+        for(let i in users) {
+            users[i].userProfile = await dbOperation("findDoc", "userProfile", [], {"number": users[i].number});
+            count++;
         }
-        await dbOperation("deleteDocs", "userProfile", [], {});
-        await dbOperation("insertDocs", "userProfile", userProfiles);
-        const docs = await dbOperation("findDocs", "userProfile", [], {}, {"number": 1}) ;
-        await console.log(docs);
+        await dbOperation("deleteDocs", "user", [], {});
+        await dbOperation("insertDocs", "user", users);
+        const docs = await dbOperation("findDocs", "user", [], {}, {"number": 1}) ;
+        console.log(docs);
+        await dbOperation("insertDoc", "sequence", {"key": "user_seq", "sequence": count});
+        await console.log(`Parsed ${rowCount} rows`);
+    });
 
+let userRoles = [];
+fs.createReadStream(path.resolve(__dirname, 'data', 'userRole.csv'))
+    .pipe(csv.parse({ headers: true }))
+    .transform(data => ({
+        number: parseInt(data.number),
+        userNumber: parseInt(data.userNumber),
+        roleNumber: parseInt(data.roleNumber)
+    }))
+    .on('error', error => console.error(error))
+    .on('data', row => {
+        userRoles.push(row)
+    })
+    .on('end', async rowCount => {
+        userRoles.sort((a,b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
+        await dbOperation("deleteDocs", "userRole", [], {});
+        await dbOperation("insertDocs", "userRole", userRoles);
+        const docs = await dbOperation("findDocs", "userRole", [], {}, {"number": 1});
+        await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
     });
 
