@@ -128,23 +128,55 @@ const createProfile = async (data) => {
 
 module.exports.updateUserProfile = async (event) => {
     const data = JSON.parse(event.body);
-    if(data.dateOfBirth) {
-        data.dateOfBirth = new Date(data.dateOfBirth);
+    let update = {}
+    if(data.firstName) {
+        update.firstName = data.firstName;
     }
-    if(data.updatedAt) {
-        data.updatedAt = new Date(data.updatedAt);
+    if(data.lastName) {
+        update.lastName = data.lastName;
+    }
+    if(data.dateOfBirth) {
+        update.dateOfBirth = new Date(data.dateOfBirth);
+    }
+    if(data.gender) {
+        update.gender = data.gender;
+    }
+    if(data.address1) {
+        update.address1 = data.address1;
+    }
+    if(data.address2) {
+        update.address2 = data.address2;
+    }
+    if(data.city) {
+        update.city = data.city;
+    }
+    if(data.postCode) {
+        update.postCode = data.postCode;
+    }
+    if(data.countryCode) {
+        update.countryCode = data.countryCode;
+    }
+    if(data.phone) {
+        update.phone = data.phone;
+    }
+    if(data.about) {
+        update.about = data.about;
     }
     if(data.communityList) {
-        let communities = data.communityList;
-        for(let i in communities) {
-            communities[i].id = parseInt(communities[i].id);
-            communities[i].checked = communities[i].checked.toUpperCase() === 'TRUE';
-        }
-        data.communityList = communities;
+        update.communityList = data.communityList;
+    }
+    if(data.mailingFlag) {
+        update.mailingFlag = data.mailingFlag;
+    }
+    if(data.lastLogin) {
+        update.lastLogin = new Date(data.lastLogin);
+    }
+    if(data.updatedAt) {
+        update.updatedAt = new Date(data.updatedAt);
     }
     const database = await db.get();
     let userId = event.requestContext.identity.cognitoIdentityId;
-    const userProfile = (!userId || userId === undefined) ? {} : await db.updateDocument(database, collection,  data.email ? {"email": data.email} : {"identityId": data.identityId}, data);
+    const userProfile = (!userId || userId === undefined) ? {} : await db.updateDocument(database, collection,  data.email ? {"email": data.email} : {"identityId": data.identityId}, { $set: update });
     return {
         statusCode: 200,
         body: JSON.stringify(userProfile),
