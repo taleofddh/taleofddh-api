@@ -166,49 +166,49 @@ module.exports.updateUserProfile = async (event) => {
 const updateProfile = async (data, userId) => {
     const database = await db.get();
     let update = {}
-    if(data.firstName) {
+    if(data.hasOwnProperty('firstName')) {
         update.firstName = data.firstName;
     }
-    if(data.lastName) {
+    if(data.hasOwnProperty('lastName')) {
         update.lastName = data.lastName;
     }
-    if(data.dateOfBirth) {
+    if(data.hasOwnProperty('dateOfBirth')) {
         update.dateOfBirth = new Date(data.dateOfBirth);
     }
-    if(data.gender) {
+    if(data.hasOwnProperty('gender')) {
         update.gender = data.gender;
     }
-    if(data.address1) {
+    if(data.hasOwnProperty('address1')) {
         update.address1 = data.address1;
     }
-    if(data.address2) {
+    if(data.hasOwnProperty('address2')) {
         update.address2 = data.address2;
     }
-    if(data.city) {
+    if(data.hasOwnProperty('city')) {
         update.city = data.city;
     }
-    if(data.postCode) {
+    if(data.hasOwnProperty('postCode')) {
         update.postCode = data.postCode;
     }
-    if(data.countryCode) {
+    if(data.hasOwnProperty('countryCode')) {
         update.countryCode = data.countryCode;
     }
-    if(data.phone) {
+    if(data.hasOwnProperty('phone')) {
         update.phone = data.phone;
     }
-    if(data.about) {
+    if(data.hasOwnProperty('about')) {
         update.about = data.about;
     }
-    if(data.communityList) {
+    if(data.hasOwnProperty('communityList')) {
         update.communityList = data.communityList;
     }
-    if(data.mailingFlag) {
+    if(data.hasOwnProperty('mailingFlag')) {
         update.mailingFlag = data.mailingFlag;
     }
-    if(data.updatedAt && !data.lastLogin) {
+    if(data.hasOwnProperty('updatedAt') && !data.lastLogin) {
         update.updatedAt = new Date(data.updatedAt);
     }
-    if(data.lastLogin) {
+    if(data.hasOwnProperty('lastLogin')) {
         update.lastLogin = new Date(data.lastLogin);
     }
     const userProfile = (!userId || userId === undefined) ? {} : await db.updateDocument(database, collection,  data.email ? {"email": data.email, "identityId": data.identityId} : {"identityId": data.identityId}, { $set: update });
