@@ -4,6 +4,21 @@ const fetch = require('node-fetch');
 const db = require('./db');
 const collection = process.env['COLLECTION_NAME'];
 
+module.exports.findIdentity = async (event) => {
+    let userId = event.requestContext.identity.cognitoIdentityId;
+    const identity = {
+        identityId: userId
+    }
+    return {
+        statusCode: 200,
+        body: JSON.stringify(identity),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
 module.exports.findUser = async (event) => {
     const data = JSON.parse(event.body);
     const database = await db.get();
@@ -70,7 +85,7 @@ module.exports.findUserProfile = async (event) => {
     const data = JSON.parse(event.body);
     const database = await db.get();
     let userId = event.requestContext.identity.cognitoIdentityId;
-    const userProfile = (!userId || userId === undefined) ? {} : await db.findDocument(database, collection,  data.email ? {"email": data.email} : {"identityId": data.identityId});
+    const userProfile = (!userId || userId === undefined) ? {} : await db.findDocument(database, collection,  data.email ? {"email": data.email, "identityId": data.identityId ? data.identityId : userId} : {"identityId": data.identityId ? data.identityId : userId});
     return {
         statusCode: 200,
         body: JSON.stringify(userProfile),
@@ -83,10 +98,19 @@ module.exports.findUserProfile = async (event) => {
 
 module.exports.createUserProfile = async (event) => {
     const data = JSON.parse(event.body);
-    const userProfile = await createProfile(data);
+    let userId = event.requestContext.identity.cognitoIdentityId;
+    const database = await db.get();
+    const existingProfile = await db.findDocument(database, collection, data.email ? {"email": data.email, "identityId": data.identityId} : {"identityId": data.identityId});
+    let userProfile;
+    if(!existingProfile) {
+        userProfile = await createProfile(data, userId);
+    } else {
+        userProfile = await updateProfile(data, userId);
+    }
+
     return {
         statusCode: 200,
-        body: JSON.stringify(userProfile),
+        body: JSON.stringify(existingProfile),
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": true,
@@ -94,23 +118,22 @@ module.exports.createUserProfile = async (event) => {
     };
 };
 
-const createProfile = async (data) => {
+const createProfile = async (data, userId) => {
     const database = await db.get();
-    let userId = event.requestContext.identity.cognitoIdentityId;
-    var sequence = await db.findSequence(database, "sequence", {"key": "user_seq"});
+    var sequenceDoc = await db.findSequence(database, "sequence", {"key": "user_seq"});
     let communityList = []
-    const allCommunities = await dbOperation("findDocs", "community", [], {}, {"number": 1})
+    const allCommunities = await db.findDocuments(database, "community", {}, {"number": 1})
     for(let i in allCommunities) {
         communityList.push({"id": allCommunities[i].number, "name": allCommunities[i].name, "checked": false})
     }
     const profile = {
-        number: sequence,
-        identityId: data.identityId ? data.identityId : '',
+        number: sequenceDoc.sequence,
+        identityId: data.identityId,
         firstName: data.firstName ? data.firstName : '',
         lastName: data.lastName ? data.lastName : '',
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : '',
         gender: data.gender ? data.gender : '',
-        email: data.email,
+        email: data.email ? data.email : '',
         address1: data.address1 ? data.address1 : '',
         address2: data.address2 ? data.address2 : '',
         city: data.city ? data.city : '',
@@ -128,6 +151,20 @@ const createProfile = async (data) => {
 
 module.exports.updateUserProfile = async (event) => {
     const data = JSON.parse(event.body);
+    let userId = event.requestContext.identity.cognitoIdentityId;
+    const userProfile = await updateProfile(data, userId);    
+    return {
+        statusCode: 200,
+        body: JSON.stringify(userProfile),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
+const updateProfile = async (data, userId) => {
+    const database = await db.get();
     let update = {}
     if(data.firstName) {
         update.firstName = data.firstName;
@@ -168,15 +205,13 @@ module.exports.updateUserProfile = async (event) => {
     if(data.mailingFlag) {
         update.mailingFlag = data.mailingFlag;
     }
+    if(data.updatedAt && !data.lastLogin) {
+        update.updatedAt = new Date(data.updatedAt);
+    }
     if(data.lastLogin) {
         update.lastLogin = new Date(data.lastLogin);
     }
-    if(data.updatedAt) {
-        update.updatedAt = new Date(data.updatedAt);
-    }
-    const database = await db.get();
-    let userId = event.requestContext.identity.cognitoIdentityId;
-    const userProfile = (!userId || userId === undefined) ? {} : await db.updateDocument(database, collection,  data.email ? {"email": data.email} : {"identityId": data.identityId}, { $set: update });
+    const userProfile = (!userId || userId === undefined) ? {} : await db.updateDocument(database, collection,  data.email ? {"email": data.email, "identityId": data.identityId} : {"identityId": data.identityId}, { $set: update });
     return {
         statusCode: 200,
         body: JSON.stringify(userProfile),
