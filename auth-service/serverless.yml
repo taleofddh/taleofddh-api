@@ -47,6 +47,15 @@ package:
   individually: true
 
 functions:
+  findIdentity:
+    handler: handler.findIdentity
+    events:
+      - http:
+          path: findIdentity
+          method: get
+          cors: true
+          authorizer: aws_iam
+
   findUser:
     handler: handler.findUser
     events:
