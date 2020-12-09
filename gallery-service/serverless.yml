@@ -66,6 +66,17 @@ functions:
     environment:
       COLLECTION_NAME: "album"
 
+  updateAlbumViewCount:
+    handler: handler.updateAlbumViewCount
+    events:
+      - http:
+          path: albumViewCount
+          method: put
+          cors: true
+          authorizer: aws_iam
+    environment:
+      COLLECTION_NAME: "album"
+
   findPhotoList:
     handler: handler.findPhotoList
     events:
@@ -83,6 +94,17 @@ functions:
       - http:
           path: photoListRestricted
           method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      COLLECTION_NAME: "photo"
+
+  updatePhotoViewCount:
+    handler: handler.updatePhotoViewCount
+    events:
+      - http:
+          path: photoViewCount
+          method: put
           cors: true
           authorizer: aws_iam
     environment:
