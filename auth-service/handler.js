@@ -211,7 +211,7 @@ const updateProfile = async (data, userId) => {
     if(data.hasOwnProperty('lastLogin')) {
         update.lastLogin = new Date(data.lastLogin);
     }
-    const userProfile = (!userId || userId === undefined) ? {} : await db.updateDocument(database, collection,  data.email ? {"email": data.email, "identityId": data.identityId} : {"identityId": data.identityId}, { $set: update });
+    const userProfile = (!userId || userId === undefined) ? {} : await db.updateDocument(database, collection,  data.email ? {"email": data.email, "identityId": data.identityId} : {"identityId": data.identityId}, { "$set": update });
     return {
         statusCode: 200,
         body: JSON.stringify(userProfile),
