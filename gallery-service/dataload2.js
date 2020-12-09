@@ -13,6 +13,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'album.csv'))
         sequence: parseInt(data.sequence),
         collectionName: parseInt(data.collectionName),
         name: data.name,
+        photoCount: parseInt(data.photoCount),
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
         description: data.description,
