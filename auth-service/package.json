@@ -24,7 +24,7 @@
   "homepage": "https://github.com/devadyuti/taleofddh-com#readme",
   "dependencies": {
     "@fast-csv/format": "^4.3.5",
-    "@fast-csv/parse": "^4.3.3",
+    "@fast-csv/parse": "^4.3.6",
     "dotenv": "^8.2.0",
     "fast-csv": "^4.3.5",
     "mongodb": "^3.6.3",
