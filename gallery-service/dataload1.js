@@ -20,7 +20,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'photo.csv'))
         maxWidth: parseInt(data.maxWidth),
         maxHeight: parseInt(data.maxHeight),
         path: data.path,
-        viewCount: data.viewCount,
+        viewCount: parseInt(data.viewCount),
         restrictedFlag: data.restrictedFlag.toUpperCase() === 'TRUE',
         pictureBoxFlag: data.pictureBoxFlag.toUpperCase() === 'TRUE',
         disabled: data.disabled.toUpperCase() === 'TRUE'
