@@ -109,3 +109,17 @@ module.exports.findCountryByName = async (event) => {
         }
     };
 };
+
+module.exports.createAuditEntry = async (event) => {
+    const data = JSON.parse(event.body);
+    const database = await db.get();
+    const doc = await db.insertDocument(database, collection, data);
+    return {
+        statusCode: 200,
+        body: JSON.stringify(doc),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
