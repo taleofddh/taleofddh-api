@@ -192,6 +192,16 @@ functions:
     environment:
       COLLECTION_NAME: "country"
 
+  createAuditEntry:
+    handler: handler.createAuditEntry
+    events:
+      - http:
+          path: auditEntry
+          method: post
+          cors: true
+    environment:
+      COLLECTION_NAME: "audit"
+
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors
