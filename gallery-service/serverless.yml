@@ -77,6 +77,17 @@ functions:
     environment:
       COLLECTION_NAME: "album"
 
+  findAlbumPhotoList:
+    handler: handler.findAlbumPhotoList
+    events:
+      - http:
+          path: albumPhotoList
+          method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      COLLECTION_NAME: "photo"
+
   findPhotoList:
     handler: handler.findPhotoList
     events:

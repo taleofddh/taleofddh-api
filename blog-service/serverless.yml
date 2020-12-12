@@ -65,6 +65,16 @@ functions:
     environment:
       COLLECTION_NAME: "blog"
 
+  findBlogArticleList:
+    handler: handler.findBlogArticleList
+    events:
+      - http:
+          path: blogArticleList
+          method: post
+          cors: true
+    environment:
+      COLLECTION_NAME: "article"
+
   findArticleList:
     handler: handler.findArticleList
     events:

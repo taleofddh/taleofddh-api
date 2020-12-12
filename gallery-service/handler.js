@@ -47,6 +47,22 @@ module.exports.updateAlbumViewCount = async (event) => {
     };
 };
 
+module.exports.findAlbumPhotoList = async (event) => {
+    const data = JSON.parse(event.body);
+    let userId = event.requestContext.identity.cognitoIdentityId;
+    const database = await db.get();
+    const doc = await db.findDocument(database, "album", {"name": data.albumName});
+    doc.photos = await db.findDocuments(database, collection, (!userId || userId === undefined) ? {"albumName": data.albumName, "restrictedFlag": false} : {"albumName": data.albumName}, {"sequence": 1});
+    return {
+        statusCode: 200,
+        body: JSON.stringify(doc),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
 module.exports.findPhotoList = async (event) => {
     const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
