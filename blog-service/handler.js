@@ -30,6 +30,21 @@ module.exports.findCategorizedBlogList = async (event) => {
     };
 };
 
+module.exports.findBlogArticleList = async (event) => {
+    const data = JSON.parse(event.body);
+    const database = await db.get();
+    const doc = await db.findDocument(database, "blog", {"name": data.blogName});
+    doc.contents = await db.findDocuments(database, collection, {"blogName": data.blogName}, {"sectionId": 1});
+    return {
+        statusCode: 200,
+        body: JSON.stringify(doc),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
 module.exports.findArticleList = async (event) => {
     const data = JSON.parse(event.body);
     const database = await db.get();
