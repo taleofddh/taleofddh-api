@@ -85,6 +85,26 @@ functions:
     environment:
       COLLECTION_NAME: "article"
 
+  findArticleCommentList:
+    handler: handler.findArticleCommentList
+    events:
+      - http:
+          path: articleCommentList
+          method: post
+          cors: true
+    environment:
+      COLLECTION_NAME: "articleComment"
+
+  addArticleComment:
+    handler: handler.addArticleComment
+    events:
+      - http:
+          path: articleComment
+          method: post
+          cors: true
+    environment:
+      COLLECTION_NAME: "articleComment"
+
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors
