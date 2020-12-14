@@ -58,3 +58,32 @@ module.exports.findArticleList = async (event) => {
         }
     };
 };
+
+module.exports.findArticleCommentList = async (event) => {
+    const data = JSON.parse(event.body);
+    const database = await db.get();
+    const docs = await db.findDocuments(database, collection, {"blogName": data.blogName}, {"date": -1});
+    return {
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
+module.exports.addArticleComment = async (event) => {
+    const data = JSON.parse(event.body);
+    data.date = new Date();
+    const database = await db.get();
+    const docs = await db.insertDocument(database, collection, data);
+    return {
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
