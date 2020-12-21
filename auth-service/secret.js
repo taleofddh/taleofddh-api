@@ -1,6 +1,6 @@
 // Load the AWS SDK
 var AWS = require('aws-sdk');
-var region = 'eu-west-1';
+var region = process.env['REGION'];
 
 module.exports = async (key) => {
     // Create a Secrets Manager client
