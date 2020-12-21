@@ -38,8 +38,11 @@ provider:
     - Effect: "Allow"
       Action:
         - s3:ListBucket
-        - s3:GetObject
       Resource: "arn:aws:s3:::taleofddh-documents"
+    - Effect: "Allow"
+      Action:
+        - s3:GetObject
+      Resource: "arn:aws:s3:::taleofddh-documents/*"
 
 #    variable1: value1
 
@@ -79,6 +82,17 @@ functions:
     environment:
       S3_BUCKET: "taleofddh-documents"
 
+  getTravelDocument:
+    handler: handler.getTravelDocument
+    events:
+      - http:
+          path: travelDocument
+          method: post
+          cors: true
+          contentHandling: CONVERT_TO_BINARY
+    environment:
+      S3_BUCKET: "taleofddh-documents"
+
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors
@@ -88,6 +102,8 @@ plugins:
   - serverless-domain-manager
   - serverless-offline
   - serverless-dotenv-plugin
+  - serverless-apigw-binary
+  - serverless-apigwy-binary
 
 custom:
   dotenv:
@@ -95,6 +111,11 @@ custom:
       - DB_NAME
       - REGION
       - COGNITO_IDENTITY_POOL_ID
+  apigwBinary:
+    types:
+      - 'application/pdf'
+      - 'applicaion/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      - 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   stage: ${opt:stage, self:provider.stage}
   domains:
     prod: api.taleofddh.com
