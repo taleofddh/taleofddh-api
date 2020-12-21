@@ -49,3 +49,22 @@ module.exports.listFolder = async (params) => {
         });
     });
 }
+
+module.exports.getObject = async (params) => {
+    // Create a new service object
+    let s3 = new AWS.S3({
+        apiVersion: '2006-03-01'
+    });
+
+    // for async it only works with Promise and resolve/reject
+    return new Promise((resolve, reject) => {
+        s3.getObject(params, (err, data) => {
+            if (err) {
+                reject(err);
+            }
+            else {
+                resolve(data);
+            }
+        });
+    });
+}
