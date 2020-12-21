@@ -1,7 +1,7 @@
 // Load the AWS SDK for Node.js
 var AWS = require('aws-sdk');
 // Set the region
-AWS.config.update({region: 'eu-west-1'});
+AWS.config.update({region: process.env['REGION']});
 
 module.exports.send = async (toAddress, templateName, templateData, ccAddress) => {
     var ccList = ccAddress ? ccAddress : [];

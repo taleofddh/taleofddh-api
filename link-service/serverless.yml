@@ -35,6 +35,11 @@ provider:
         - lambda:InvokeFunction
         - secretsmanager:GetSecretValue
       Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - s3:ListBucket
+        - s3:GetObject
+      Resource: "arn:aws:s3:::taleofddh-documents"
 
 #    variable1: value1
 
@@ -63,6 +68,17 @@ functions:
     environment:
       COLLECTION_NAME: "link"
 
+  findTravelDocuments:
+    handler: handler.findTravelDocuments
+    events:
+      - http:
+          path: documentList
+          method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      S3_BUCKET: "taleofddh-documents"
+
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors
@@ -77,6 +93,8 @@ custom:
   dotenv:
     include:
       - DB_NAME
+      - REGION
+      - COGNITO_IDENTITY_POOL_ID
   stage: ${opt:stage, self:provider.stage}
   domains:
     prod: api.taleofddh.com

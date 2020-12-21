@@ -225,6 +225,7 @@ custom:
   dotenv:
     include:
       - DB_NAME
+      - REGION
   stage: ${opt:stage, self:provider.stage}
   domains:
     prod: api.taleofddh.com
