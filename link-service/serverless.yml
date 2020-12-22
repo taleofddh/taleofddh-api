@@ -82,6 +82,16 @@ functions:
     environment:
       S3_BUCKET: "taleofddh-documents"
 
+  findCountryVisitStatus:
+    handler: handler.findCountryVisitStatus
+    events:
+      - http:
+          path: countryVisitStatus
+          method: get
+          cors: true
+    environment:
+      COLLECTION_NAME: "countryVisit"
+
   getTravelDocument:
     handler: handler.getTravelDocument
     events:
