@@ -35,6 +35,14 @@ provider:
         - lambda:InvokeFunction
         - secretsmanager:GetSecretValue
       Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - s3:ListBucket
+      Resource: "arn:aws:s3:::taleofddh-blogs"
+    - Effect: "Allow"
+      Action:
+        - s3:GetObject
+      Resource: "arn:aws:s3:::taleofddh-blogs/*"
 
 # you can define service wide environment variables here
 #  environment:
@@ -105,6 +113,17 @@ functions:
     environment:
       COLLECTION_NAME: "articleComment"
 
+  getArticleDocument:
+    handler: handler.getArticleDocument
+    events:
+      - http:
+          path: articleDocument
+          method: post
+          cors: true
+          contentHandling: CONVERT_TO_BINARY
+    environment:
+      S3_BUCKET: "taleofddh-blogs"
+
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors
@@ -123,12 +142,19 @@ plugins:
   - serverless-domain-manager
   - serverless-offline
   - serverless-dotenv-plugin
+  - serverless-apigw-binary
+  - serverless-apigwy-binary
 
 custom:
   dotenv:
     include:
       - DB_NAME
       - REGION
+  apigwBinary:
+    types:
+      - 'binary/octet-stream'
+      - 'image/jpeg'
+      - 'image/png'
   stage: ${opt:stage, self:provider.stage}
   domains:
     prod: api.taleofddh.com

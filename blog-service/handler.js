@@ -1,6 +1,8 @@
 'use strict';
 const db = require('./db');
+const storage = require('./storage');
 const collection = process.env['COLLECTION_NAME'];
+const bucket = process.env['S3_BUCKET'];
 
 module.exports.findBlogList = async (event) => {
     const database = await db.get();
@@ -87,3 +89,20 @@ module.exports.addArticleComment = async (event) => {
         }
     };
 };
+
+module.exports.getArticleDocument = async (event) => {
+    const data = JSON.parse(event.body);
+    const prefix = data.prefix;
+    const file = data.file;
+    let object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + file});
+    return {
+        statusCode: 200,
+        body: JSON.stringify(object.Body.toString('utf-8')),
+        headers: {
+            "isBase64Encoded": true,
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+            "Content-Type": object.ContentType
+        }
+    };
+}
