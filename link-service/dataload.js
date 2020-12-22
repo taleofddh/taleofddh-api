@@ -31,6 +31,50 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'link.csv'))
         await console.log(`Parsed ${rowCount} rows`);
     });
 
+let visitStatues = [];
+fs.createReadStream(path.resolve(__dirname, 'data', 'visitStatus.csv'))
+    .pipe(csv.parse({ headers: true }))
+    .transform(data => ({
+        sequence: parseInt(data.sequence),
+        status: data.status,
+        color: data.color,
+        backgroundColor: data.backgroundColor
+    }))
+    .on('error', error => console.error(error))
+    .on('data', row => {
+        visitStatues.push(row);
+    })
+    .on('end', async rowCount => {
+        visitStatues.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
+        await dbOperation("deleteDocs", "visitStatus", [], {});
+        await dbOperation("insertDocs", "visitStatus", visitStatues);
+        const docs = await dbOperation("findDocs", "visitStatus", [], {}, {"sequence": 1});
+        await console.log(docs);
+        await console.log(`Parsed ${rowCount} rows`);
+    });
+
+let countryVisits = [];
+fs.createReadStream(path.resolve(__dirname, 'data', 'countryVisit.csv'))
+    .pipe(csv.parse({ headers: true }))
+    .transform(data => ({
+        countryCode: data.countryCode,
+        countryName: data.countryName,
+        visitStatus: data.visitStatus
+    }))
+    .on('error', error => console.error(error))
+    .on('data', row => {
+        countryVisits.push(row);
+    })
+    .on('end', async rowCount => {
+        countryVisits.sort((a, b) => a.countryCode.localeCompare(b.countryCode));
+        await dbOperation("deleteDocs", "countryVisit", [], {});
+        await dbOperation("insertDocs", "countryVisit", countryVisits);
+        const docs = await dbOperation("findDocs", "countryVisit", [], {}, {});
+        await console.log(docs);
+        await console.log(`Parsed ${rowCount} rows`);
+    });
+
+
 const dbOperation = async (operation, collection, data, query, sort) => {
     // for async it only works with Promise and resolve/reject
     return new Promise(async (resolve, reject) => {
