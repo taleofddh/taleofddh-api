@@ -21,7 +21,7 @@ module.exports.findCategorizedBlogList = async (event) => {
     const data = JSON.parse(event.body);
     let homePageFlag = data.homePageBlog === 'true';
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, homePageFlag ? {"category": data.category, "homePageFlag": homePageFlag} : {"category": data.category}, {"sequence": 1});
+    const docs = await db.findDocuments(database, collection, homePageFlag ? {"category": data.category, "homePageFlag": homePageFlag} : {"category": data.category}, {"endDate": -1, "sequence": 1});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
