@@ -73,6 +73,16 @@ functions:
     environment:
       COLLECTION_NAME: "blog"
 
+  updateBlogViewCount:
+    handler: handler.updateBlogViewCount
+    events:
+      - http:
+          path: blogViewCount
+          method: put
+          cors: true
+    environment:
+      COLLECTION_NAME: "blog"
+
   findBlogArticleList:
     handler: handler.findBlogArticleList
     events:
