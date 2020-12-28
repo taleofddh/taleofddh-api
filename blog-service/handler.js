@@ -32,6 +32,20 @@ module.exports.findCategorizedBlogList = async (event) => {
     };
 };
 
+module.exports.updateBlogViewCount = async (event) => {
+    const data = JSON.parse(event.body);
+    const database = await db.get();
+    const docs = await db.updateDocument(database, collection, {"name": data.name}, { "$inc": {"viewCount": 1} });
+    return {
+        statusCode: 200,
+        body: JSON.stringify(docs),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
 module.exports.findBlogArticleList = async (event) => {
     const data = JSON.parse(event.body);
     const database = await db.get();
