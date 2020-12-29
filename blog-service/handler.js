@@ -6,7 +6,7 @@ const bucket = process.env['S3_BUCKET'];
 
 module.exports.findBlogList = async (event) => {
     const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {}, {"category": 1});
+    const docs = await db.findDocuments(database, collection, {}, {"category": 1, "endDate": -1});
     return {
         statusCode: 200,
         body: JSON.stringify(docs),
