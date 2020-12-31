@@ -8,7 +8,7 @@ dotenv.config();
 
 let albums = [];
 fs.createReadStream(path.resolve(__dirname, 'data', 'album.csv'))
-    .pipe(csv.parse({ headers: true, delimiter: '|' }))
+    .pipe(csv.parse({ headers: true }))
     .transform(data => ({
         sequence: parseInt(data.sequence),
         collectionName: parseInt(data.collectionName),
