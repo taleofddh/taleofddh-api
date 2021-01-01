@@ -120,6 +120,18 @@ functions:
           authorizer: aws_iam
     environment:
       COLLECTION_NAME: "userProfile"
+
+  findUserRole:
+    handler: handler.findUserRole
+    events:
+      - http:
+          path: userRole
+          method: get
+          cors: true
+          authorizer: aws_iam
+    environment:
+      COLLECTION_NAME: "userRole"
+
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors

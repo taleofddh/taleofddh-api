@@ -37,7 +37,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'album.csv'))
         await dbOperation("insertDocs", "album", albums);
         const docs = await dbOperation("findDocs", "album", [], {}, {"sequence": 1});
         await console.log(docs);
-        await dbOperation("updateDoc", "sequence", { $set: {"sequence": parseInt(`${rowCount}`)} }, {"key": "album_seq"}, )
+        await dbOperation("updateDoc", "sequence", { $set: {"sequence": parseInt(`${rowCount + 1}`)} }, {"key": "album_seq"}, )
         await console.log(`Parsed ${rowCount} rows`);
     });
 
