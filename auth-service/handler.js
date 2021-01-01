@@ -1,6 +1,4 @@
 'use strict';
-'use strict';
-const fetch = require('node-fetch');
 const db = require('./db');
 const collection = process.env['COLLECTION_NAME'];
 
@@ -110,7 +108,7 @@ module.exports.createUserProfile = async (event) => {
 
     return {
         statusCode: 200,
-        body: JSON.stringify(existingProfile),
+        body: JSON.stringify(userProfile),
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": true,
@@ -146,13 +144,31 @@ const createProfile = async (data, userId) => {
         updatedAt: new Date(),
         lastLogin: new Date()
     }
+    var roleSequenceDoc = await db.findSequence(database, "sequence", {"key": "userRole_seq"});
+    const defaultRole = await db.findDocument(database, "role", {"name": "User"})
+    const userRole = {
+        number: roleSequenceDoc.sequence,
+        userNumber: sequenceDoc.sequence,
+        roleList: [{
+            id: defaultRole.number,
+            name: defaultRole.name
+        }]
+    }
+    await db.insertDocument(database, "userRole",  userRole);
     return (!userId || userId === undefined) ? {} : await db.insertDocument(database, "userProfile",  profile);
 }
 
 module.exports.updateUserProfile = async (event) => {
     const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
-    const userProfile = await updateProfile(data, userId);    
+    const database = await db.get();
+    const existingProfile = await db.findDocument(database, collection, data.email ? {"email": data.email, "identityId": data.identityId} : {"identityId": data.identityId});
+    let userProfile;
+    if(!existingProfile) {
+        userProfile = await createProfile(data, userId);
+    } else {
+        userProfile = await updateProfile(data, userId);
+    }
     return {
         statusCode: 200,
         body: JSON.stringify(userProfile),
@@ -221,3 +237,24 @@ const updateProfile = async (data, userId) => {
         }
     };
 };
+
+module.exports.findUserRole = async (event) => {
+    const data = JSON.parse(event.body);
+    let identityId = event.requestContext.identity.cognitoIdentityId;
+    const database = await db.get();
+    const userProfile = await db.findDocument(database, "userProfile", { "identityId" : identityId });
+    let userRole;
+    if(!userProfile) {
+        userRole = await db.findDocument(database, collection, {"userNumber": userProfile.number}, );
+    } else {
+        userRole = {};
+    }
+    return {
+        statusCode: 200,
+        body: JSON.stringify(userRole),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+}
