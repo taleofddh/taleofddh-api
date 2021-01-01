@@ -244,7 +244,7 @@ module.exports.findUserRole = async (event) => {
     const database = await db.get();
     const userProfile = await db.findDocument(database, "userProfile", { "identityId" : identityId });
     let userRole;
-    if(!userProfile) {
+    if(userProfile) {
         userRole = await db.findDocument(database, collection, {"userNumber": userProfile.number}, );
     } else {
         userRole = {};

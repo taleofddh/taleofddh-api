@@ -125,7 +125,7 @@ functions:
     handler: handler.findUserRole
     events:
       - http:
-          path: userRole
+          path: findUserRole
           method: get
           cors: true
           authorizer: aws_iam
