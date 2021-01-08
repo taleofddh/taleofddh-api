@@ -1,0 +1,126 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: admin
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+# you can overwrite defaults here
+  stage: prod
+  region: eu-west-1
+
+# you can add statements to the Lambda function's IAM Role here
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - lambda:InvokeFunction
+        - secretsmanager:GetSecretValue
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - s3:ListBucket
+      Resource: "arn:aws:s3:::taleofddh-messages"
+    - Effect: "Allow"
+      Action:
+        - s3:GetObject
+      Resource: "arn:aws:s3:::taleofddh-messages/*"
+
+#    variable1: value1
+
+# you can add packaging information here
+package:
+  individually: true
+#  include:
+#    - include-me.js
+#    - include-me-dir/**
+#  exclude:
+#    - exclude-me.js
+#    - exclude-me-dir/**
+
+functions:
+  processInboundMessage:
+    handler: handler.processInboundMessage
+    environment:
+      S3_BUCKET: "taleofddh-messages"
+      COLLECTION_NAME: "inbox"
+
+  findMessageList:
+    handler: handler.findMessageList
+    events:
+      - http:
+          path: messageList
+          method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      S3_BUCKET: "taleofddh-messages"
+
+  getEmailMessage:
+    handler: handler.getEmailMessage
+    events:
+      - http:
+          path: emailMessage
+          method: post
+          cors: true
+          authorizer: aws_iam
+          contentHandling: CONVERT_TO_BINARY
+    environment:
+      S3_BUCKET: "taleofddh-messages"
+
+# you can add CloudFormation resource templates here
+resources:
+  # API Gateway Errors
+  - ${file(resources/api-gateway-errors.yml)}
+
+plugins:
+  - serverless-domain-manager
+  - serverless-offline
+  - serverless-dotenv-plugin
+  - serverless-apigw-binary
+  - serverless-apigwy-binary
+
+custom:
+  dotenv:
+    include:
+      - DB_NAME
+      - REGION
+      - COGNITO_IDENTITY_POOL_ID
+  apigwBinary:
+    types:
+      - 'application/pdf'
+      - 'applicaion/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      - 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  stage: ${opt:stage, self:provider.stage}
+  domains:
+    prod: api.taleofddh.com
+    staging: staging-api.taleofddh.com
+    dev: dev-api.taleofddh.com
+  customDomain:
+    domainName: ${self:custom.domains.${self:custom.stage}}
+    basePath: "admin"
+    stage: ${self:custom.stage}
+    certificateName: "*.taleofddh.com"
+    hostedZoneId: ${opt:HOSTED_ZONE_ID}
+    createRoute53Record: true
+    endpointType: edge
+    securityPolicy: tls_1_2
+    apiType: rest

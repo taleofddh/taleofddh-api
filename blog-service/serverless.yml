@@ -43,6 +43,16 @@ provider:
       Action:
         - s3:GetObject
       Resource: "arn:aws:s3:::taleofddh-blogs/*"
+    - Effect: "Allow"
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:BatchWriteItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
 
 # you can define service wide environment variables here
 #  environment:
@@ -61,7 +71,7 @@ functions:
           method: get
           cors: true
     environment:
-      COLLECTION_NAME: "blog"
+      TABLE_NAME: "blog"
 
   findCategorizedBlogList:
     handler: handler.findCategorizedBlogList
@@ -71,7 +81,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "blog"
+      TABLE_NAME: "blog"
 
   updateBlogViewCount:
     handler: handler.updateBlogViewCount
@@ -81,7 +91,7 @@ functions:
           method: put
           cors: true
     environment:
-      COLLECTION_NAME: "blog"
+      TABLE_NAME: "blog"
 
   findBlogArticleList:
     handler: handler.findBlogArticleList
@@ -91,7 +101,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "article"
+      TABLE_NAME: "article"
 
   findArticleList:
     handler: handler.findArticleList
@@ -101,7 +111,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "article"
+      TABLE_NAME: "article"
 
   findArticleCommentList:
     handler: handler.findArticleCommentList
@@ -111,7 +121,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "articleComment"
+      TABLE_NAME: "articleComment"
 
   addArticleComment:
     handler: handler.addArticleComment
@@ -121,7 +131,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "articleComment"
+      TABLE_NAME: "articleComment"
 
   getArticleDocument:
     handler: handler.getArticleDocument
@@ -160,6 +170,9 @@ custom:
     include:
       - DB_NAME
       - REGION
+      - ENVIRONMENT
+      - APP_NAME
+      - SERVICE_NAME
   apigwBinary:
     types:
       - 'binary/octet-stream'
