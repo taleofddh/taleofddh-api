@@ -1,6 +1,5 @@
 // Load the AWS SDK
 var AWS = require('aws-sdk');
-var converter = AWS.DynamoDB.Converter;
 
 AWS.config.update({
     region: "eu-west-1"
