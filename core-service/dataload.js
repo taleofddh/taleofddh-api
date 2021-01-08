@@ -51,7 +51,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'menu.csv'))
         });
     })
     .on('end', async rowCount => {
-        await dbOperation("deleteDocs", "menu", menuDeleteKeys, {});
+        await dbOperation("deleteDocs", "menu", menuDeleteKeys);
         await dbOperation("insertDocs", "menu", menuItems);
         const docs = await dbOperation("findDocs", "menu", menuGetKeys);
         await console.log(docs);
@@ -93,7 +93,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'aboutUs.csv'))
         });
     })
     .on('end', async rowCount => {
-        await dbOperation("deleteDocs", "aboutUs", aboutUsDeleteKeys, {});
+        await dbOperation("deleteDocs", "aboutUs", aboutUsDeleteKeys);
         await dbOperation("insertDocs", "aboutUs", aboutUsItems);
         const docs = await dbOperation("findDocs", "aboutUs", aboutUsGetKeys);
         await console.log(docs);
@@ -140,7 +140,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'promotion.csv'))
 
     })
     .on('end', async rowCount => {
-        await dbOperation("deleteDocs", "promotion", promotionDeleteKeys, {});
+        await dbOperation("deleteDocs", "promotion", promotionDeleteKeys);
         await dbOperation("insertDocs", "promotion", promotionItems);
         const docs = await dbOperation("findDocs", "promotion", promotionGetKeys);
         await console.log(docs);
