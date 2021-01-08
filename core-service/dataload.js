@@ -91,7 +91,6 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'aboutUs.csv'))
         aboutUsGetKeys.push({
             "sequence": row.sequence
         });
-
     })
     .on('end', async rowCount => {
         await dbOperation("deleteDocs", "aboutUs", aboutUsDeleteKeys, {});
@@ -373,5 +372,4 @@ const dbOperation = async (operation, table, data, filter) => {
     } catch (error) {
         console.error(error);
     }
-
 }
