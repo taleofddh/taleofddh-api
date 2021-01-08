@@ -2,11 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const csv = require('fast-csv');
 const dotenv = require('dotenv');
-const MongoClient = require('mongodb').MongoClient;
+const database = require('./db');
 
 dotenv.config();
 
-let blogs = [];
+let blogDeleteKeys = [];
+let blogItemKeys = [];
+let blogGetKeys = [];
 fs.createReadStream(path.resolve(__dirname, 'data', 'blog.csv'))
     .pipe(csv.parse({ headers: true }))
     .transform(data => ({
@@ -14,8 +16,8 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'blog.csv'))
         name: data.name,
         author: data.author,
         category: data.category,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
+        startDate: data.startDate,
+        endDate: data.endDate,
         homePageFlag: data.homePageFlag.toUpperCase() === 'TRUE',
         header: data.header,
         title: data.title,
@@ -26,18 +28,49 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'blog.csv'))
     }))
     .on('error', error => console.error(error))
     .on('data', row => {
-        blogs.push(row);
+        blogDeleteKeys.push({
+            DeleteRequest: {
+                Key: {
+                    "name": row.name,
+                    "category": row.category
+                }
+            }
+        });
+        blogItemKeys.push({
+            PutRequest: {
+                Item: {
+                    "sequence": row.sequence,
+                    "name": row.name,
+                    "author": row.author,
+                    "category": row.category,
+                    "startDate": row.startDate,
+                    "endDate": row.endDate,
+                    "homePageFlag": row.homePageFlag,
+                    "header": row.header,
+                    "title": row.title,
+                    "summary": row.summary,
+                    "link": row.link,
+                    "titlePhoto": row.titlePhoto,
+                    "viewCount": row.viewCount
+                }
+            }
+        });
+        blogGetKeys.push({
+            "name": row.name,
+            "category": row.category
+        });
     })
     .on('end', async rowCount => {
-        blogs.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-        await dbOperation("deleteDocs", "blog", [], {});
-        await dbOperation("insertDocs", "blog", blogs);
-        const docs = await dbOperation("findDocs", "blog", [], {"homePageFlag": true}, {"sequence": 1});
+        await dbOperation("deleteDocs", "blog", blogDeleteKeys);
+        await dbOperation("insertDocs", "blog", blogItemKeys);
+        const docs = await dbOperation("findDocs", "blog", blogGetKeys);
         await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
     });
 
-let articles = [];
+let articleDeleteKeys = [];
+let articleItemKeys = [];
+let articleGetKeys = [];
 fs.createReadStream(path.resolve(__dirname, 'data', 'article.csv'))
     .pipe(csv.parse({ headers: true }))
     .transform(data => ({
@@ -50,60 +83,112 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'article.csv'))
     }))
     .on('error', error => console.error(error))
     .on('data', row => {
-        articles.push(row)
+        articleDeleteKeys.push({
+            DeleteRequest: {
+                Key: {
+                    "blogName": row.blogName,
+                    "sequence": row.sequence
+                }
+            }
+        });
+        articleItemKeys.push({
+            PutRequest: {
+                Item: {
+                    "sequence": row.sequence,
+                    "blogName": row.blogName,
+                    "sectionId": row.sectionId,
+                    "type": row.type,
+                    "content": row.content,
+                    "styleClass": row.styleClass
+                }
+            }
+        });
+        articleGetKeys.push({
+            "blogName": row.blogName,
+            "sequence": row.sequence
+        });
     })
     .on('end', async rowCount => {
-        articles.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-        await dbOperation("deleteDocs", "article", [], {});
-        await dbOperation("insertDocs", "article", articles);
-        const docs = await dbOperation("findDocs", "article", [], {}, {"sequence": 1});
+        await dbOperation("deleteDocs", "article", articleDeleteKeys);
+        await dbOperation("insertDocs", "article", articleItemKeys);
+        const docs = await dbOperation("findDocs", "article", articleGetKeys);
         await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
     });
 
-const dbOperation = async (operation, collection, data, query, sort) => {
-    // for async it only works with Promise and resolve/reject
-    return new Promise(async (resolve, reject) => {
-        // Connect using the connection string
-        await MongoClient.connect(process.env['MONGODB_ATLAS_CLUSTER_URI'], { useNewUrlParser: true, useUnifiedTopology: true }, async (err, client) => {
-            if (err) {
-                reject(err);
-            } else {
-                //the following line is critical for performance reasons to allow re-use of database connections across calls to this Lambda function and avoid closing the database connection. The first call to this lambda function takes about 5 seconds to complete, while subsequent, close calls will only take a few hundred milliseconds.
-                var database = await client.db(process.env['DB_NAME']);
-                var response;
-                switch(operation) {
-                    case 'findDoc':
-                        response = await database.collection(collection).findOne(query);
-                        break;
-                    case 'findDocs':
-                        response = await database.collection(collection).find(query).sort(sort).toArray();
-                        break;
-                    case 'insertDoc':
-                        response = await database.collection(collection).insertOne(data);
-                        break;
-                    case 'insertDocs':
-                        response = await database.collection(collection).insertMany(data);
-                        break;
-                    case 'updateDoc':
-                        response = await database.collection(collection).updateOne(query, data);
-                        break;
-                    case 'udpateDocs':
-                        response = await database.collection(collection).updateMany(query, data);
-                        break;
-                    case 'deleteDoc':
-                        response = await database.collection(collection).deleteOne(query);
-                        break;
-                    case 'deleteDocs':
-                        response = await database.collection(collection).deleteMany(query);
-                        break;
-                    default:
-                        break;
+const dbOperation = async (operation, table, data, filter) => {
+    var tableName = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + table;
+    var response;
+    var params;
+    try {
+        switch(operation) {
+            case 'findDoc':
+                data.TableName = tableName;
+                params = data;
+                response = await database.get(params);
+                break;
+            case 'findDocs':
+                params = {
+                    "RequestItems": {
+                        [tableName]: {
+                            "Keys": data
+                        }
+                    }
                 }
-                await client.close();
-                //await console.log(response);
-                resolve(response);
-            }
-        });
-    });
+                response = await database.batchGet(params, tableName);
+                break;
+            case 'insertDoc':
+                data.TableName = tableName;
+                params = data;
+                response = await database.put(params);
+                break;
+            case 'insertDocs':
+                params = {
+                    "RequestItems": {
+                        [tableName]: data
+                    }
+                }
+                response = await database.batchWrite(params);
+                break;
+            case 'updateDoc':
+                //response = await database.collection(collection).updateOne(query, data);
+                break;
+            case 'udpateDocs':
+                //response = await database.collection(collection).updateMany(query, data);
+                break;
+            case 'deleteDoc':
+                data.TableName = tableName;
+                params = data;
+                response = await database.delete(params);
+                break;
+            case 'deleteDocs':
+                params = {
+                    "RequestItems": {
+                        [tableName]: data
+                    }
+                }
+                response = await database.batchWrite(params);
+                break;
+            case 'queryDocs':
+                filter.TableName = tableName
+                params = filter;
+                response = await database.query(params);
+                break;
+            case 'scanDocs':
+                filter.TableName = tableName
+                params = filter;
+                response = await database.scan(params);
+                break;
+            case 'putDoc':
+                data.TableName = tableName
+                params = data;
+                response = await database.putDocument(params);
+                break;
+            default:
+                break;
+        }
+        return response;
+    } catch (error) {
+        console.error(error);
+    }
 }
