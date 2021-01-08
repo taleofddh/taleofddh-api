@@ -35,6 +35,16 @@ provider:
         - lambda:InvokeFunction
         - secretsmanager:GetSecretValue
       Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:BatchWriteItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
 #      Action:
 #        - "s3:ListBucket"
 #      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
@@ -108,7 +118,7 @@ functions:
 
 #    Define function environment variables here
     environment:
-      COLLECTION_NAME: "menu"
+      TABLE_NAME: "menu"
 
   findPromotionList:
     handler: handler.findPromotionList
@@ -122,7 +132,7 @@ functions:
               paths:
                 active: true
     environment:
-      COLLECTION_NAME: "promotion"
+      TABLE_NAME: "promotion"
 
   findAboutUsList:
     handler: handler.findAboutUsList
@@ -132,7 +142,7 @@ functions:
           method: get
           cors: true
     environment:
-      COLLECTION_NAME: "aboutUs"
+      TABLE_NAME: "aboutUs"
 
   findTermsAndConditionsList:
     handler: handler.findTermsAndConditionsList
@@ -142,7 +152,7 @@ functions:
           method: get
           cors: true
     environment:
-      COLLECTION_NAME: "termsAndConditions"
+      TABLE_NAME: "termsAndConditions"
 
   findPrivacyPolicyList:
     handler: handler.findPrivacyPolicyList
@@ -152,7 +162,7 @@ functions:
           method: get
           cors: true
     environment:
-      COLLECTION_NAME: "privacyPolicy"
+      TABLE_NAME: "privacyPolicy"
 
   findFrequentlyAskedQuestionList:
     handler: handler.findFrequentlyAskedQuestionList
@@ -162,7 +172,7 @@ functions:
           method: get
           cors: true
     environment:
-      COLLECTION_NAME: "frequentlyAskedQuestion"
+      TABLE_NAME: "frequentlyAskedQuestion"
 
   findCountryByCode:
     handler: handler.findCountryByCode
@@ -176,7 +186,7 @@ functions:
               paths:
                 countryCode: true
     environment:
-      COLLECTION_NAME: "country"
+      TABLE_NAME: "country"
 
   findCountryByName:
     handler: handler.findCountryByName
@@ -190,7 +200,7 @@ functions:
               paths:
                 countryName: true
     environment:
-      COLLECTION_NAME: "country"
+      TABLE_NAME: "country"
 
   createAuditEntry:
     handler: handler.createAuditEntry
@@ -200,7 +210,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "audit"
+      TABLE_NAME: "audit"
 
 # you can add CloudFormation resource templates here
 resources:
@@ -226,6 +236,9 @@ custom:
     include:
       - DB_NAME
       - REGION
+      - ENVIRONMENT
+      - APP_NAME
+      - SERVICE_NAME
   stage: ${opt:stage, self:provider.stage}
   domains:
     prod: api.taleofddh.com
