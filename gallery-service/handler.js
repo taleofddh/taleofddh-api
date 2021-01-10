@@ -1,6 +1,5 @@
 'use strict';
-const db = require('./db');
-const database = require('./dynamodb');
+const database = require('./db');
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
 module.exports.findAlbumList = async (event) => {
