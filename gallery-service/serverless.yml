@@ -35,6 +35,16 @@ provider:
         - lambda:InvokeFunction
         - secretsmanager:GetSecretValue
       Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:BatchWriteItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
 
 # you can define service wide environment variables here
 #  environment:
@@ -53,7 +63,7 @@ functions:
           method: get
           cors: true
     environment:
-      COLLECTION_NAME: "album"
+      TABLE_NAME: "album"
 
   findRestrictedAlbumList:
     handler: handler.findRestrictedAlbumList
@@ -64,7 +74,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "album"
+      TABLE_NAME: "album"
 
   updateAlbumViewCount:
     handler: handler.updateAlbumViewCount
@@ -75,7 +85,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "album"
+      TABLE_NAME: "album"
 
   findAlbumPhotoList:
     handler: handler.findAlbumPhotoList
@@ -86,7 +96,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "photo"
+      TABLE_NAME: "photo"
 
   findPhotoList:
     handler: handler.findPhotoList
@@ -97,7 +107,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "photo"
+      TABLE_NAME: "photo"
 
   findRestrictedPhotoList:
     handler: handler.findRestrictedPhotoList
@@ -108,7 +118,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "photo"
+      TABLE_NAME: "photo"
 
   updatePhotoViewCount:
     handler: handler.updatePhotoViewCount
@@ -119,7 +129,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "photo"
+      TABLE_NAME: "photo"
 
 # you can add CloudFormation resource templates here
 resources:
@@ -145,6 +155,9 @@ custom:
     include:
       - DB_NAME
       - REGION
+      - ENVIRONMENT
+      - APP_NAME
+      - SERVICE_NAME
   stage: ${opt:stage, self:provider.stage}
   domains:
     prod: api.taleofddh.com

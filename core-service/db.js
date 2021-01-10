@@ -33,7 +33,7 @@ module.exports.get = async (params) => {
                 reject(err);
             }
             else {
-                resolve(data);
+                resolve(data.Item);
             }
         });
     });
