@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const csv = require('fast-csv');
 const dotenv = require('dotenv');
-const database = require('./dynamodb');
+const database = require('./db');
 const hash = require('hash.js');
 
 dotenv.config();
