@@ -9,7 +9,7 @@ module.exports.findBlogList = async (event) => {
         TableName: table
     };
     const blogList = await database.scan(params);
-    blogList.sort((a, b) => a.category.localeCompare(b.category) || a.date - b.date);
+    blogList.sort((a, b) => a.category.localeCompare(b.category) || new Date(b.date) - new Date(a.date));
     return {
         statusCode: 200,
         body: JSON.stringify(blogList),
