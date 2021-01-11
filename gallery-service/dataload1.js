@@ -124,7 +124,12 @@ const dbOperation = async (operation, table, data, filter) => {
                 response = await database.put(params);
                 break;
             case 'udpateDocs':
-                //response = await database.collection(collection).updateMany(query, data);
+                params = {
+                    "RequestItems": {
+                        [tableName]: data
+                    }
+                }
+                response = await database.batchWrite(params);
                 break;
             case 'deleteDoc':
                 data.TableName = tableName;

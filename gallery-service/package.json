@@ -27,8 +27,7 @@
     "@fast-csv/parse": "^4.3.6",
     "dotenv": "^8.2.0",
     "fast-csv": "^4.3.5",
-    "hash.js": "^1.1.7",
-    "mongodb": "^3.6.3"
+    "hash.js": "^1.1.7"
   },
   "devDependencies": {
     "aws-sdk": "^2.792.0",

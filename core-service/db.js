@@ -50,7 +50,7 @@ module.exports.update = async (params) => {
                 reject(err);
             }
             else {
-                resolve(data);
+                resolve(data.Attributes);
             }
         });
     });

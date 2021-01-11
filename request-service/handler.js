@@ -1,52 +1,86 @@
 'use strict';
 const fetch = require('node-fetch');
-const db = require('./db');
-const collection = process.env['COLLECTION_NAME'];
+const database = require('./db');
+const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
 module.exports.createRequest = async (event) => {
-    const database = await db.get();
     const data = JSON.parse(event.body);
-    var typeDoc = await db.findDocument(database, "type", {"type": data.type});
+    let params = {
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'type',
+        Key: {
+            "type": data.type
+        }
+    };
+    const typeDoc = await database.get(params);
     const type = typeDoc.type;
     const countryCode = (data.countryCode) ? data.countryCode : "";
     const requestor = data.requestor;
     const email = data.email;
     const phone = (data.phone) ? data.phone : "";
     const enquiry = data.enquiry;
-    var sequenceDoc = await db.findSequence(database, "sequence", {"key": "request_seq"});
+    params = {
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'sequence',
+        Key: {
+            "key": "request_seq"
+        },
+        UpdateExpression: "SET #sequence = #sequence + :inc",
+        ExpressionAttributeNames: {
+            "#sequence": "sequence"
+        },
+        ExpressionAttributeValues: { ":inc": 1 },
+        ReturnValues: "ALL_NEW"
+    }
+    var sequenceDoc = await database.update(params);
     const sequence = sequenceDoc.sequence + '';
     const number = 'REQ' + sequence.padStart(7, '0');
-    var statusDoc = await db.findDocument(database, "status", {"status": "Submitted"});
-    const status = statusDoc.status;
-    const date = new Date();
 
-    const actionDoc = await db.findDocument(database, "action", {"action": "Create Request"});
+    params = {
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'status',
+        Key: {
+            "status": "Submitted"
+        }
+    };
+    var statusDoc = await database.get(params);
+    const status = statusDoc.status;
+
+    const date = JSON.parse(JSON.stringify(new Date()));
+
+    params = {
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'action',
+        Key: {
+            "action": "Create Request"
+        }
+    };
+    const actionDoc = await database.get(params);
     const action = actionDoc.action;
+
     const message = actionDoc.description + " " + number;
 
     const request = {
-        "type": type,
-        "countryCode": countryCode,
-        "sequence": sequence,
-        "number": number,
-        "requestor": requestor,
-        "email": email,
-        "phone": phone,
-        "enquiry": enquiry,
-        "status": status,
-        "createDate": date,
-        "updateDate": date,
-        "commentList": [],
-        "attachmentList": [],
-        "auditTrailList": []
+        TableName: table,
+        Item: {
+            "type": type,
+            "countryCode": countryCode,
+            "sequence": sequence,
+            "number": number,
+            "requestor": requestor,
+            "email": email,
+            "phone": phone,
+            "enquiry": enquiry,
+            "status": status,
+            "createDate": date,
+            "updateDate": date
+        }
     }
-
     const auditTrail = {
-        "number": number,
-        "date": date,
-        "user": requestor,
-        "action": action,
-        "message": message
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'auditTrail',
+        Item: {
+            "number": number,
+            "date": date,
+            "user": requestor,
+            "action": action,
+            "message": message
+        }
     }
 
     const emailData = {
@@ -57,9 +91,9 @@ module.exports.createRequest = async (event) => {
         "to": email
     };
 
-    await db.insertDocument(database, collection, request);
+    await database.put(request);
 
-    await db.insertDocument(database, "auditTrail", auditTrail);
+    await database.put(auditTrail);
 
     const sendMessage = await sendConfirmation(process.env['SEND_ENQUIRY_URL'], JSON.stringify(emailData));
 
@@ -67,6 +101,26 @@ module.exports.createRequest = async (event) => {
         console.log("Attempted to send email to " + email + " for request # " + number);
     }
 
+    return {
+        statusCode: 200,
+        body: JSON.stringify(request.Item),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
+module.exports.findRequest = async (event) => {
+    const data = JSON.parse(event.body);
+    const params = {
+        TableName: table,
+        Key: {
+            'number': data.requestId,
+            'email': data.email
+        }
+    };
+    const request = await database.get(params);
     return {
         statusCode: 200,
         body: JSON.stringify(request),
@@ -77,30 +131,21 @@ module.exports.createRequest = async (event) => {
     };
 };
 
-module.exports.findRequest = async (event) => {
-    const data = JSON.parse(event.body);
-    const database = await db.get();
-    const docs = await db.findDocument(database, collection, { "email" : data.email, "number": data.requestId });
-    return {
-        statusCode: 200,
-        body: JSON.stringify(docs),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
-};
-
 module.exports.updateSubscription = async (event) => {
     const data = JSON.parse(event.body);
-    const database = await db.get();
-    var existingSubscriptionDoc = await db.findDocument(database, collection, {"email": data.email});
-    if(existingSubscriptionDoc) {
-        const update = { "$set": { "subscribed": data.subscribed } };
-        await db.updateDocument(database, collection, {"email": data.email}, update)
-    } else {
-        await db.insertDocument(database, collection, data);
+    const params = {
+        TableName: table,
+        Key: {
+            "email": data.email
+        },
+        UpdateExpression: "SET #subscribed = :subscribed",
+        ExpressionAttributeNames: {
+            "#subscribed": "subscribed"
+        },
+        ExpressionAttributeValues: { ":subscribed": data.subscribed },
+        ReturnValues: "UPDATED_NEW"
     }
+    await database.update(params);
 
     const emailData = {
         "subject": "Acknowledgement",
