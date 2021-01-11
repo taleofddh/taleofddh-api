@@ -35,6 +35,16 @@ provider:
         - lambda:InvokeFunction
         - secretsmanager:GetSecretValue
       Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:BatchWriteItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
 
 # you can define service wide environment variables here
 #  environment:
@@ -53,7 +63,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "request"
+      TABLE_NAME: "request"
       SEND_ENQUIRY_URL: "https://api.taleofddh.com/email/sendRequestMessage"
 
   findRequest:
@@ -64,7 +74,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "request"
+      TABLE_NAME: "request"
 
   updateSubscription:
     handler: handler.updateSubscription
@@ -74,7 +84,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "subscription"
+      TABLE_NAME: "subscription"
       SEND_SUBSCRIPTION_URL: "https://api.taleofddh.com/email/sendSubscriptionMessage"
 
 # you can add CloudFormation resource templates here
@@ -94,8 +104,10 @@ plugins:
 custom:
   dotenv:
     include:
-      - DB_NAME
       - REGION
+      - ENVIRONMENT
+      - APP_NAME
+      - SERVICE_NAME
   stage: ${opt:stage, self:provider.stage}
   domains:
     prod: api.taleofddh.com

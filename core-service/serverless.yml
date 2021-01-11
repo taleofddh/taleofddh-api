@@ -234,7 +234,6 @@ plugins:
 custom:
   dotenv:
     include:
-      - DB_NAME
       - REGION
       - ENVIRONMENT
       - APP_NAME

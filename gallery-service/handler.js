@@ -66,7 +66,7 @@ module.exports.updateAlbumViewCount = async (event) => {
             "#viewCount": "viewCount"
         },
         ExpressionAttributeValues: { ":inc": 1 },
-        ReturnValues: "UPDATED_NEW"
+        ReturnValues: "ALL_NEW"
     }
     const updatedAlbum = (!userId || userId === undefined) ? {} : await database.update(params);
     return {

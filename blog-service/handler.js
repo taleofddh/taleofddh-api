@@ -59,7 +59,7 @@ module.exports.updateBlogViewCount = async (event) => {
             "#viewCount": "viewCount"
         },
         ExpressionAttributeValues: { ":inc": 1 },
-        ReturnValues: "UPDATED_NEW"
+        ReturnValues: "ALL_NEW"
     }
     const updatedBlog = await database.update(params);
     return {
