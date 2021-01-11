@@ -43,6 +43,16 @@ provider:
       Action:
         - s3:GetObject
       Resource: "arn:aws:s3:::taleofddh-documents/*"
+    - Effect: "Allow"
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:BatchWriteItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
 
 #    variable1: value1
 
@@ -69,7 +79,7 @@ functions:
               paths:
                 active: true
     environment:
-      COLLECTION_NAME: "link"
+      TABLE_NAME: "link"
 
   findTravelDocuments:
     handler: handler.findTravelDocuments
@@ -90,7 +100,7 @@ functions:
           method: get
           cors: true
     environment:
-      COLLECTION_NAME: "countryVisit"
+      TABLE_NAME: "countryVisit"
 
   getTravelDocument:
     handler: handler.getTravelDocument
@@ -118,9 +128,10 @@ plugins:
 custom:
   dotenv:
     include:
-      - DB_NAME
       - REGION
-      - COGNITO_IDENTITY_POOL_ID
+      - ENVIRONMENT
+      - APP_NAME
+      - SERVICE_NAME
   apigwBinary:
     types:
       - 'application/pdf'

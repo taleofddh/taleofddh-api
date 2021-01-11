@@ -1,16 +1,24 @@
 'use strict';
-const db = require('./db');
+const database = require('./db');
 const storage = require('./storage');
-const collection = process.env['COLLECTION_NAME'];
+const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucket = process.env['S3_BUCKET'];
 
 module.exports.findLinkList = async (event) => {
     let active  = (event.pathParameters.active === 'true');
-    const database = await db.get();
-    const docs = await db.findDocuments(database, collection, {"active" : active}, {"sequence": 1});
+    const params = {
+        TableName: table,
+        FilterExpression: '#active = :active_val',
+        ExpressionAttributeNames: {
+            '#active': 'active',
+        },
+        ExpressionAttributeValues: {':active_val': active}
+    };
+    const links = await database.scan(params);
+    links.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
     return {
         statusCode: 200,
-        body: JSON.stringify(docs),
+        body: JSON.stringify(links),
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": true,
@@ -38,17 +46,31 @@ module.exports.findTravelDocuments = async (event) => {
 }
 
 module.exports.findCountryVisitStatus = async (event) => {
-    const database = await db.get();
-    const statuses = await db.findDocuments(database, "visitStatus", {}, {"sequence": 1});
+    const params = {
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'visitStatus'
+    };
+    const statuses = await database.scan(params);
+    statuses.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
+
     let countryVisitPromises = {}
     console.log(statuses);
     countryVisitPromises = statuses.map(async (item) => {
-        return {...countryVisitPromises, _id: item._id, sequence: item.sequence, status: item.status, color: item.color, backgroundColor: item.backgroundColor, countries: await db.findDocuments(database, collection, {"visitStatus": item.status}, {"countryCode": 1})}
+        const countryParams = {
+            TableName: table,
+            KeyConditionExpression: '#visitStatus = :visitStatus',
+            ExpressionAttributeNames: {
+                '#visitStatus': 'visitStatus'
+            },
+            ExpressionAttributeValues: {
+                ':visitStatus': item.status
+            }
+        }
+        return {...countryVisitPromises, _id: item._id, sequence: item.sequence, status: item.status, color: item.color, backgroundColor: item.backgroundColor, countries: await database.query(countryParams)}
     })
-    const docs = await Promise.all(countryVisitPromises);
+    const countryVisitList = await Promise.all(countryVisitPromises);
     return {
         statusCode: 200,
-        body: JSON.stringify(docs),
+        body: JSON.stringify(countryVisitList),
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": true,
