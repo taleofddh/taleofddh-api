@@ -28,11 +28,11 @@ module.exports.processInboundMessage = async (event) => {
             "body": message.body
         }
     }
-    const email = await database.put(params);
+    const inboxMsg = await database.put(params);
 
     return {
         statusCode: 200,
-        body: JSON.stringify(email),
+        body: JSON.stringify(inboxMsg),
         status: 'success'
     };
 }
