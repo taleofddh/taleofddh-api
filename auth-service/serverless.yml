@@ -27,8 +27,6 @@ provider:
 # you can overwrite defaults here
   stage: prod
   region: eu-west-1
-  environment:
-    DB_NAME: "ddhome-auth"
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:

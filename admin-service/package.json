@@ -27,7 +27,6 @@
     "@fast-csv/parse": "^4.3.6",
     "dotenv": "^8.2.0",
     "fast-csv": "^4.3.5",
-    "mongodb": "^3.6.3",
     "mailparser": "^3.0.1"
   },
   "devDependencies": {
