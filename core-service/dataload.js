@@ -297,7 +297,7 @@ fs.readFile('data/audit.json', 'utf8', async (err, data) => {
     console.log(docs);
 });*/
 
-const dbOperation = async (operation, table, data, filter) => {
+const dbOperation = async (operation, table, data) => {
     var tableName = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + table;
     var response;
     var params;
@@ -358,19 +358,14 @@ const dbOperation = async (operation, table, data, filter) => {
                 response = await database.batchWrite(params);
                 break;
             case 'queryDocs':
-                filter.TableName = tableName
-                params = filter;
+                data.TableName = tableName
+                params = data;
                 response = await database.query(params);
                 break;
             case 'scanDocs':
-                filter.TableName = tableName
-                params = filter;
-                response = await database.scan(params);
-                break;
-            case 'putDoc':
                 data.TableName = tableName
                 params = data;
-                response = await database.putDocument(params);
+                response = await database.scan(params);
                 break;
             default:
                 break;
