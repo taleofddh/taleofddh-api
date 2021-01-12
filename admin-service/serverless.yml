@@ -43,6 +43,16 @@ provider:
       Action:
         - s3:GetObject
       Resource: "arn:aws:s3:::taleofddh-messages/*"
+    - Effect: "Allow"
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:BatchWriteItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
 
 #    variable1: value1
 
@@ -61,7 +71,7 @@ functions:
     handler: handler.processInboundMessage
     environment:
       S3_BUCKET: "taleofddh-messages"
-      COLLECTION_NAME: "inbox"
+      TABLE_NAME: "inbox"
 
   findMessageList:
     handler: handler.findMessageList
@@ -101,9 +111,10 @@ plugins:
 custom:
   dotenv:
     include:
-      - DB_NAME
       - REGION
-      - COGNITO_IDENTITY_POOL_ID
+      - ENVIRONMENT
+      - APP_NAME
+      - SERVICE_NAME
   apigwBinary:
     types:
       - 'application/pdf'

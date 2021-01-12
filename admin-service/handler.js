@@ -2,7 +2,8 @@
 const db = require('./db');
 const storage = require('./storage');
 const email = require('./email');
-const collection = process.env['COLLECTION_NAME'];
+const database = require('./db');
+const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucket = process.env['S3_BUCKET'];
 
 module.exports.processInboundMessage = async (event) => {
@@ -15,12 +16,23 @@ module.exports.processInboundMessage = async (event) => {
 
     const message = await email.parse(object);
     message.messaageId = sesNotification.mail.messageId;
-
-    const database = await db.get();
-    await db.insertDocument(database, collection, message);
+    const params = {
+        TableName: table,
+        Item: {
+            "messageId": message.messaageId,
+            "from": message.from,
+            "date": message.date,
+            "to": message.to,
+            "cc": message.cc,
+            "subject": message.subject,
+            "body": message.body
+        }
+    }
+    const email = await database.put(params);
 
     return {
         statusCode: 200,
+        body: JSON.stringify(email),
         status: 'success'
     };
 }
@@ -28,10 +40,10 @@ module.exports.processInboundMessage = async (event) => {
 module.exports.findMessageList = async (event) => {
     const data = JSON.parse(event.body);
     const prefix = data.prefix;
-    const docs = await storage.listFolder({Bucket: bucket, Delimiter: "/", Prefix: prefix + "/"});
+    const messages = await storage.listFolder({Bucket: bucket, Delimiter: "/", Prefix: prefix + "/"});
     return {
         statusCode: 200,
-        body: JSON.stringify(docs),
+        body: JSON.stringify(messages),
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": true,
