@@ -2,19 +2,21 @@ const fs = require('fs');
 const path = require('path');
 const csv = require('fast-csv');
 const dotenv = require('dotenv');
-const MongoClient = require('mongodb').MongoClient;
+const database = require('./db');
 
 dotenv.config();
 
-let userProfiles = [];
+let userProfileDeleteKeys = [];
+let userProfileItems = [];
+let userProfileGetKeys = [];
 fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
-    .pipe(csv.parse({ headers: true, delimiter: '|' }))
+    .pipe(csv.parse({ headers: true }))
     .transform(data => ({
         number: parseInt(data.number),
         identityId: data.identityId,
         firstName: data.firstName,
         lastName: data.lastName,
-        dateOfBirth: new Date(data.dateOfBirth),
+        dateOfBirth: data.dateOfBirth,
         gender: data.gender,
         email: data.email,
         address1: data.address1,
@@ -24,89 +26,162 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
         countryCode: data.countryCode,
         phone: data.phone,
         about: data.about,
-        communityList: data.communities,
+        communityList: JSON.parse(data.communityList),
         mailingFlag: data.mailingFlag.toUpperCase() === 'TRUE',
-        updatedAt: new Date(data.updatedAt),
-        lastLogin: new Date(data.lastLogin)
+        updatedAt: data.updatedAt,
+        lastLogin: data.lastLogin
     }))
     .on('error', error => console.error(error))
     .on('data', row => {
-        userProfiles.push(row)
+        userProfileDeleteKeys.push({
+            DeleteRequest: {
+                Key: {
+                    "number": row.number
+                }
+            }
+        });
+        userProfileItems.push({
+            PutRequest: {
+                Item: {
+                    "number": row.number,
+                    "identityId": row.identityId,
+                    "firstName": row.firstName,
+                    "lastName": row.lastName,
+                    "dateOfBirth": row.dateOfBirth,
+                    "gender": row.gender,
+                    "email": row.email,
+                    "address1": row.address1,
+                    "address2": row.address2,
+                    "city": row.city,
+                    "postCode": row.postCode,
+                    "countryCode": row.countryCode,
+                    "phone": row.phone,
+                    "about": row.about,
+                    "communityList": row.communityList,
+                    "mailingFlag": row.mailingFlag,
+                    "updatedAt": row.updatedAt,
+                    "lastLogin": row.lastLogin
+                }
+            }
+        });
+        userProfileGetKeys.push({
+            "number": row.number
+        });
     })
     .on('end', async rowCount => {
-        userProfiles.sort((a,b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
-        await dbOperation("deleteDoc", "sequence", [], {"key": "user_seq"});
-        const allCommunities = await dbOperation("findDocs", "community", [], {}, {"number": 1})
-        for(i in userProfiles) {
-            let communityList = []
+        /*const commParams = {};
+        const allCommunities = await dbOperation("scanDocs", "community", commParams);
+        allCommunities.sort((a, b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
+        for(i in userProfileItems) {
+            let communityList = [];
             for(let j in allCommunities) {
                 let match = false;
-                let communities = userProfiles[i].communityList ? userProfiles[i].communityList.split(',') : [];
+                let communities = JSON.parse(userProfileItems[i].PutRequest.Item.communityList);
+                communities.sort((a, b) => (a.id > b.id) ? 1 : ((b.id > a.id) ? -1 : 0));
                 for(let k in communities) {
                     //await console.log(communities[j]);
-                    if(allCommunities[j].number === parseInt(communities[k])) {
-                        match = true;
+                    if(allCommunities[j].number === parseInt(communities[k].id)) {
+                        match = communities[k].checked;
                     }
                 }
+                //console.log(match);
                 if(match) {
                     communityList.push({"id": allCommunities[j].number, "name": allCommunities[j].name, "checked": true});
                 } else {
                     communityList.push({"id": allCommunities[j].number, "name": allCommunities[j].name, "checked": false});
                 }
             }
-            userProfiles[i].communityList = communityList;
-        }
-        await dbOperation("deleteDocs", "userProfile", [], {});
-        await dbOperation("insertDocs", "userProfile", userProfiles);
-        const docs = await dbOperation("findDocs", "userProfile", [], {}, {"number": 1}) ;
+            userProfileItems[i].PutRequest.Item.communityList = communityList;
+        }*/
+        await dbOperation("deleteDocs", "userProfile", userProfileDeleteKeys);
+        await dbOperation("insertDocs", "userProfile", userProfileItems);
+        const docs = await dbOperation("findDocs", "userProfile", userProfileGetKeys);
         await console.log(docs);
-
+        const sequenceKey = {
+            Item: {
+                "key": "user_seq",
+                "squence": rowCount
+            }
+        }
+        await dbOperation("updateDoc", "sequence", sequenceKey);
         await console.log(`Parsed ${rowCount} rows`);
     });
 
-const dbOperation = async (operation, collection, data, query, sort) => {
-    // for async it only works with Promise and resolve/reject
-    return new Promise(async (resolve, reject) => {
-        // Connect using the connection string
-        await MongoClient.connect(process.env['MONGODB_ATLAS_CLUSTER_URI'], { useNewUrlParser: true, useUnifiedTopology: true }, async (err, client) => {
-            if (err) {
-                reject(err);
-            } else {
-                //the following line is critical for performance reasons to allow re-use of database connections across calls to this Lambda function and avoid closing the database connection. The first call to this lambda function takes about 5 seconds to complete, while subsequent, close calls will only take a few hundred milliseconds.
-                var database = await client.db(process.env['DB_NAME']);
-                var response;
-                switch(operation) {
-                    case 'findDoc':
-                        response = await database.collection(collection).findOne(query);
-                        break;
-                    case 'findDocs':
-                        response = await database.collection(collection).find(query).sort(sort).toArray();
-                        break;
-                    case 'insertDoc':
-                        response = await database.collection(collection).insertOne(data);
-                        break;
-                    case 'insertDocs':
-                        response = await database.collection(collection).insertMany(data);
-                        break;
-                    case 'updateDoc':
-                        response = await database.collection(collection).updateOne(query, data);
-                        break;
-                    case 'udpateDocs':
-                        response = await database.collection(collection).updateMany(query, data);
-                        break;
-                    case 'deleteDoc':
-                        response = await database.collection(collection).deleteOne(query);
-                        break;
-                    case 'deleteDocs':
-                        response = await database.collection(collection).deleteMany(query);
-                        break;
-                    default:
-                        break;
+const dbOperation = async (operation, table, data) => {
+    var tableName = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + table;
+    var response;
+    var params;
+    try {
+        switch(operation) {
+            case 'findDoc':
+                data.TableName = tableName;
+                params = data;
+                response = await database.get(params);
+                break;
+            case 'findDocs':
+                params = {
+                    "RequestItems": {
+                        [tableName]: {
+                            "Keys": data
+                        }
+                    }
                 }
-                await client.close();
-                //await console.log(response);
-                resolve(response);
-            }
-        });
-    });
+                response = await database.batchGet(params, tableName);
+                break;
+            case 'insertDoc':
+                data.TableName = tableName;
+                params = data;
+                response = await database.put(params);
+                break;
+            case 'insertDocs':
+                params = {
+                    "RequestItems": {
+                        [tableName]: data
+                    }
+                }
+                response = await database.batchWrite(params);
+                break;
+            case 'updateDoc':
+                data.TableName = tableName;
+                params = data;
+                response = await database.put(params);
+                break;
+            case 'udpateDocs':
+                params = {
+                    "RequestItems": {
+                        [tableName]: data
+                    }
+                }
+                response = await database.batchWrite(params);
+                break;
+            case 'deleteDoc':
+                data.TableName = tableName;
+                params = data;
+                response = await database.delete(params);
+                break;
+            case 'deleteDocs':
+                params = {
+                    "RequestItems": {
+                        [tableName]: data
+                    }
+                }
+                response = await database.batchWrite(params);
+                break;
+            case 'queryDocs':
+                data.TableName = tableName
+                params = data;
+                response = await database.query(params);
+                break;
+            case 'scanDocs':
+                data.TableName = tableName
+                params = data;
+                response = await database.scan(params);
+                break;
+            default:
+                break;
+        }
+        return response;
+    } catch (error) {
+        console.error(error);
+    }
 }

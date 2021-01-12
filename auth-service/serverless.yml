@@ -37,6 +37,16 @@ provider:
         - lambda:InvokeFunction
         - secretsmanager:GetSecretValue
       Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - dynamodb:BatchGetItem
+        - dynamodb:GetItem
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:BatchWriteItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
 
 # you can define service wide environment variables here
 #  environment:
@@ -64,7 +74,7 @@ functions:
           method: post
           cors: true
     environment:
-      COLLECTION_NAME: "user"
+      TABLE_NAME: "user"
 
   createUser:
     handler: handler.createUser
@@ -75,7 +85,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "user"
+      TABLE_NAME: "user"
 
   updateUser:
     handler: handler.updateUser
@@ -86,7 +96,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "user"
+      TABLE_NAME: "user"
 
   findUserProfile:
     handler: handler.findUserProfile
@@ -97,7 +107,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "userProfile"
+      TABLE_NAME: "userProfile"
 
   createUserProfile:
     handler: handler.createUserProfile
@@ -108,7 +118,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "userProfile"
+      TABLE_NAME: "userProfile"
 
   updateUserProfile:
     handler: handler.updateUserProfile
@@ -119,7 +129,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "userProfile"
+      TABLE_NAME: "userProfile"
 
   findUserRole:
     handler: handler.findUserRole
@@ -130,7 +140,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      COLLECTION_NAME: "userRole"
+      TABLE_NAME: "userRole"
 
 # you can add CloudFormation resource templates here
 resources:
@@ -149,8 +159,10 @@ plugins:
 custom:
   dotenv:
     include:
-      - DB_NAME
       - REGION
+      - ENVIRONMENT
+      - APP_NAME
+      - SERVICE_NAME
   stage: ${opt:stage, self:provider.stage}
   domains:
     prod: api.taleofddh.com
