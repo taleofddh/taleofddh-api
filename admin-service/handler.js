@@ -1,5 +1,4 @@
 'use strict';
-const db = require('./db');
 const storage = require('./storage');
 const email = require('./email');
 const database = require('./db');
@@ -14,19 +13,12 @@ module.exports.processInboundMessage = async (event) => {
     // Retrieve the email from your bucket
     const object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + sesNotification.mail.messageId});
 
-    const message = await email.parse(object);
-    message.messaageId = sesNotification.mail.messageId;
+    let message = await email.parse(object);
+    message.messageId = sesNotification.mail.messageId;
+
     const params = {
         TableName: table,
-        Item: {
-            "messageId": message.messaageId,
-            "from": message.from,
-            "date": message.date,
-            "to": message.to,
-            "cc": message.cc,
-            "subject": message.subject,
-            "body": message.body
-        }
+        Item: message
     }
     const inboxMsg = await database.put(params);
 
@@ -34,6 +26,48 @@ module.exports.processInboundMessage = async (event) => {
         statusCode: 200,
         body: JSON.stringify(inboxMsg),
         status: 'success'
+    };
+}
+
+module.exports.processStoredMessage = async (event) => {
+    const data = JSON.parse(event.body);
+    const prefix = data.prefix;
+    // Retrieve the message from your bucket
+    const messages = await storage.listFolder({Bucket: bucket, Delimiter: "/", Prefix: prefix + "/"});
+
+    let processedMessageList = [];
+    for(let i = 0; i < messages.length; i++) {
+        let messageId = messages[i];
+        let params = {
+            TableName: table,
+            Key: {
+                "messageId": messageId
+            }
+        }
+        let messageExists = await database.get(params);
+        if(!messageExists) {
+            const object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + messageId});
+
+            let message = await email.parse(object);
+            message.messageId = messageId;
+
+            const params = {
+                TableName: table,
+                Item: message
+            }
+            const inboxMsg = await database.put(params);
+            console.log('Processed ' + messageId);
+            processedMessageList.push(message);
+        }
+    }
+    console.log("List", processedMessageList);
+    return {
+        statusCode: 200,
+        body: JSON.stringify(processedMessageList),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
     };
 }
 
