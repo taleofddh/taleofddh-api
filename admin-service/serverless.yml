@@ -73,6 +73,18 @@ functions:
       S3_BUCKET: "taleofddh-messages"
       TABLE_NAME: "inbox"
 
+  processStoredMessage:
+    handler: handler.processStoredMessage
+    events:
+      - http:
+          path: processMessage
+          method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      S3_BUCKET: "taleofddh-messages"
+      TABLE_NAME: "inbox"
+
   findMessageList:
     handler: handler.findMessageList
     events:

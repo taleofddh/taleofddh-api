@@ -42,8 +42,8 @@ module.exports.parse = async(data) => {
         const email = await simpleParser(data.Body);
         const message = {
             from: email.from.text,
-            date: email.date,
-            to: email.to.text,
+            date: JSON.parse(JSON.stringify(email.date)),
+            to: email.to ? email.to.text : '',
             cc: email.cc ? email.cc.text : '',
             subject: email.subject,
             body: email.text,
