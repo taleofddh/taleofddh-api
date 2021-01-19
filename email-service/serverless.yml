@@ -23,6 +23,7 @@ frameworkVersion: '2'
 provider:
   name: aws
   runtime: nodejs12.x
+  profile: taleofddh
 
 # you can overwrite defaults here
   stage: prod
@@ -72,6 +73,17 @@ functions:
           cors: true
     environment:
       TEMPLATE_NAME: "Subscription"
+
+  sendPromotionMessage:
+    handler: handler.sendPromotionMessage
+    events:
+      - http:
+          path: sendPromotionMessage
+          method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      TEMPLATE_NAME: "Promotion"
 
 # you can add CloudFormation resource templates here
 resources:

@@ -16,7 +16,8 @@
     "taleofddh",
     "ddhome",
     "db",
-    "request"
+    "request",
+    "subscription"
   ],
   "bugs": {
     "url": "https://github.com/devadyuti/taleofddh-api/issues"

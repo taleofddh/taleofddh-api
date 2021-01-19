@@ -27,6 +27,7 @@ provider:
 # you can overwrite defaults here
   stage: prod
   region: eu-west-1
+  profile: taleofddh
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
@@ -44,7 +45,7 @@ provider:
         - dynamodb:BatchWriteItem
         - dynamodb:PutItem
         - dynamodb:UpdateItem
-      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
+      Resource: arn:aws:dynamodb:*:*:table/${opt:stage}.${env:APP_NAME}.${self:service}.*
 
 # you can define service wide environment variables here
 #  environment:

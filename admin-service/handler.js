@@ -73,8 +73,17 @@ module.exports.processStoredMessage = async (event) => {
 
 module.exports.findMessageList = async (event) => {
     const data = JSON.parse(event.body);
-    const prefix = data.prefix;
-    const messages = await storage.listFolder({Bucket: bucket, Delimiter: "/", Prefix: prefix + "/"});
+    const folder = data.folder;
+
+    const params = {
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + folder.toLowerCase()
+    }
+    const messages = await database.scan(params);
+
+    if(messages.length > 0 ) {
+        messages.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+
     return {
         statusCode: 200,
         body: JSON.stringify(messages),

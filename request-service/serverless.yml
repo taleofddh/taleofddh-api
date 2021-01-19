@@ -23,6 +23,7 @@ frameworkVersion: '2'
 provider:
   name: aws
   runtime: nodejs12.x
+  profile: taleofddh
 
 # you can overwrite defaults here
   stage: prod
@@ -44,7 +45,7 @@ provider:
         - dynamodb:BatchWriteItem
         - dynamodb:PutItem
         - dynamodb:UpdateItem
-      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
+      Resource: arn:aws:dynamodb:*:*:table/${opt:stage}.${env:APP_NAME}.${self:service}.*
 
 # you can define service wide environment variables here
 #  environment:
