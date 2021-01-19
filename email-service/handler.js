@@ -28,3 +28,17 @@ module.exports.sendSubscriptionMessage = async (event) => {
         }
     };
 };
+
+module.exports.sendPromotionMessage = async (event) => {
+    const subscription = JSON.parse(event.body);
+    const data = JSON.stringify({ "subject": subscription.subject, "message": subscription.message });
+    const messageId = await email.send(subscription.to, process.env['TEMPLATE_NAME'], data);
+    return {
+        statusCode: 200,
+        body: JSON.stringify(messageId),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
