@@ -79,11 +79,9 @@ module.exports.updateUser = async (event) => {
         expAttrValues[":password"] = data.password;
     }
 
-    let updateExpr = '';
+    let updateExpr = 'SET ';
     for(let i in update) {
-        if(i === 0) {
-            updateExpr += 'SET ';
-        } else {
+        if(i > 0)  {
             updateExpr += ', ';
         }
         updateExpr += update[i];
@@ -265,7 +263,7 @@ const createProfile = async (data, userId) => {
         }
     }
     await database.put(userRole);
-    (!userId || userId === undefined) ? {} : await database.put(profile);
+    const doc = (!userId || userId === undefined) ? {} : await database.put(profile);
     params = {
         TableName: data.hasOwnProperty('table') ? process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + data.table : table,
         Key: {
