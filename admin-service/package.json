@@ -1,7 +1,7 @@
 {
-  "name": "core-service",
+  "name": "admin-service",
   "version": "1.0.0",
-  "description": "Link APIs for Tale of DDH",
+  "description": "Admin APIs for Tale of DDH",
   "main": "handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
