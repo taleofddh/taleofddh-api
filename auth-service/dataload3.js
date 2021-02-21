@@ -98,7 +98,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'userRole.csv'))
         const sequenceKey = {
             Item: {
                 "key": "userRole_seq",
-                "squence": rowCount
+                "sequence": rowCount
             }
         }
         await dbOperation("updateDoc", "sequence", sequenceKey);
