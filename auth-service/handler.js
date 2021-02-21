@@ -168,7 +168,7 @@ module.exports.createUserProfile = async (event) => {
         };
     const existingProfile = await database.scan(params);
     let userProfile;
-    if(!existingProfile) {
+    if(existingProfile.length === 0) {
         userProfile = await createProfile(data, userId);
     } else {
         userProfile = await updateProfile(data, userId, existingProfile[0].number);
@@ -300,7 +300,7 @@ module.exports.updateUserProfile = async (event) => {
         };
     const existingProfile = await database.scan(params);
     let userProfile;
-    if(!existingProfile) {
+    if(existingProfile.length === 0) {
         userProfile = await createProfile(data, userId);
     } else {
         userProfile = await updateProfile(data, userId, existingProfile[0].number);
