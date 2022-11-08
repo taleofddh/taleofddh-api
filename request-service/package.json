@@ -1,6 +1,6 @@
 {
   "name": "request-service",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Request APIs for Tale of DDH",
   "main": "handler.js",
   "scripts": {
