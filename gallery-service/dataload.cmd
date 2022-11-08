@@ -4,4 +4,6 @@ REM SETTING ENVIRONMENT PARAMETERS
 SET ENVIRONMENT=%1
 
 REM RUN DATALOADING SCRIPTS
-node dataload.js
+node dataload1.js
+
+node dataload2.js
