@@ -18,7 +18,9 @@ service: ${env:SERVICE_NAME}
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
-frameworkVersion: '2'
+frameworkVersion: '3'
+
+useDotenv: true
 
 provider:
   name: aws
@@ -27,11 +29,11 @@ provider:
   profile: ${env:APP_NAME}
 
   # you can overwrite defaults here
-  stage: ${opt:stage, dev}
-  region: ${opt:region, eu-west-1}
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'eu-west-1'}
   environment:
     ENVIRONMENT: ${opt:stage, self:provider.stage}
-    REGION: ${opt:region, eu-west-1}
+    REGION: ${opt:region, 'eu-west-1'}
 
   apiGateway:
     shouldStartNameWithService: true
