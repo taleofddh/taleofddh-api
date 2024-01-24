@@ -68,3 +68,41 @@ module.exports.getObject = async (params) => {
         });
     });
 }
+
+module.exports.getSignedUrl = async (params) => {
+    // Create a new service object
+    let s3 = new AWS.S3({
+        apiVersion: '2006-03-01'
+    });
+
+    // for async it only works with Promise and resolve/reject
+    return new Promise((resolve, reject) => {
+        s3.getSignedUrl('putObject', params, (err, data) => {
+            if (err) {
+                reject(err);
+            }
+            else {
+                resolve(data);
+            }
+        });
+    });
+}
+
+module.exports.putObject = async (params) => {
+    // Create a new service object
+    let s3 = new AWS.S3({
+        apiVersion: '2006-03-01'
+    });
+
+    // for async it only works with Promise and resolve/reject
+    return new Promise((resolve, reject) => {
+        s3.putObject(params, (err, data) => {
+            if (err) {
+                reject(err);
+            }
+            else {
+                resolve(data);
+            }
+        });
+    });
+}
