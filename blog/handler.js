@@ -175,7 +175,7 @@ module.exports.getArticleDocument = async (event) => {
     let object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + file});
     return {
         statusCode: 200,
-        body: JSON.stringify(object.Body.toString('utf-8')),
+        body: JSON.stringify(await object.Body.transformToString('utf-8')),
         headers: {
             "isBase64Encoded": true,
             "Access-Control-Allow-Origin": "*",

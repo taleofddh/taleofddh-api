@@ -103,7 +103,6 @@ functions:
           path: documentList
           method: post
           cors: true
-          authorizer: aws_iam
     environment:
       S3_BUCKET: ${env:S3_BUCKET}
 
