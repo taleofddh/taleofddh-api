@@ -155,7 +155,7 @@ module.exports.findCountryByName = async (event) => {
 
 module.exports.createAuditEntry = async (event) => {
     const data = JSON.parse(event.body);
-    const params = {
+    const doc = {
         TableName: table,
         Item: {
             "date": data.date,
@@ -166,7 +166,7 @@ module.exports.createAuditEntry = async (event) => {
             "message": data.message
         }
     }
-    const doc = await database.put(params);
+    console.log("Audit", doc);
     return {
         statusCode: 200,
         body: JSON.stringify(doc),

@@ -86,7 +86,7 @@ module.exports.getTravelDocument = async (event) => {
     return {
         isBase64Encoded: true,
         statusCode: 200,
-        body: JSON.stringify(object.Body.toString('base64')),
+        body: JSON.stringify(await object.Body.transformToString('base64')),
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": true,
