@@ -108,34 +108,17 @@ module.exports.updateUser = async (event) => {
 };
 
 module.exports.findUserProfile = async (event) => {
-    const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
-    let params = data.email ?
-        {
-            TableName: table,
-            FilterExpression: '#email = :email and #identityId = :identityId',
-            ExpressionAttributeNames: {
-                '#email': 'email',
-                '#identityId': 'identityId'
-            },
-            ExpressionAttributeValues: {
-                ':email': data.email,
-                ':identityId': data.identityId ? data.identityId : userId
-            }
-        } : {
-            TableName: table,
-            FilterExpression: '#identityId = :identityId',
-            ExpressionAttributeNames: {
-                '#identityId': 'identityId'
-            },
-            ExpressionAttributeValues: {
-                ':identityId': data.identityId ? data.identityId : userId
-            }
-        };
-    const userProfile = (!userId || userId === undefined) ? {} : await database.scan(params);
+    let params = {
+        TableName: table,
+        Key: {
+            "identityId": userId
+        }
+    };
+    const userProfile = (!userId || userId === undefined) ? {} : await database.get(params);
     return {
         statusCode: 200,
-        body: JSON.stringify(userProfile[0]),
+        body: JSON.stringify(userProfile),
         headers: {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Credentials": true,

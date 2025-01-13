@@ -82,7 +82,7 @@ package:
 #    - exclude-me-dir/**
 
 functions:
-  findMenuList:
+  findLinkList:
     handler: handler.findLinkList
     events:
       - http:
@@ -100,9 +100,13 @@ functions:
     handler: handler.findTravelDocuments
     events:
       - http:
-          path: documentList
-          method: post
+          path: documentList/{prefix}
+          method: get
           cors: true
+          request:
+            parameters:
+              paths:
+                prefix: true
     environment:
       S3_BUCKET: ${env:S3_BUCKET}
 
@@ -120,9 +124,15 @@ functions:
     handler: handler.getTravelDocument
     events:
       - http:
-          path: travelDocument
-          method: post
+          path: travelDocument/{prefix}/{folder}/{file}
+          method: get
           cors: true
+          request:
+            parameters:
+              paths:
+                prefix: true
+                folder: true
+                file: true
           response:
             contentHandling: CONVERT_TO_BINARY
     environment:

@@ -1,16 +1,15 @@
-var AWS = require('aws-sdk');
+const { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand, DeleteObjectCommand, SelectObjectContentCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
-AWS.config.update({region: process.env['REGION']});
+// a client can be shared by different commands.
+const client = new S3Client({region: process.env['REGION']});
 
 module.exports.listBucket = async (params) => {
-    // Create a new service object
-    var s3 = new AWS.S3({
-        apiVersion: '2006-03-01'
-    });
+    const command = new ListObjectsV2Command(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        s3.listObjectsV2(params, (err, data) => {
+        client.send(command, (err, data) => {
             if (err) {
                 reject(err);
             }
@@ -27,14 +26,11 @@ module.exports.listBucket = async (params) => {
 }
 
 module.exports.listFolder = async (params) => {
-    // Create a new service object
-    var s3 = new AWS.S3({
-        apiVersion: '2006-03-01'
-    });
+    const command = new ListObjectsV2Command(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        s3.listObjectsV2(params, (err, data) => {
+        client.send(command, (err, data) => {
             if (err) {
                 reject(err);
             }
@@ -51,14 +47,87 @@ module.exports.listFolder = async (params) => {
 }
 
 module.exports.getObject = async (params) => {
-    // Create a new service object
-    let s3 = new AWS.S3({
-        apiVersion: '2006-03-01'
-    });
+    const command = new GetObjectCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        s3.getObject(params, (err, data) => {
+        client.send(command, (err, data) => {
+            if (err) {
+                reject(err);
+            }
+            else {
+                resolve(data);
+            }
+        });
+    });
+}
+
+module.exports.putObjectSignedUrl = async (params) => {
+    const command = new PutObjectCommand(params);
+
+    // for async it only works with Promise and resolve/reject
+    return new Promise(async (resolve, reject) => {
+        try {
+            const data = await getSignedUrl(client, command, { expiresIn: 3600 });
+            resolve(data);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+module.exports.getObjectSignedUrl = async (params) => {
+    const command = new GetObjectCommand(params);
+
+    // for async it only works with Promise and resolve/reject
+    return new Promise(async (resolve, reject) => {
+        try {
+            const data = await getSignedUrl(client, command, { expiresIn: 3600 });
+            resolve(data);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
+
+module.exports.putObject = async (params) => {
+    const command = new PutObjectCommand(params);
+
+    // for async it only works with Promise and resolve/reject
+    return new Promise((resolve, reject) => {
+        client.send(command, (err, data) => {
+            if (err) {
+                reject(err);
+            }
+            else {
+                resolve(data);
+            }
+        });
+    });
+}
+
+module.exports.deleteObject = async (params) => {
+    const command = new DeleteObjectCommand(params);
+
+    // for async it only works with Promise and resolve/reject
+    return new Promise((resolve, reject) => {
+        client.send(command, (err, data) => {
+            if (err) {
+                reject(err);
+            }
+            else {
+                resolve(data);
+            }
+        });
+    });
+}
+
+module.exports.selectObjectContent = async (params) => {
+    const command = new SelectObjectContentCommand(params);
+
+    // for async it only works with Promise and resolve/reject
+    return new Promise((resolve, reject) => {
+        client.send(command, (err, data) => {
             if (err) {
                 reject(err);
             }

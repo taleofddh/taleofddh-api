@@ -1,17 +1,16 @@
-// Load the AWS SDK
-var AWS = require('aws-sdk');
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const {DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand, DeleteCommand, BatchWriteCommand, BatchGetCommand, QueryCommand, ScanCommand} = require("@aws-sdk/lib-dynamodb")
 
-AWS.config.update({
-    region: "eu-west-1"
-});
+// a client can be shared by different commands.
+const client = new DynamoDBClient({ region: process.env['REGION'] });
+const docClient = DynamoDBDocumentClient.from(client);
 
 module.exports.put = async (params) => {
-    // Create the DynamoDB Document Client
-    var documentClient = new AWS.DynamoDB.DocumentClient();
+    const command = new PutCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        documentClient.put(params, function(err, data) {
+        docClient.send(command, function(err, data) {
             if (err) {
                 reject(err);
             }
@@ -23,12 +22,11 @@ module.exports.put = async (params) => {
 }
 
 module.exports.get = async (params) => {
-    // Create the DynamoDB Document Client
-    var documentClient = new AWS.DynamoDB.DocumentClient();
+    const command = new GetCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        documentClient.get(params, function(err, data) {
+        docClient.send(command, function(err, data) {
             if (err) {
                 reject(err);
             }
@@ -40,12 +38,11 @@ module.exports.get = async (params) => {
 }
 
 module.exports.update = async (params) => {
-    // Create the DynamoDB Document Client
-    var documentClient = new AWS.DynamoDB.DocumentClient();
+    const command = new UpdateCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        documentClient.update(params, function(err, data) {
+        docClient.send(command, function(err, data) {
             if (err) {
                 reject(err);
             }
@@ -57,12 +54,11 @@ module.exports.update = async (params) => {
 }
 
 module.exports.delete = async (params) => {
-    // Create the DynamoDB Document Client
-    var documentClient = new AWS.DynamoDB.DocumentClient();
+    const command = new DeleteCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        documentClient.delete(params, function(err, data) {
+        docClient.send(command, function(err, data) {
             if (err) {
                 reject(err);
             }
@@ -74,12 +70,11 @@ module.exports.delete = async (params) => {
 }
 
 module.exports.batchWrite = async (params) => {
-    // Create the DynamoDB Document Client
-    var documentClient = new AWS.DynamoDB.DocumentClient();
+    const command = new BatchWriteCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        documentClient.batchWrite(params, function(err, data) {
+        docClient.send(command, function(err, data) {
             if (err) {
                 reject(err);
             }
@@ -91,17 +86,16 @@ module.exports.batchWrite = async (params) => {
 }
 
 module.exports.batchGet = async (params, table) => {
-    // Create the DynamoDB Document Client
-    var documentClient = new AWS.DynamoDB.DocumentClient();
+    const command = new BatchGetCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        documentClient.batchGet(params, function(err, data) {
+        docClient.send(command, function(err, data) {
             if (err) {
                 reject(err);
             }
             else {
-                var response = data.Responses[table].map((item) => {
+                let response = data.Responses[table].map((item) => {
                     return item;
                 })
                 resolve(response);
@@ -111,17 +105,16 @@ module.exports.batchGet = async (params, table) => {
 }
 
 module.exports.query = async (params) => {
-    // Create the DynamoDB Document Client
-    var documentClient = new AWS.DynamoDB.DocumentClient();
+    const command = new QueryCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        documentClient.query(params, function(err, data) {
+        docClient.send(command, function(err, data) {
             if (err) {
                 reject(err);
             }
             else {
-                var response = data.Items.map((item) => {
+                let response = data.Items.map((item) => {
                     return item;
                 })
                 resolve(response);
@@ -131,17 +124,16 @@ module.exports.query = async (params) => {
 }
 
 module.exports.scan = async (params) => {
-    // Create the DynamoDB Document Client
-    var documentClient = new AWS.DynamoDB.DocumentClient();
+    const command = new ScanCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        documentClient.scan(params, function(err, data) {
+        docClient.send(command, function(err, data) {
             if (err) {
                 reject(err);
             }
             else {
-                var response = data.Items.map((item) => {
+                let response = data.Items.map((item) => {
                     return item;
                 })
                 resolve(response);
