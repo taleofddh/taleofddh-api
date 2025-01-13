@@ -27,8 +27,7 @@ module.exports.findLinkList = async (event) => {
 };
 
 module.exports.findTravelDocuments = async (event) => {
-    const data = JSON.parse(event.body);
-    const prefix = data.prefix;
+    const prefix  = decodeURI(event.pathParameters.prefix);
     const folders = await storage.listBucket({Bucket: bucket, Delimiter: "/", Prefix: prefix + "/"});
     let docPromises ={};
     docPromises = folders.map(async (folder) => {
@@ -79,9 +78,8 @@ module.exports.findCountryVisitStatus = async (event) => {
 }
 
 module.exports.getTravelDocument = async (event) => {
-    const data = JSON.parse(event.body);
-    const prefix = data.prefix;
-    const file = data.file;
+    const prefix  = decodeURI(event.pathParameters.prefix) + '/' + decodeURI(event.pathParameters.folder);
+    const file = decodeURI(event.pathParameters.file);
     let object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + file});
     return {
         isBase64Encoded: true,

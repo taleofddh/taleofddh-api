@@ -116,7 +116,7 @@ functions:
     events:
       - http:
           path: findUserProfile
-          method: post
+          method: get
           cors: true
           authorizer: aws_iam
     environment:
