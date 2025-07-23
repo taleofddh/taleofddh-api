@@ -30,8 +30,8 @@
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.549.0",
-    "@aws-sdk/lib-dynamodb": "^3.549.0",
     "@aws-sdk/client-s3": "^3.550.0",
+    "@aws-sdk/lib-dynamodb": "^3.549.0",
     "@aws-sdk/s3-request-presigner": "^3.550.0",
     "serverless-apigw-binary": "^0.4.4",
     "serverless-domain-manager": "^7.0.2",
