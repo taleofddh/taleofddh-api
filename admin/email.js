@@ -1,13 +1,18 @@
+const { SESClient, SendTemplatedEmailCommand } = require("@aws-sdk/client-ses");
+
+// a client can be shared by different commands.
+const client = new SESClient({ region: process.env['REGION'] });
+
 // Load the AWS SDK for Node.js
-var AWS = require('aws-sdk');
+//var AWS = require('aws-sdk');
 const simpleParser = require('mailparser').simpleParser;
 // Set the region
-AWS.config.update({region: process.env['REGION']});
+//AWS.config.update({region: process.env['REGION']});
 
 module.exports.send = async (toAddress, templateName, templateData, ccAddress) => {
-    var ccList = ccAddress ? ccAddress : [];
+    const ccList = ccAddress ? ccAddress : [];
     // Create sendEmail params
-    var params = {
+    const params = {
         Destination: { /* required */
             CcAddresses: ccList,
             ToAddresses: [
@@ -22,11 +27,12 @@ module.exports.send = async (toAddress, templateName, templateData, ccAddress) =
     };
 
     // Create a SES client
-    var ses = new AWS.SES({apiVersion: '2010-12-01'});
+    //const ses = new AWS.SES({apiVersion: '2010-12-01'});
+    const command = new SendTemplatedEmailCommand(params);
 
     // for async it only works with Promise and resolve/reject
     return new Promise((resolve, reject) => {
-        ses.sendTemplatedEmail(params, function(err, data) {
+        client.send(command, function(err, data) {
             if (err) {
                 reject(err);
             }

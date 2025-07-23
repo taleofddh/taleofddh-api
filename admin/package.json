@@ -30,7 +30,12 @@
     "mailparser": "^3.6.4"
   },
   "devDependencies": {
-    "aws-sdk": "^2.1369.0",
+    "@aws-sdk/client-dynamodb": "^3.549.0",
+    "@aws-sdk/client-s3": "^3.550.0",
+    "@aws-sdk/client-secrets-manager": "^3.549.0",
+    "@aws-sdk/client-ses": "^3.731.1",
+    "@aws-sdk/lib-dynamodb": "^3.549.0",
+    "@aws-sdk/s3-request-presigner": "^3.550.0",
     "serverless-apigw-binary": "^0.4.4",
     "serverless-domain-manager": "^7.0.2",
     "serverless-dotenv-plugin": "^6.0.0",
