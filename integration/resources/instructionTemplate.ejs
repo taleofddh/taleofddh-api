@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    </head>
+    <body style="width:100%; background: rgb(255, 255, 255); margin: 0 auto; padding: 0px; font-family: Verdana; font-size: 14px; position: absolute; letter-spacing: 0px;">
+        <div style="display: table; width: 880px; margin: 0 auto; line-height: 14px;">
+<%- include('header') -%>
+            <div style="padding: 5px 0px; width: auto; clear: both;">
+                <div style="border-width: 1px; border-style: solid; border-color: rgb(192, 159, 128); width: 878px; height: auto; margin: auto; line-height: 22px; position: relative; background-color: rgb(255, 255, 255)">
+                    <div style="height: auto; line-height: 22px; padding: 10px 10px 0px;">
+                        <div style="font-family: Verdana; font-size: 14px; font-weight: normal; line-height: 22px; text-align: justify; padding: 5px 0px; margin: 0 auto;">
+                            <span>Dear <%= supplierQuote.supplier.name %>,</span>
+                            <br /><br />
+                            <span>We are delighted to inform you that <%= customerName %> has reviewed <%= service %> quotations from ServEase and wish to instruct your firm for their <%= service %> requirements.</span>
+                            <br /><br />
+                            <span>Our client reference number is <%= quotationNumber %>.</span>
+                            <br /><br />
+                            <span>For any queries please email us at <a href="mailto:enquiries@servease.io" target="blank">enquiries@servease.io</a> quoting your enquiry reference number.</span>
+                            <br /><br />
+                            <span>Kindly contact the client to complete the instruction and on-boarding process.</span>
+                            <br /><br />
+                            <div>
+                                <span style="color: #431c5d; font-weight: bold;">Client details</span>
+                                <table style="border: 1px solid rgb(169,169,169); border-collapse: collapse;">
+                                    <thead />
+                                    <tbody>
+                                        <tr>
+                                            <td style="border: 1px solid rgb(169,169,169);font-weight: bold;">Name</td>
+                                            <td style="border: 1px solid rgb(169,169,169); font-weight: normal;"><%= customerName %></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="border: 1px solid rgb(169,169,169); font-weight: bold;">Email</td>
+                                            <td style="border: 1px solid rgb(169,169,169); font-weight: normal;"><%= customerEmail %></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="border: 1px solid rgb(169,169,169); font-weight: bold;">Instructions</td>
+                                            <td style="border: 1px solid rgb(169,169,169); font-weight: normal;"><%= customerInstruction %></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <br /><br />
+                            <div>
+                                <span style="color: #431c5d; font-weight: bold;"><%= service %> requirements are listed below</span>
+                                <table style="border: 1px solid rgb(169,169,169); border-collapse: collapse;">
+                                    <thead>
+                                        <tr>
+                                            <th style="border: 1px solid rgb(169,169,169);">Question</th>
+                                            <th style="border: 1px solid rgb(169,169,169);">Response</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    <% for(const response of responseList) { %>
+                                        <% if(!response.hidden) { %>
+                                        <tr>
+                                            <td style="border: 1px solid rgb(169,169,169);"><span><%= response.question %></span></td>
+                                            <td style="border: 1px solid rgb(169,169,169);"><span><%= response.choice %></span></td>
+                                        </tr>
+                                        <% } %>
+                                    <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <br /><br />
+                        <div style="font-family: Verdana; font-size: 14px; font-weight: normal; line-height: 22px; text-align: justify; padding: 5px 0px; margin: 0 auto;">
+                            <span style="color: #431c5d; font-weight: bold;"><%= service %> partner</span>
+                            <table style="border: 1px solid rgb(169,169,169); border-collapse: collapse;">
+                                <thead />
+                                <tbody>
+                                <tr>
+                                    <td style="border: 1px solid rgb(169,169,169);">
+                                        <img src="https://servease.io/images/suppliers/<%= supplierQuote.supplier.logo %>" style="width: 200px; display: inline;">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid rgb(169,169,169); font-size: 1.1rem; font-weight: bold;"><%= supplierQuote.supplier.name %></td>
+                                </tr>
+                                <tr style="border: 1px solid rgb(169,169,169); font-weight: bold;">
+                                    <td><%= supplierQuote.supplier.shortDescription %></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                            <br /><br />
+                            <span style="color: #431c5d; font-weight: bold;"><%= service %> cost details</span>
+                            <table style="border: 1px solid rgb(169,169,169); border-collapse: collapse;">
+                                <thead>
+                                <tr>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: center; font-weight: bold;"></td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: center; font-weight: bold;">Net (£)</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: center; font-weight: bold;">VAT (£)</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: center; font-weight: bold;">Gross (£)</td>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <% if(subService === 'Purchase & Sell') { %>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169, 169, 169); text-align: left; font-weight: bold; color: rgb(67, 28, 93)">Purchase</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold;">Professional Fees</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: left;">Legal Fee:</td>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.purchaseLegalFee.baseFee %></td>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.purchaseLegalFee.taxAmount %></td>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.purchaseLegalFeeTotal %></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold;">Additional Fee</td>
+                                    </tr>
+                                    <% for(const additionalFee of supplierQuote.purchaseAdditionalFeeList) { %>
+                                        <% if(additionalFee.baseFee > 0) { %>
+                                            <tr>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: left;"><%= additionalFee.type %>:</td>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= additionalFee.baseFee %></td>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= additionalFee.taxAmount %></td>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= parseFloat(additionalFee.baseFee) + parseFloat(additionalFee.taxAmount) %></td>
+                                            </tr>
+                                        <% } %>
+                                    <% } %>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold;">Disbursments</td>
+                                    </tr>
+                                    <% for(const disbursement of supplierQuote.purchaseDisbursementList) { %>
+                                        <tr>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: left;"><%= disbursement.type %>:</td>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= disbursement.baseFee %></td>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= disbursement.taxAmount %></td>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= parseFloat(disbursement.baseFee) + parseFloat(disbursement.taxAmount) %></td>
+                                        </tr>
+                                    <% } %>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold; color: rgb(67, 28, 93)">Sell</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold;">Professional Fees</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: left;">Legal Fee:</td>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.sellLegalFee.baseFee %></td>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.sellLegalFee.taxAmount %></td>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.sellLegalFeeTotal %></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold;">Additional Fee</td>
+                                    </tr>
+                                    <% for(const additionalFee of supplierQuote.sellAdditionalFeeList) { %>
+                                        <% if(additionalFee.baseFee > 0) { %>
+                                            <tr>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: left;"><%= additionalFee.type %>:</td>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= additionalFee.baseFee %></td>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= additionalFee.taxAmount %></td>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= parseFloat(additionalFee.baseFee) + parseFloat(additionalFee.taxAmount) %></td>
+                                            </tr>
+                                        <% } %>
+                                    <% } %>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold;">Disbursments</td>
+                                    </tr>
+                                    <% for(const disbursement of supplierQuote.sellDisbursementList) { %>
+                                        <tr>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: left;"><%= disbursement.type %>:</td>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= disbursement.baseFee %></td>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= disbursement.taxAmount %></td>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= parseFloat(disbursement.baseFee) + parseFloat(disbursement.taxAmount) %></td>
+                                        </tr>
+                                    <% } %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold;">Professional Fees</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: left;">Legal Fee:</td>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.legalFee.baseFee %></td>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.legalFee.taxAmount %></td>
+                                        <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.legalFeeTotal %></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold;">Additional Fee</td>
+                                    </tr>
+                                    <% for(const additionalFee of supplierQuote.additionalFeeList) { %>
+                                        <% if(additionalFee.baseFee > 0) { %>
+                                            <tr>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: left;"><%= additionalFee.type %>:</td>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= additionalFee.baseFee %></td>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= additionalFee.taxAmount %></td>
+                                                <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= parseFloat(additionalFee.baseFee) + parseFloat(additionalFee.taxAmount) %></td>
+                                            </tr>
+                                        <% } %>
+                                    <% } %>
+                                    <tr>
+                                        <td colspan="4" style="border: 1px solid rgb(169,169,169); text-align: left; font-weight: bold;">Disbursments</td>
+                                    </tr>
+                                    <% for(const disbursement of supplierQuote.disbursementList) { %>
+                                        <tr>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: left;"><%= disbursement.type %>:</td>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= disbursement.baseFee %></td>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= disbursement.taxAmount %></td>
+                                            <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= parseFloat(disbursement.baseFee) + parseFloat(disbursement.taxAmount) %></td>
+                                        </tr>
+                                    <% } %>
+                                <% } %>
+                                <tr>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: left; font-size: 15px; font-weight: bold; color: rgb(67, 28, 93);">Total</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: right;">&nbsp;</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: right;">&nbsp;</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: right; font-size: 15px; font-weight: bold; color: rgb(67, 28, 93);">&pound;&nbsp;<%= supplierQuote.totalFee %></td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: left;">Stamp Duty</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: right;">&nbsp;</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: right;">&nbsp;</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.stampDutyTotal %></td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: left;">Land Registration</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: right;">&nbsp;</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: right;">&nbsp;</td>
+                                    <td style="border: 1px solid rgb(169,169,169); text-align: right;">&pound;&nbsp;<%= supplierQuote.landRegistrationTotal %></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <br /><br />
+                        <div style="padding: 5px; text-align: left; font-size: 14px; font-weight: bold;">What do we assume when calculating the conveyancing costs?</div>
+                        <div style="padding: 5px; text-align: left; font-size: 14px; font-weight: normal;">For conveyancing quotations and calculation of costs, the following assumptions have been made.</div>
+                        <div style="padding: 5px; text-align: left; font-size: 14px; font-weight: normal;">For <strong>legal fees</strong>, it’s assumed the case will be a standard, straightforward transaction and won’t be substantially more complex than would normally be expected on a residential sale or purchase. If the transaction is not as straightforward as it’s been assumed e.g. defects in title which may require a remedial action or lease extension or other unforeseen circumstances of time-consuming in nature, then there may be additional costs involved. Such costs will always be explained to you and prior authorisation will be obtained. </div>
+                        <div style="padding: 5px; text-align: left; font-size: 14px; font-weight: normal;">For <strong>leasehold properties</strong> the landlord or management company is likely to charge additional fees such as Notice of Transfer, Notice of Charge, Deed of Covenant, Certificate of Completion. These fees are not included within the quote as it is charged at the landlord's discretion and cannot be known without first contacting the landlord. These fees vary from property to property. You will be advised of these costs during your case and in writing as soon as the relevant leasehold documents are received from the relevant parties.</div>
+                        <div style="padding: 5px; text-align: left; font-size: 14px; font-weight: normal;">For purchases, the <strong>search pack</strong> includes the cost of Personal Local, Drainage/Water, Environmental and Chancel searches. Additional searches e.g. Mining may be required subject to the location of the property or when we receive more information. In such cases you will be informed in writing of the additional costs. Some mortgage lenders may insist upon a full official Local Authority Search for some conveyancing transactions and may also insist on additional due diligence and legal work to be carried out on their behalf, due to the mortgage product you have selected with them. If this is the case for your conveyancing transaction you will be informed in writing of the additional costs.</div>
+                        <div style="padding: 5px; text-align: left; font-size: 14px; font-weight: normal;">To comply with <strong>Anti Money Laundering</strong> legislation, it is a requirement to verify the identity of all clients. The fee quoted is for each person. </div>
+                        <div style="padding: 5px; text-align: left; font-size: 14px; font-weight: normal;">The <strong>Telegraphic Transfer</strong> Fee, often referred to as (CHAPS), is the bank charges for the electronic transfer of funds.</div>
+                        <div style="padding: 5px; text-align: left; font-size: 14px; font-weight: normal;">The <strong>lawyer checker</strong> process is for fraud prevention and to verify the bank account details of seller’s solicitor.</div>
+                        <div style="padding: 5px; text-align: left; font-size: 14px; font-weight: normal;">You have the right to <strong>cancel</strong> the instruction as long as you have not formally accepted by the solicitor or the conveyancing firm. If you decide to abort your transaction or withdraw the instruction at a later stage, then charge for the work that has been carried out may be payable.</div>
+                        <br />
+                        <div style="font-family: Verdana; font-size: 14px; font-weight: normal; line-height: 22px; text-align: justify; padding: 5px 0px; margin: 0 auto;">
+                            <span>Kind regards,</span>
+                            <br />
+                            <span>The ServEase Team</span>
+                        </div>
+                        <br /><br />
+                        <div style="font-family: Verdana; font-size: 12px; font-weight: normal; line-height: 20px; text-align: justify; padding: 5px 0px; margin: 0 auto;">
+                            <span>The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and maybe legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. If you don't wish to receive emails from us in future, you may <a href="mailto:enquiries@servease.io?subject=UNSUBSCRIBE ME" target="blank">unsubscribe</a>. ServEase Ltd is incorporated in England and Wales under company registration number 12325243. Our registered office address is 54 Middleton Gardens, Greater London, IG2 6DX, United Kingdom. ServEase Ltd is registered with the UK Information Commissioner's Office for data protection under ICO reference number ZA839745.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+<%- include('footer') -%>
+        </div>
+    </body>
+</html>

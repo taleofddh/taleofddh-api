@@ -1,0 +1,142 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: ${env:SERVICE_NAME, 'integration'}
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '4'
+
+provider:
+  name: aws
+  runtime: ${env:RUNTIME, 'nodejs22.x'}
+  endpointType: ${env:ENDPOINT_TYPE, 'regional'}
+  profile: ${env:APP_NAME, 'taleofddh'}
+
+  # you can overwrite defaults here
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'eu-west-1'}
+  environment:
+    ENVIRONMENT: ${opt:stage, self:provider.stage}
+    REGION: ${opt:region, 'eu-west-1'}
+    APP_NAME: ${env:APP_NAME, 'taleofddh'}
+    SERVICE_NAME: ${env:SERVICE_NAME, 'integration'}
+    S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-data'}
+    FROM_NAME: ${env:FROM_NAME, 'Adda Slough Information'}
+    EMAIL_HOST: ${env:EMAIL_HOST, 'smtp.gmail.com'}
+    EMAIL_PORT: ${env:EMAIL_PORT, '465'}
+    APP_BANNER: ${env:APP_BANNER, 'taleofddh-logo.png'}
+    FROM_ADDRESS: ${env:FROM_ADDRESS, 'helpdesk@taleofddh.com'}
+    COPY_ADDRESS: ${env:COPY_ADDRESS, 'helpdesk@taleofddh.com'}
+    CONFIG_SET: ${env:CONFIG_SET, 'taleofddh-configset'}
+    GOOGLE_API_CREDENTIALS_KEY: ${env:GOOGLE_API_CREDENTIALS_KEY, 'GOOGLE_API_CREDENTIALS'}
+    WHATSAPP_API_ENDPOINT: ${env:WHATSAPP_API_ENDPOINT, 'https://graph.facebook.com/v19.0'}
+    WHATSAPP_CREDENTIALS_KEY: ${env:WHATSAPP_CREDENTIALS_KEY, 'WHATSAPP_CREDENTIALS'}
+    WHATSAPP_GROUP_NAME: ${env:WHATSAPP_GROUP_NAME, 'Tale of DDH'}
+
+  apiGateway:
+    shouldStartNameWithService: true
+
+# you can add statements to the Lambda function's IAM Role here
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - lambda:InvokeFunction
+        - secretsmanager:GetSecretValue
+        - secretsmanager:PutSecretValue
+        - kms:Encrypt
+        - kms:Decrypt
+        - kms:ReEncrypt*
+        - kms:GenerateDataKey*
+        - kms:DescribeKey
+        - sns:Publish
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+        - ses:SendEmail
+        - ses:SendTemplatedEmail
+        - ses:SendBulkTemplatedEmail
+      Resource: "*"
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+
+# you can add packaging information here
+package:
+  individually: true
+
+functions:
+  sendEmailMessage:
+    handler: handler.sendEmailMessage
+    events:
+      - sqs:
+          arn:
+            Fn::Join:
+              - ':'
+              - - arn
+                - aws
+                - sqs
+                - Ref: AWS::Region
+                - Ref: AWS::AccountId
+                - ${env:MESSAGE_QUEUE, 'taleofddh-message'}-${opt:stage}
+
+  sendWhatsAppMessage:
+    handler: handler.sendWhatsAppMessage
+    events:
+      - sns:
+          arn:
+            Fn::Join:
+              - ':'
+              - - arn
+                - aws
+                - sns
+                - Ref: AWS::Region
+                - Ref: AWS::AccountId
+                - ${env:WHATSAPP_NOTIFICATION_TOPIC, 'taleofddh-whatsapp'}-${opt:stage}
+          topicName: ${env:MESSAGE_QUEUE, 'taleofddh-message'}-${opt:stage}
+
+  createOrUpdateReportFile:
+    handler: handler.createOrUpdateReportFile
+    events:
+      - sns:
+          arn:
+            Fn::Join:
+              - ':'
+              - - arn
+                - aws
+                - sns
+                - Ref: AWS::Region
+                - Ref: AWS::AccountId
+                - ${env:GOOGLE_DRIVE_NOTIFICATION_TOPIC, 'taleofddh-google-drive'}-${opt:stage}
+          topicName: ${env:MESSAGE_QUEUE, 'taleofddh-message'}-${opt:stage}
+    environment:
+      EMAIL_NOTIFICATION_TOPIC: ${env:EMAIL_NOTIFICATION_TOPIC, 'taleofddh-email'}-${opt:stage}
+
+# you can add CloudFormation resource templates here
+#resources:
+#  # API Gateway Errors
+#  - ${file(resources/api-gateway-errors.yml)}
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"
+
+plugins:
+  - serverless-offline
+
+custom:
+  stage: ${opt:stage, self:provider.stage}

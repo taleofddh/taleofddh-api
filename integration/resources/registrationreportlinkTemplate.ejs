@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body style="width:100%; background: rgb(255, 255, 255); margin: 0 auto; padding: 0px; font-family: Verdana; font-size: 14px; position: absolute; letter-spacing: 0px;">
+<div style="display: table; width: 880px; margin: 0 auto; line-height: 14px;">
+    <%- include('header') -%>
+    <div style="background-color: rgb(251, 251, 251); padding: 10px 5px; width: 870px; height: auto; text-align: center; font-family: Verdana; color: rgb(67, 28, 93);">
+        <span>Your Event Registration Report <%= fileName %></span>
+    </div>
+    <div style="padding: 5px 0px; width: auto; clear: both;">
+        <div style="border-width: 1px; border-style: solid; border-color: rgb(192, 159, 128); width: 878px; height: auto; margin: auto; line-height: 22px; position: relative; background-color: rgb(255, 255, 255)">
+            <div style="height: auto; line-height: 22px; padding: 10px 10px 0px;">
+                <div style="font-family: Verdana; font-size: 14px; font-weight: normal; line-height: 22px; text-align: justify; padding: 5px 0px;">
+                    <span>Dear <%= name %>,</span>
+                    <br /><br />
+                    <span>We have created following registration report for <%= reportName %>. This email is an acknowledgement for the same.</span>
+                    <br /><br />
+                    <span><a href="<%= link %>" target="_blank"><%= fileName %></a></span>
+                    <br /><br />
+                    <span>For any queries please email us at <a href="mailto:addasloughinformation@gmail.com" target="blank">addasloughinformation@gmail.com</a> quoting registration reference number.</span>
+                    <br /><br />
+                    <span>Kind regards,</span>
+                    <br />
+                    <span>Adda Slough Team</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <%- include('footer') -%>
+</div>
+</body>
+</html>

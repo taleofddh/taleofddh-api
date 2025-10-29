@@ -1,0 +1,11 @@
+We are delighted that you chose to stay connected with us. This email is an acknowledgement for the same.
+{{#if servEaseEnquiryList}}
+    Your Response to ServEase Enquiry
+    | Enquiry | Response |
+    {{#each servEaseEnquiryList}}
+        | {{enquiry}} | {{response}} |
+    {{/each}}
+{{/if}}
+We shall keep you informed about our roadmap and plan of launching new services.
+ServEase Team
+If you don't wish to receive emails in future, you may unsubscribe by writing to enquiries@servease.io with subject 'UNSUBSCRIBE ME'

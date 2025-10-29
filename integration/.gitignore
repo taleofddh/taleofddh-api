@@ -1,0 +1,16 @@
+# package directories
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless
+
+# misc
+.DS_Store
+.env
+.env.dev.local
+.env.uat.local
+.env.prod.local
+/resources/Kali Pujo 2025 Event Registration Test.xlsx
+/resources/Kali Pujo 2025.json
+/.npmrc

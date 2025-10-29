@@ -1,0 +1,44 @@
+{
+  "name": "integration-service",
+  "version": "4.0.0",
+  "description": "Integration API for Adda Slough",
+  "type": "module",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Devadyuti Das",
+  "repository": {
+    "type": "git",
+    "url": "git+https://git@github.com/taleofddh/taleofddh-api.git"
+  },
+  "keywords": [
+    "taleofddh",
+    "email",
+    "integration"
+  ],
+  "bugs": {
+    "url": "https://github.com/taleofddh/taleofddh-api/issues"
+  },
+  "homepage": "https://github.com/taleofddh/taleofddh-apii#readme",
+  "dependencies": {
+    "@taleofddh/drive": "^1.0.0",
+    "@taleofddh/gmail": "^1.0.0",
+    "@taleofddh/identity": "^1.0.0",
+    "@taleofddh/notification": "^1.0.0",
+    "@taleofddh/response": "^1.0.0",
+    "@taleofddh/secret": "^1.0.0",
+    "@taleofddh/text": "^1.0.0",
+    "@taleofddh/whatsapp": "^1.0.0",
+    "@taleofddh/workbook": "^1.0.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.919.0",
+    "dotenv": "^17.2.3",
+    "serverless-domain-manager": "^8.0.0",
+    "serverless-offline": "^14.4.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
