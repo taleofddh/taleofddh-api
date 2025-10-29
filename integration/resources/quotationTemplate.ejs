@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head></head>
+    <body style="width:100%; background: rgb(255, 255, 255); margin: 0 auto; padding: 0px; font-family: Verdana; font-size: 14px; position: absolute; letter-spacing: 0px;">
+        <div style="display: table; width: 880px; margin: 0 auto; line-height: 14px;">
+<%- include('header') -%>
+            <div style="padding: 5px 0px; width: auto; clear: both;">
+                <div style="border-width: 1px; border-style: solid; border-color: rgb(192, 159, 128); width: 878px; height: auto; margin: auto; line-height: 22px; position: relative; background-color: rgb(255, 255, 255)">
+                    <div style="height: auto; line-height: 22px; padding: 10px 10px 0px;">
+                        <div style="font-family: Verdana; font-size: 14px; font-weight: normal; line-height: 22px; text-align: justify; padding: 5px 0px; margin: 0 auto;">
+                            <span>Dear <%= name %>,</span>
+                            <br /><br />
+                            <span>Thank you for using ServEase to search <%= service %> quotations for your <%= titleSuffix %>.</span>
+                            <br /><br />
+                            <span>Your quotation reference number is <%= quotationNumber %>. All Quotes and fees are valid for 30 days from the date of quotation (<%= new Intl.DateTimeFormat('en-GB', { year: 'numeric', month: 'long', day: '2-digit'}).format(new Date(expiry)) %>)</span>
+                            <br /><br />
+                            <span>Please click on button below to retrieve your quotations.</span>
+                            <br /><br />
+                            <a href="<%= baseUrl + '/' + category + '-quotation-retrieve?key=' + key %>" style="font-size:16px; font-weight: bold; font-family:Verdana; color: rgb(255, 255, 255); text-decoration: none; line-height:40px; width:100%; display:inline-block">
+                                <span style=" text-align: center; width: 300px; height: 40px; background-color: rgb(43, 84, 127); -webkit-border-radius: 5px; -moz-border-radius: 5px; border-radius: 5px; display: block;">View your <%= service %> quotes</span>
+                            </a>
+                            <br /><br />
+                            <% if(responseList && responseList.length > 0) { %>
+                            <div>
+                                <span>Your Response to the questions are listed below</span>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Question</th>
+                                            <th>Response</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    <% for(const response of responseList) { %>
+                                        <% if(!response.hidden) { %>
+                                        <tr>
+                                            <td><span><%= response.question %></span></td>
+                                            <td><span><%= response.choice %></span></td>
+                                        </tr>
+                                        <% } %>
+                                    <% } %>
+                                    </tbody>
+                                </table>
+                                <br /><br />
+                            </div>
+                            <% } %>
+                            <span>If you would like to change any of the responses, please resubmit details for amended quotes.</span>
+                            <br /><br />
+                            <span>We look forward to hearing from you.</span>
+                            <br /><br />
+                            <span>For any queries please email us at <a href="mailto:enquiries@servease.io" target="blank">enquiries@servease.io</a> quoting your enquiry reference number.</span>
+                            <br /><br />
+                            <span>Kind regards,</span>
+                            <br />
+                            <span>The ServEase Team</span>
+                            <br /><br />
+                        </div>
+                        <div style="font-family: Verdana; font-size: 12px; font-weight: normal; line-height: 20px; text-align: justify; padding: 5px 0px; margin: 0 auto;">
+                            <span>You received this email because <%= email %> was used to generate a quotation on </span><a href="https://servease.io">https://servease.io</a><span>. The contents of this email message and any attachments are intended solely for the addressee(s) and may contain confidential and/or privileged information and may be legally protected from disclosure. If you are not the intended recipient of this message or their agent, or if this message has been addressed to you in error, please immediately alert the sender by reply email and then delete this message and any attachments. If you are not the intended recipient, you are hereby notified that any use, dissemination, copying, or storage of this message or its attachments is strictly prohibited. If you don't wish to receive emails from us in future, you may <a href="mailto:enquiries@servease.io?subject=UNSUBSCRIBE ME" target="blank">unsubscribe</a>. ServEase Ltd is incorporated in England and Wales under company registration number 12325243. Our registered office address is 54 Middleton Gardens, Greater London, IG2 6DX, United Kingdom. ServEase Ltd is registered with the UK Information Commissioner's Office for data protection under ICO reference number ZA839745.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+<%- include('footer') -%>
+        </div>
+    </body>
+</html>
