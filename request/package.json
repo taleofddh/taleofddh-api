@@ -1,6 +1,6 @@
 {
   "name": "request-service",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Request APIs for Tale of DDH",
   "main": "handler.js",
   "scripts": {
@@ -36,5 +36,8 @@
     "serverless-domain-manager": "^7.0.2",
     "serverless-dotenv-plugin": "^6.0.0",
     "serverless-offline": "^12.0.4"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
