@@ -1,8 +1,9 @@
 'use strict';
-const database = require('./db');
+import * as database from '@taleofddh/database';
+import * as response from '@taleofddh/response';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
-module.exports.findIdentity = async (event) => {
+export const findIdentity = async (event) => {
     let userId = event.requestContext.identity.cognitoIdentityId;
     const identity = {
         identityId: userId
@@ -17,7 +18,7 @@ module.exports.findIdentity = async (event) => {
     };
 };
 
-module.exports.findUser = async (event) => {
+export const findUser = async (event) => {
     const data = JSON.parse(event.body);
     const params = {
         TableName: table,
@@ -37,7 +38,7 @@ module.exports.findUser = async (event) => {
     };
 };
 
-module.exports.createUser = async (event) => {
+export const createUser = async (event) => {
     const data = JSON.parse(event.body);
     const profile = {
         table: 'userProfile',
@@ -70,7 +71,7 @@ module.exports.createUser = async (event) => {
     };
 };
 
-module.exports.updateUser = async (event) => {
+export const updateUser = async (event) => {
     const data = JSON.parse(event.body);
     let update = [];
     let expAttrValues = {};
@@ -107,7 +108,7 @@ module.exports.updateUser = async (event) => {
     };
 };
 
-module.exports.findUserProfile = async (event) => {
+export const findUserProfile = async (event) => {
     let userId = event.requestContext.identity.cognitoIdentityId;
     let params = {
         TableName: table,
@@ -126,7 +127,7 @@ module.exports.findUserProfile = async (event) => {
     };
 };
 
-module.exports.createUserProfile = async (event) => {
+export const createUserProfile = async (event) => {
     const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
     let params = data.email ?
@@ -256,7 +257,7 @@ const createProfile = async (data, userId) => {
     return await database.get(params);
 }
 
-module.exports.updateUserProfile = async (event) => {
+export const updateUserProfile = async (event) => {
     const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
     let params = data.email ?
@@ -416,7 +417,7 @@ const updateProfile = async (data, userId, userNumber) => {
     };
 };
 
-module.exports.findUserRole = async (event) => {
+export const findUserRole = async (event) => {
     const data = JSON.parse(event.body);
     let identityId = event.requestContext.identity.cognitoIdentityId;
     let params = {

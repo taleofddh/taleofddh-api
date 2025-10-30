@@ -1,8 +1,9 @@
 'use strict';
-const database = require('./db');
+import * as database from '@taleofddh/database';
+import * as response from '@taleofddh/response';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
-module.exports.findAlbumList = async (event) => {
+export const findAlbumList = async (event) => {
     let userId = event.requestContext.identity.cognitoIdentityId;
     const params =
         (!userId || userId === undefined) ?
@@ -18,17 +19,10 @@ module.exports.findAlbumList = async (event) => {
         };
     const albumList = await database.scan(params);
     albumList.sort((a, b) => new Date(b.endDate) - new Date(a.endDate) );
-    return {
-        statusCode: 200,
-        body: JSON.stringify(albumList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(albumList, 200);
 };
 
-module.exports.findRestrictedAlbumList = async (event) => {
+export const findRestrictedAlbumList = async (event) => {
     const data = JSON.parse(event.body);
     let restrictedFlag  = (data.restrictedFlag === 'true');
     let userId = event.requestContext.identity.cognitoIdentityId;
@@ -43,17 +37,10 @@ module.exports.findRestrictedAlbumList = async (event) => {
     const albumList = (restrictedFlag && (!userId || userId === undefined)) ? [] : await database.scan(params);
     if(albumList.length > 0)
         albumList.sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(albumList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(albumList, 200);
 };
 
-module.exports.updateAlbumViewCount = async (event) => {
+export const updateAlbumViewCount = async (event) => {
     const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
     const params = {
@@ -69,17 +56,10 @@ module.exports.updateAlbumViewCount = async (event) => {
         ReturnValues: "ALL_NEW"
     }
     const updatedAlbum = (!userId || userId === undefined) ? {} : await database.update(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(updatedAlbum),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(updatedAlbum, 200);
 };
 
-module.exports.findAlbumPhotoList = async (event) => {
+export const findAlbumPhotoList = async (event) => {
     const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
     let params = {
@@ -113,17 +93,10 @@ module.exports.findAlbumPhotoList = async (event) => {
         };
     album.photos = await database.query(params);
     album.photos.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(album),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(album, 200);
 };
 
-module.exports.findPhotoList = async (event) => {
+export const findPhotoList = async (event) => {
     const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
     const params =
@@ -150,17 +123,10 @@ module.exports.findPhotoList = async (event) => {
         };
     const photoList = await database.query(params);
     photoList.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(photoList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(photoList, 200);
 };
 
-module.exports.findRestrictedPhotoList = async (event) => {
+export const findRestrictedPhotoList = async (event) => {
     const data = JSON.parse(event.body);
     let restrictedFlag  = (data.restrictedFlag === 'true');
     let userId = event.requestContext.identity.cognitoIdentityId;
@@ -188,17 +154,10 @@ module.exports.findRestrictedPhotoList = async (event) => {
         };
     const photoList = (restrictedFlag && (!userId || userId === undefined)) ? [] : await database.query(params);
     photoList.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(photoList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(photoList, 200);
 };
 
-module.exports.updatePhotoViewCount = async (event) => {
+export const updatePhotoViewCount = async (event) => {
     const data = JSON.parse(event.body);
     let userId = event.requestContext.identity.cognitoIdentityId;
     const params = {
@@ -215,12 +174,5 @@ module.exports.updatePhotoViewCount = async (event) => {
         ReturnValues: "UPDATED_NEW"
     }
     const updatedPhoto = (!userId || userId === undefined) ? {} : await database.update(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(updatedPhoto),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(updatedPhoto, 200);
 };

@@ -1,8 +1,9 @@
 'use strict';
-const database = require('./db');
+import * as database from '@taleofddh/database';
+import * as response from '@taleofddh/response';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
-module.exports.findMenuList = async (event) => {
+export const findMenuList = async (event) => {
     let active  = (event.pathParameters.active === 'true');
     const params = {
         TableName: table,
@@ -14,17 +15,10 @@ module.exports.findMenuList = async (event) => {
     };
     const menus = await database.scan(params);
     menus.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(menus),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(menus, 200);
 };
 
-module.exports.findPromotionList = async (event) => {
+export const findPromotionList = async (event) => {
     let active  = (event.pathParameters.active === 'true');
     const params = {
         TableName: table,
@@ -36,81 +30,46 @@ module.exports.findPromotionList = async (event) => {
     };
     const promotions = await database.scan(params);
     promotions.sort((a, b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(promotions),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(promotions, 200);
 };
 
-module.exports.findAboutUsList = async (event) => {
+export const findAboutUsList = async (event) => {
     const params = {
         TableName: table
     };
     const aboutUsList = await database.scan(params);
     aboutUsList.sort((a, b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(aboutUsList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(aboutUsList, 200);
 };
 
-module.exports.findTermsAndConditionsList = async (event) => {
+export const findTermsAndConditionsList = async (event) => {
     const params = {
         TableName: table
     };
     const termsAndConditionsList = await database.scan(params);
     termsAndConditionsList.sort((a, b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(termsAndConditionsList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(termsAndConditionsList, 200);
 };
 
-module.exports.findPrivacyPolicyList = async (event) => {
+export const findPrivacyPolicyList = async (event) => {
     const params = {
         TableName: table
     };
     const privacyPolicyList = await database.scan(params);
     privacyPolicyList.sort((a, b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(privacyPolicyList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(privacyPolicyList, 200);
 };
 
-module.exports.findFrequentlyAskedQuestionList = async (event) => {
+export const findFrequentlyAskedQuestionList = async (event) => {
     const params = {
         TableName: table
     };
     const frequentlyAskedQuestionList = await database.scan(params);
     frequentlyAskedQuestionList.sort((a, b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(frequentlyAskedQuestionList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(frequentlyAskedQuestionList, 200);
 };
 
-module.exports.findCountryByCode = async (event) => {
+export const findCountryByCode = async (event) => {
     let countryCode  = event.pathParameters.countryCode;
     const params = {
         TableName: table,
@@ -122,17 +81,10 @@ module.exports.findCountryByCode = async (event) => {
     };
     const country = await database.query(params);
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(country),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(country, 200);
 };
 
-module.exports.findCountryByName = async (event) => {
+export const findCountryByName = async (event) => {
     let countryName  = event.pathParameters.countryName;
     const params = {
         TableName: table,
@@ -143,17 +95,10 @@ module.exports.findCountryByName = async (event) => {
         ExpressionAttributeValues: {':name': countryName}
     };
     const country = await database.scan(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(country),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(country, 200);
 };
 
-module.exports.createAuditEntry = async (event) => {
+export const createAuditEntry = async (event) => {
     const data = JSON.parse(event.body);
     const doc = {
         TableName: table,
@@ -167,12 +112,5 @@ module.exports.createAuditEntry = async (event) => {
         }
     }
     console.log("Audit", doc);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(doc),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(doc, 200);
 };

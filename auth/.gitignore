@@ -11,3 +11,4 @@ jspm_packages
 .env.dev.local
 .env.prod.local
 /data/
+.npmrc

@@ -11,7 +11,7 @@
 #
 # Happy Coding!
 
-service: ${env:SERVICE_NAME}
+service: ${env:SERVICE_NAME, 'gallery'}
 # app and org for use with dashboard.serverless.com
 #app: your-app-name
 #org: your-org-name
@@ -20,13 +20,11 @@ service: ${env:SERVICE_NAME}
 # Check out our docs for more details
 frameworkVersion: '4'
 
-useDotenv: true
-
 provider:
   name: aws
-  runtime: ${env:RUNTIME}
-  endpointType: ${env:ENDPOINT_TYPE}
-  profile: ${env:APP_NAME}
+  runtime: ${env:RUNTIME, 'nodejs22.x'}
+  endpointType: ${env:ENDPOINT_TYPE, 'regional'}
+  profile: ${env:APP_NAME, 'taleofddh'}
 
   # you can overwrite defaults here
   stage: ${opt:stage, 'dev'}
@@ -34,6 +32,8 @@ provider:
   environment:
     ENVIRONMENT: ${opt:stage, self:provider.stage}
     REGION: ${opt:region, 'eu-west-1'}
+    APP_NAME: ${env:APP_NAME, 'taleofddh'}
+    SERVICE_NAME: ${env:SERVICE_NAME, 'gallery'}
 
   apiGateway:
     shouldStartNameWithService: true
@@ -59,7 +59,7 @@ provider:
         - dynamodb:BatchWriteItem
         - dynamodb:PutItem
         - dynamodb:UpdateItem
-      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.*
 
 # you can define service wide environment variables here
 #  environment:
@@ -163,24 +163,19 @@ resources:
 plugins:
   - serverless-domain-manager
   - serverless-offline
-  - serverless-dotenv-plugin
 
 custom:
-  dotenv:
-    include:
-      - APP_NAME
-      - SERVICE_NAME
   stage: ${opt:stage, self:provider.stage}
   domains:
-    prod: ${env:API_DOMAIN}
-    dev: ${self:custom.stage}-${env:API_DOMAIN}
+    prod: ${env:API_DOMAIN, 'taleofddh.com'}
+    dev: ${self:custom.stage}-${env:API_DOMAIN, 'taleofddh.com'}
   customDomain:
     domainName: ${self:custom.domains.${self:custom.stage}}
-    basePath: ${env:BASE_PATH}
+    basePath: ${env:BASE_PATH, 'gallery'}
     stage: ${self:custom.stage}
-    certificateName: ${env:CERTIFICATE_NAME}
-    hostedZoneId: ${env:HOSTED_ZONE_ID}
+    certificateName: ${env:CERTIFICATE_NAME, '*.taleofddh.com'}
+    hostedZoneId: ${env:HOSTED_ZONE_ID, 'Z044305914KLOWN7PAF5E'}
     createRoute53Record: true
-    endpointType: ${env:ENDPOINT_TYPE}
-    securityPolicy: ${env:SECURITY_POLICY}
-    apiType: ${env:API_TYPE}
+    endpointType: ${env:ENDPOINT_TYPE, 'regional'}
+    securityPolicy: ${env:SECURITY_POLICY, 'tls_1_2'}
+    apiType: ${env:API_TYPE, 'rest'}

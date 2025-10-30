@@ -1,14 +1,16 @@
 'use strict';
-const storage = require('./storage');
-const email = require('./email');
-const database = require('./db');
+import * as database from '@taleofddh/database';
+import * as storage from '@taleofddh/storage';
+import * as secret from '@taleofddh/secret';
+import * as response from '@taleofddh/response';
+import * as email from '@taleofddh/email';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucket = process.env['S3_BUCKET'];
 
-module.exports.processInboundMessage = async (event) => {
+export const processInboundMessage = async (event) => {
     const prefix = "Inbox";
     console.log('Process email');
-    var sesNotification = event.Records[0].ses;
+    let sesNotification = event.Records[0].ses;
     console.log("SES Notification:\n", JSON.stringify(sesNotification, null, 2));
     // Retrieve the email from your bucket
     const object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + sesNotification.mail.messageId});
@@ -29,7 +31,7 @@ module.exports.processInboundMessage = async (event) => {
     };
 }
 
-module.exports.processStoredMessage = async (event) => {
+export const processStoredMessage = async (event) => {
     const data = JSON.parse(event.body);
     const prefix = data.prefix;
     // Retrieve the message from your bucket
@@ -71,7 +73,7 @@ module.exports.processStoredMessage = async (event) => {
     };
 }
 
-module.exports.findMessageList = async (event) => {
+export const findMessageList = async (event) => {
     const data = JSON.parse(event.body);
     const folder = data.folder;
 
@@ -94,7 +96,7 @@ module.exports.findMessageList = async (event) => {
     };
 }
 
-module.exports.getEmailMessage = async (event) => {
+export const getEmailMessage = async (event) => {
     const data = JSON.parse(event.body);
     const prefix = data.prefix;
     const file = data.file;

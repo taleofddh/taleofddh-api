@@ -1,15 +1,15 @@
-const fs = require('fs');
-const path = require('path');
-const csv = require('fast-csv');
-const dotenv = require('dotenv');
-const database = require('./db');
+import fs from 'fs';
+import path from 'path';
+import csv from 'fast-csv';
+import dotenv from 'dotenv';
+import * as database from '@taleofddh/database';
 
 dotenv.config();
 
 let actionDeleteKeys = [];
 let actionItems = [];
 let actionGetKeys = [];
-fs.createReadStream(path.resolve(__dirname, 'data', 'action.csv'))
+fs.createReadStream(path.resolve(process.cwd(), 'request', 'data', 'action.csv'))
     .pipe(csv.parse({ headers: true }))
     .transform(data => ({
         action: data.action,
@@ -47,7 +47,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'action.csv'))
 let statusDeleteKeys = [];
 let statusItems = [];
 let statusGetKeys = [];
-fs.createReadStream(path.resolve(__dirname, 'data', 'status.csv'))
+fs.createReadStream(path.resolve(process.cwd(), 'request', 'data', 'status.csv'))
     .pipe(csv.parse({ headers: true }))
     .transform(data => ({
         status: data.status,
@@ -85,7 +85,7 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'status.csv'))
 let typeDeleteKeys = [];
 let typeItems = [];
 let typeGetKeys = [];
-fs.createReadStream(path.resolve(__dirname, 'data', 'type.csv'))
+fs.createReadStream(path.resolve(process.cwd(), 'request', 'data', 'type.csv'))
     .pipe(csv.parse({ headers: true }))
     .transform(data => ({
         type: data.type,

@@ -2,6 +2,7 @@
     "name": "taleofddh-api",
     "version": "4.0.0",
     "description": "Multi-module serverless Lambda repository with automated deployment scripts",
+    "type": "module",
     "scripts": {
         "install:all": "node scripts/install.js",
         "deploy:dev": "node scripts/deploy.js dev",
