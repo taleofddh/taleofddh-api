@@ -118,7 +118,7 @@ custom:
     dev: ${self:custom.stage}-${env:API_DOMAIN, 'api.taleofddh.com'}
   customDomain:
     domainName: ${self:custom.domains.${self:custom.stage}}
-    basePath: ${env:BASE_PATH, 'blog'}
+    basePath: ${env:BASE_PATH, 'email'}
     stage: ${self:custom.stage}
     certificateName: ${env:CERTIFICATE_NAME, '*.taleofddh.com'}
     hostedZoneId: ${env:HOSTED_ZONE_ID, 'Z044305914KLOWN7PAF5E'}
