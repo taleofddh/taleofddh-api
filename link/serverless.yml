@@ -150,8 +150,8 @@ plugins:
 custom:
   stage: ${opt:stage, self:provider.stage}
   domains:
-    prod: ${env:API_DOMAIN, 'taleofddh.com'}
-    dev: ${self:custom.stage}-${env:API_DOMAIN, 'taleofddh.com'}
+    prod: ${env:API_DOMAIN, 'api.taleofddh.com'}
+    dev: ${self:custom.stage}-${env:API_DOMAIN, 'api.taleofddh.com'}
   customDomain:
     domainName: ${self:custom.domains.${self:custom.stage}}
     basePath: ${env:BASE_PATH, 'link'}
