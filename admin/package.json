@@ -26,11 +26,11 @@
   "dependencies": {
     "@fast-csv/format": "^5.0.5",
     "@fast-csv/parse": "^5.0.5",
-    "@taleofddh/database": "^1.1.1",
-    "@taleofddh/email": "^1.1.1",
-    "@taleofddh/storage": "^1.1.1",
-    "@taleofddh/secret": "^1.1.1",
-    "@taleofddh/response": "^1.1.1",
+    "@taleofddh/database": "^1.1.2",
+    "@taleofddh/email": "^1.1.2",
+    "@taleofddh/storage": "^1.1.2",
+    "@taleofddh/secret": "^1.1.2",
+    "@taleofddh/response": "^1.1.2",
     "dotenv": "^17.2.3",
     "fast-csv": "5.0.5",
     "mailparser": "^3.7.5"
