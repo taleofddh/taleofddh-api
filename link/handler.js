@@ -1,10 +1,12 @@
 'use strict';
-const database = require('./db');
-const storage = require('./storage');
+import * as database from '@taleofddh/database';
+import * as storage from '@taleofddh/storage';
+import * as response from '@taleofddh/response';
+
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucket = process.env['S3_BUCKET'];
 
-module.exports.findLinkList = async (event) => {
+export const findLinkList = async (event) => {
     let active  = (event.pathParameters.active === 'true');
     const params = {
         TableName: table,
@@ -16,17 +18,10 @@ module.exports.findLinkList = async (event) => {
     };
     const links = await database.scan(params);
     links.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(links),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(links, 200);
 };
 
-module.exports.findTravelDocuments = async (event) => {
+export const findTravelDocuments = async (event) => {
     const prefix  = decodeURI(event.pathParameters.prefix);
     const folders = await storage.listBucket({Bucket: bucket, Delimiter: "/", Prefix: prefix + "/"});
     let docPromises ={};
@@ -34,17 +29,10 @@ module.exports.findTravelDocuments = async (event) => {
         return {...docPromises, folder: folder, files: await storage.listFolder({Bucket: bucket, Delimiter: "/", Prefix: prefix + "/" + folder + "/"})}
     })
     const docs = await Promise.all(docPromises);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(docs),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(docs, 200);
 }
 
-module.exports.findCountryVisitStatus = async (event) => {
+export const findCountryVisitStatus = async (event) => {
     const params = {
         TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'visitStatus'
     };
@@ -67,17 +55,10 @@ module.exports.findCountryVisitStatus = async (event) => {
         return {...countryVisitPromises, _id: item._id, sequence: item.sequence, status: item.status, color: item.color, backgroundColor: item.backgroundColor, countries: await database.query(countryParams)}
     })
     const countryVisitList = await Promise.all(countryVisitPromises);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(countryVisitList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(countryVisitList, 200);
 }
 
-module.exports.getTravelDocument = async (event) => {
+export const getTravelDocument = async (event) => {
     const prefix  = decodeURI(event.pathParameters.prefix) + '/' + decodeURI(event.pathParameters.folder);
     const file = decodeURI(event.pathParameters.file);
     let object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + file});

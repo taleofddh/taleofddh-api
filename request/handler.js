@@ -1,9 +1,10 @@
 'use strict';
-const fetch = require('node-fetch');
-const database = require('./db');
+import fetch from 'node-fetch';
+import * as database from '@taleofddh/database';
+import * as response from '@taleofddh/response';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
-module.exports.createRequest = async (event) => {
+export const createRequest = async (event) => {
     const data = JSON.parse(event.body);
     let params = {
         TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'type',
@@ -101,17 +102,10 @@ module.exports.createRequest = async (event) => {
         console.log("Attempted to send email to " + email + " for request # " + number);
     }
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(request.Item),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(request.Item, 200);
 };
 
-module.exports.findRequest = async (event) => {
+export const findRequest = async (event) => {
     const data = JSON.parse(event.body);
     const params = {
         TableName: table,
@@ -121,17 +115,10 @@ module.exports.findRequest = async (event) => {
         }
     };
     const request = await database.get(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(request),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(request, 200);
 };
 
-module.exports.updateSubscription = async (event) => {
+export const updateSubscription = async (event) => {
     const data = JSON.parse(event.body);
     const params = {
         TableName: table,
@@ -158,14 +145,7 @@ module.exports.updateSubscription = async (event) => {
         console.log("Attempted to send email to " + data.email + " for subscription option " + data.subscribed);
     }
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(data),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(data, 200);
 };
 
 const sendConfirmation = async (url, data) => {

@@ -1,8 +1,12 @@
-const fs = require('fs');
-const path = require('path');
-const csv = require('fast-csv');
-const dotenv = require('dotenv');
-const database = require('./db');
+import fs from 'fs';
+import path from 'path';
+import csv from 'fast-csv';
+import dotenv from 'dotenv';
+import * as database from '@taleofddh/database';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 

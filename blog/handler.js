@@ -1,26 +1,20 @@
 'use strict';
-const database = require('./db');
-const storage = require('./storage');
+import * as database from '@taleofddh/database';
+import * as storage from '@taleofddh/storage';
+import * as response from '@taleofddh/response';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucket = process.env['S3_BUCKET'];
 
-module.exports.findBlogList = async (event) => {
+export const findBlogList = async (event) => {
     const params = {
         TableName: table
     };
     const blogList = await database.scan(params);
     blogList.sort((a, b) => a.category.localeCompare(b.category) || new Date(b.date) - new Date(a.date));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(blogList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(blogList, 200);
 };
 
-module.exports.findCategorizedBlogList = async (event) => {
+export const findCategorizedBlogList = async (event) => {
     const data = JSON.parse(event.body);
     let homePageFlag = data.homePageBlog === 'true';
     const params = {
@@ -36,17 +30,10 @@ module.exports.findCategorizedBlogList = async (event) => {
     };
     const blogList = await database.scan(params);
     blogList.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0) || a.date - b.date);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(blogList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(blogList, 200);
 };
 
-module.exports.updateBlogViewCount = async (event) => {
+export const updateBlogViewCount = async (event) => {
     const data = JSON.parse(event.body);
     const params = {
         TableName: table,
@@ -62,17 +49,10 @@ module.exports.updateBlogViewCount = async (event) => {
         ReturnValues: "ALL_NEW"
     }
     const updatedBlog = await database.update(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(updatedBlog),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(updatedBlog, 200);
 };
 
-module.exports.findBlogArticleList = async (event) => {
+export const findBlogArticleList = async (event) => {
     const data = JSON.parse(event.body);
     let params = {
         TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'blog',
@@ -92,17 +72,10 @@ module.exports.findBlogArticleList = async (event) => {
     };
     blog.contents = await database.query(params);
     blog.contents.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(blog),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(blog, 200);
 };
 
-module.exports.findArticleList = async (event) => {
+export const findArticleList = async (event) => {
     const data = JSON.parse(event.body);
     const params = {
         TableName: table,
@@ -114,17 +87,10 @@ module.exports.findArticleList = async (event) => {
     };
     const articleList = await database.query(params);
     articleList.sort((a,b) => (a.sectionId > b.sectionId) ? 1 : ((b.sectionId > a.sectionId) ? -1 : 0));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(articleList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(articleList, 200);
 };
 
-module.exports.findArticleCommentList = async (event) => {
+export const findArticleCommentList = async (event) => {
     const data = JSON.parse(event.body);
     const params = {
         TableName: table,
@@ -136,17 +102,10 @@ module.exports.findArticleCommentList = async (event) => {
         ScanIndexForward: false
     };
     const articleCommentList = await database.query(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(articleCommentList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(articleCommentList, 200);
 };
 
-module.exports.addArticleComment = async (event) => {
+export const addArticleComment = async (event) => {
     const data = JSON.parse(event.body);
     const params = {
         TableName: table,
@@ -158,17 +117,10 @@ module.exports.addArticleComment = async (event) => {
         }
     }
     const articleComment = await database.put(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(articleComment),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(articleComment, 200);
 };
 
-module.exports.getArticleDocument = async (event) => {
+export const getArticleDocument = async (event) => {
     const data = JSON.parse(event.body);
     const prefix = data.prefix;
     const file = data.file;
