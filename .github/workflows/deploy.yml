@@ -79,8 +79,19 @@ jobs:
       
       - name: Configure npm for GitHub packages
         run: |
-          echo "@taleofddh:registry=https://npm.pkg.github.com" >> ~/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+          # Use NPM_TOKEN if available, otherwise fall back to GITHUB_TOKEN
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "Using NPM_TOKEN for authentication"
+            echo "@taleofddh:registry=https://npm.pkg.github.com" >> ~/.npmrc
+            echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          else
+            echo "Using GITHUB_TOKEN for authentication"
+            echo "@taleofddh:registry=https://npm.pkg.github.com" >> ~/.npmrc
+            echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+          fi
+          echo "Configured npm for GitHub packages in install job"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Install root dependencies
         run: |
@@ -90,13 +101,36 @@ jobs:
             echo "No root package.json found, skipping root install"
           fi
       
+      - name: Create .npmrc files for all modules
+        run: |
+          echo "Creating .npmrc files for all Lambda modules..."
+          for dir in */; do
+            if [ -f "${dir}package.json" ] && [ -d "${dir}" ]; then
+              echo "Creating .npmrc for module: ${dir%/}"
+              if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+                cat > "${dir}.npmrc" << EOF
+          //npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}
+          @taleofddh:registry=https://npm.pkg.github.com
+          EOF
+              else
+                cat > "${dir}.npmrc" << EOF
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          @taleofddh:registry=https://npm.pkg.github.com
+          EOF
+              fi
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Install module dependencies
         run: |
           echo "Installing dependencies for all Lambda modules..."
           node scripts/install.js
         env:
           CI: true
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
       
       - name: Cache node_modules
         uses: actions/cache@v3
@@ -127,8 +161,41 @@ jobs:
       
       - name: Configure npm for GitHub packages
         run: |
-          echo "@taleofddh:registry=https://npm.pkg.github.com" >> ~/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+          # Use NPM_TOKEN if available, otherwise fall back to GITHUB_TOKEN
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "Using NPM_TOKEN for authentication"
+            echo "@taleofddh:registry=https://npm.pkg.github.com" >> ~/.npmrc
+            echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
+          else
+            echo "Using GITHUB_TOKEN for authentication"
+            echo "@taleofddh:registry=https://npm.pkg.github.com" >> ~/.npmrc
+            echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+          fi
+          echo "Configured npm for GitHub packages in deploy job"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create .npmrc files for all modules (deploy)
+        run: |
+          echo "Creating .npmrc files for all Lambda modules in deploy job..."
+          for dir in */; do
+            if [ -f "${dir}package.json" ] && [ -d "${dir}" ]; then
+              echo "Creating .npmrc for module: ${dir%/}"
+              if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+                cat > "${dir}.npmrc" << EOF
+          //npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}
+          @taleofddh:registry=https://npm.pkg.github.com
+          EOF
+              else
+                cat > "${dir}.npmrc" << EOF
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          @taleofddh:registry=https://npm.pkg.github.com
+          EOF
+              fi
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Restore cached dependencies
         uses: actions/cache@v3
@@ -179,7 +246,8 @@ jobs:
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
           STAGE: ${{ needs.setup.outputs.stage }}
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
           SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
       
       - name: Generate deployment summary
