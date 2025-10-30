@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 Adda Slough API
+# 🚀 Tale of DDH API
 
 **Multi-module serverless Lambda repository with automated deployment scripts and comprehensive CI/CD workflows**
 
@@ -116,10 +116,10 @@ Set up AWS credentials using a profile (recommended):
 
 ```bash
 # Configure AWS CLI with your profile
-aws configure --profile adda-slough
+aws configure --profile taleofddh
 
 # Set the profile for this project
-export AWS_PROFILE=adda-slough
+export AWS_PROFILE=taleofddh
 ```
 
 ### ⚡ Serverless Framework v4 Authentication
@@ -142,8 +142,8 @@ The repository uses GitHub Secrets for AWS credentials and Serverless authentica
 
 1. **📥 Clone the repository:**
 ```bash
-git clone https://github.com/adda-slough/adda-slough-api.git
-cd adda-slough-api
+git clone https://github.com/taleofddh/taleofddh-api.git
+cd taleofddh-api
 ```
 
 2. **📦 Install dependencies for all Lambda modules:**
@@ -242,7 +242,7 @@ For local development and testing:
 
 1. **☁️ Set up AWS credentials:**
 ```bash
-export AWS_PROFILE=adda-slough
+export AWS_PROFILE=taleofddh
 ```
 
 2. **📦 Install dependencies:**
@@ -287,7 +287,7 @@ For emergency production deployments from local environment:
 git checkout production
 
 # Set AWS credentials for production
-export AWS_PROFILE=adda-slough
+export AWS_PROFILE=taleofddh
 
 # Deploy to production
 npm run deploy:prod
@@ -332,7 +332,7 @@ The repository includes a comprehensive CI/CD pipeline with the following jobs:
 ## 📁 Project Structure
 
 ```
-adda-slough-api/
+taleofddh-api/
 ├── 🔄 .github/
 │   └── workflows/
 │       └── deploy.yml              # GitHub Actions CI/CD workflow
@@ -382,22 +382,22 @@ module-name/
 
 ### 🔐 Authentication Service (auth)
 - **🎯 Purpose**: User authentication and authorization
-- **📦 Dependencies**: @adda-slough/database, @adda-slough/response, fast-csv
+- **📦 Dependencies**: @taleofddh/database, @taleofddh/response, fast-csv
 - **✨ Key Features**: User management, security, CSV processing
 
 ### 💝 Charity Service (charity)
 - **🎯 Purpose**: Charitable organization and donation management
-- **📦 Dependencies**: @adda-slough/array, @adda-slough/response, @adda-slough/storage
+- **📦 Dependencies**: @taleofddh/array, @taleofddh/response, @taleofddh/storage
 - **✨ Key Features**: Charity data management, file storage integration
 
 ### ⚙️ Core Service (core)
 - **🎯 Purpose**: Fundamental application business logic
-- **📦 Dependencies**: @adda-slough/array, @adda-slough/response, @adda-slough/storage
+- **📦 Dependencies**: @taleofddh/array, @taleofddh/response, @taleofddh/storage
 - **✨ Key Features**: Core functionality, data processing
 
 ### 🎉 Event Service (event)
 - **🎯 Purpose**: Event creation, management, and tracking
-- **📦 Dependencies**: Multiple @adda-slough packages (database, date, identity, notification, etc.)
+- **📦 Dependencies**: Multiple @taleofddh packages (database, date, identity, notification, etc.)
 - **✨ Key Features**: Event lifecycle management, notifications, identity handling
 
 ### 🔗 Integration Service (integration)
@@ -432,8 +432,8 @@ module-name/
 **✅ Solution**:
 ```bash
 # For local development
-export AWS_PROFILE=adda-slough
-aws configure --profile adda-slough
+export AWS_PROFILE=taleofddh
+aws configure --profile taleofddh
 
 # Verify credentials
 aws sts get-caller-identity
@@ -542,8 +542,8 @@ git push origin feature/your-feature-name
 
 | Information | Details |
 |-------------|---------|
-| 📂 **Repository** | https://github.com/adda-slough/adda-slough-api |
-| 🐛 **Issues** | https://github.com/adda-slough/adda-slough-api/issues |
+| 📂 **Repository** | https://github.com/taleofddh/taleofddh-api |
+| 🐛 **Issues** | https://github.com/taleofddh/taleofddh-api/issues |
 | 👨‍💻 **Author** | Devadyuti Das |
 | 🏷️ **Version** | 2.0.0 |
 | 🟢 **Node.js** | &gt;= 22.0.0 |
@@ -555,7 +555,7 @@ git push origin feature/your-feature-name
 
 **Made with ❤️ for serverless development**
 
-[![GitHub stars](https://img.shields.io/github/stars/adda-slough/adda-slough-api?style=social)](https://github.com/adda-slough/adda-slough-api/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/adda-slough/adda-slough-api?style=social)](https://github.com/adda-slough/adda-slough-api/network/members)
+[![GitHub stars](https://img.shields.io/github/stars/taleofddh/taleofddh-api?style=social)](https://github.com/taleofddh/taleofddh-api/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/taleofddh/taleofddh-api?style=social)](https://github.com/taleofddh/taleofddh-api/network/members)
 
 </div>

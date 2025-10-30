@@ -1,13 +1,14 @@
 {
   "name": "integration-service",
   "version": "4.0.0",
-  "description": "Integration API for Adda Slough",
+  "description": "Integration API for Tale of DDH",
   "type": "module",
   "main": "handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Devadyuti Das",
+  "license": "GPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "git+https://git@github.com/taleofddh/taleofddh-api.git"
@@ -15,6 +16,7 @@
   "keywords": [
     "taleofddh",
     "email",
+    "drive",
     "integration"
   ],
   "bugs": {

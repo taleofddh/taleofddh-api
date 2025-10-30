@@ -101,6 +101,25 @@ jobs:
             echo "No root package.json found, skipping root install"
           fi
       
+      - name: Clean stale package locks and node_modules
+        run: |
+          echo "Cleaning stale package-lock.json files and node_modules..."
+          for dir in */; do
+            if [ -f "${dir}package.json" ] && [ -d "${dir}" ]; then
+              echo "Cleaning ${dir%/}..."
+              # Remove package-lock.json to force regeneration with correct versions
+              if [ -f "${dir}package-lock.json" ]; then
+                rm "${dir}package-lock.json"
+                echo "  Removed stale package-lock.json"
+              fi
+              # Remove node_modules to ensure clean install
+              if [ -d "${dir}node_modules" ]; then
+                rm -rf "${dir}node_modules"
+                echo "  Removed node_modules"
+              fi
+            fi
+          done
+      
       - name: Create .npmrc files for all modules
         run: |
           echo "Creating .npmrc files for all Lambda modules..."
