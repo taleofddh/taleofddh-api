@@ -35,7 +35,7 @@ provider:
     APP_NAME: ${env:APP_NAME, 'taleofddh'}
     SERVICE_NAME: ${env:SERVICE_NAME, 'integration'}
     S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-data'}
-    FROM_NAME: ${env:FROM_NAME, 'Adda Slough Information'}
+    FROM_NAME: ${env:FROM_NAME, 'Tale of DDH Helpdesk'}
     EMAIL_HOST: ${env:EMAIL_HOST, 'smtp.gmail.com'}
     EMAIL_PORT: ${env:EMAIL_PORT, '465'}
     APP_BANNER: ${env:APP_BANNER, 'taleofddh-logo.png'}
