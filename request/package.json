@@ -27,8 +27,8 @@
   "dependencies": {
     "@fast-csv/format": "^5.0.5",
     "@fast-csv/parse": "^5.0.5",
-    "@taleofddh/database": "^1.1.1",
-    "@taleofddh/response": "^1.1.1",
+    "@taleofddh/database": "^1.1.2",
+    "@taleofddh/response": "^1.1.2",
     "dotenv": "^17.2.3",
     "fast-csv": "^5.0.5",
     "node-fetch": "^3.3.2"
