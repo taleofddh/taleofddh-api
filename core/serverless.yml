@@ -59,7 +59,7 @@ provider:
         - dynamodb:BatchWriteItem
         - dynamodb:PutItem
         - dynamodb:UpdateItem
-      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME}.${self:service}.*
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.*
 #      Action:
 #        - "s3:ListBucket"
 #      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
