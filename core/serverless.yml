@@ -34,6 +34,8 @@ provider:
     REGION: ${opt:region, 'eu-west-1'}
     APP_NAME: ${env:APP_NAME, 'taleofddh'}
     SERVICE_NAME: ${env:SERVICE_NAME, 'core'}
+    S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-data'}
+    S3_MEDIA_BUCKET: ${env:S3_MEDIA_BUCKET, 'taleofddh-media'}
 
   apiGateway:
     shouldStartNameWithService: true
@@ -43,7 +45,6 @@ provider:
     - Effect: "Allow"
       Action:
         - lambda:InvokeFunction
-        - secretsmanager:GetSecretValue
         - kms:Encrypt
         - kms:Decrypt
         - kms:ReEncrypt*
@@ -52,26 +53,16 @@ provider:
       Resource: "*"
     - Effect: "Allow"
       Action:
-        - dynamodb:BatchGetItem
-        - dynamodb:GetItem
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:BatchWriteItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.*
-#      Action:
-#        - "s3:ListBucket"
-#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:PutObject"
-#      Resource:
-#        Fn::Join:
-#          - ""
-#          - - "arn:aws:s3:::"
-#            - "Ref" : "ServerlessDeploymentBucket"
-#            - "/*"
+        - s3:ListBucket
+      Resource:
+        - arn:aws:s3:::${env:S3_BUCKET, 'taleofddh-data'}
+        - arn:aws:s3:::${env:S3_MEDIA_BUCKET, 'taleofddh-media'}
+    - Effect: "Allow"
+      Action:
+        - s3:GetObject
+      Resource:
+        - arn:aws:s3:::${env:S3_BUCKET, 'taleofddh-data'}/*
+        - arn:aws:s3:::${env:S3_MEDIA_BUCKET, 'taleofddh-media'}/*
 
 # you can define service wide environment variables here
 #  environment:
@@ -133,7 +124,7 @@ functions:
 
 #    Define function environment variables here
     environment:
-      TABLE_NAME: "menu"
+      OBJECT_NAME: "menu"
 
   findPromotionList:
     handler: handler.findPromotionList
@@ -147,7 +138,7 @@ functions:
               paths:
                 active: true
     environment:
-      TABLE_NAME: "promotion"
+      OBJECT_NAME: "promotion"
 
   findAboutUsList:
     handler: handler.findAboutUsList
@@ -157,7 +148,7 @@ functions:
           method: get
           cors: true
     environment:
-      TABLE_NAME: "aboutUs"
+      OBJECT_NAME: "aboutUs"
 
   findTermsAndConditionsList:
     handler: handler.findTermsAndConditionsList
@@ -167,7 +158,7 @@ functions:
           method: get
           cors: true
     environment:
-      TABLE_NAME: "termsAndConditions"
+      OBJECT_NAME: "termsAndConditions"
 
   findPrivacyPolicyList:
     handler: handler.findPrivacyPolicyList
@@ -177,7 +168,7 @@ functions:
           method: get
           cors: true
     environment:
-      TABLE_NAME: "privacyPolicy"
+      OBJECT_NAME: "privacyPolicy"
 
   findFrequentlyAskedQuestionList:
     handler: handler.findFrequentlyAskedQuestionList
@@ -187,7 +178,7 @@ functions:
           method: get
           cors: true
     environment:
-      TABLE_NAME: "frequentlyAskedQuestion"
+      OBJECT_NAME: "frequentlyAskedQuestion"
 
   findCountryByCode:
     handler: handler.findCountryByCode
@@ -201,7 +192,7 @@ functions:
               paths:
                 countryCode: true
     environment:
-      TABLE_NAME: "country"
+      OBJECT_NAME: "country"
 
   findCountryByName:
     handler: handler.findCountryByName
@@ -215,7 +206,7 @@ functions:
               paths:
                 countryName: true
     environment:
-      TABLE_NAME: "country"
+      OBJECT_NAME: "country"
 
   createAuditEntry:
     handler: handler.createAuditEntry
@@ -224,8 +215,6 @@ functions:
           path: auditEntry
           method: post
           cors: true
-    environment:
-      TABLE_NAME: "audit"
 
 # you can add CloudFormation resource templates here
 resources:

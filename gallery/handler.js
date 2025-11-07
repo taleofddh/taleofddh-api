@@ -1,5 +1,7 @@
 'use strict';
+import * as array from '@taleofddh/array';
 import * as database from '@taleofddh/database';
+import * as date from '@taleofddh/date';
 import * as response from '@taleofddh/response';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
@@ -175,4 +177,71 @@ export const updatePhotoViewCount = async (event) => {
     }
     const updatedPhoto = (!userId || userId === undefined) ? {} : await database.update(params);
     return response.createResponse(updatedPhoto, 200);
+};
+
+export const findHistoricalAlbumCategories = async (event) => {
+    const historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+    const params = {
+        TableName: table,
+        IndexName: "category-index",
+        ProjectionExpression: "#name, category, startDateTime, endDateTime",
+        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
+        ExpressionAttributeNames: {
+            '#name': 'name',
+            '#startDateTime': 'startDateTime',
+            '#production': 'production'
+        },
+        ExpressionAttributeValues: {
+            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
+            ':production': true
+        },
+    };
+    const albums = await database.scan(params);
+    albums.sort((a,b) => (a.category.localeCompare(b.category)));
+
+    const albumCategories = array.distinctValues(albums, "category");
+
+    return {
+        statusCode: 200,
+        body: JSON.stringify(albumCategories),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
+};
+
+export const findHistoricalAlbumSubCategories = async (event) => {
+    const category = decodeURI(event.pathParameters.category);
+    const historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+    const params = {
+        TableName: table,
+        IndexName: "category-index",
+        ProjectionExpression: "category, subCategory, #name, startDateTime, endDateTime",
+        FilterExpression: '#category = :category and #startDateTime < :historicalDate and #production = :production',
+        ExpressionAttributeNames: {
+            '#name': 'name',
+            '#category': 'category',
+            '#startDateTime': "startDateTime",
+            '#production': 'production'
+        },
+        ExpressionAttributeValues: {
+            ':category': category,
+            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
+            ':production': true
+        }
+    };
+    const albums = await database.scan(params);
+    albums.sort((a,b) => (a.subCategory.localeCompare(b.subCategory)));
+
+    const albumSubCategories = array.distinctValues(albums, "subCategory");
+
+    return {
+        statusCode: 200,
+        body: JSON.stringify(albumSubCategories),
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        }
+    };
 };

@@ -24,8 +24,8 @@
   },
   "homepage": "https://github.com/taleofddh/taleofddh-api#readme",
   "dependencies": {
-    "@taleofddh/response": "^1.1.2",
-    "@taleofddh/notification": "^1.1.2",
+    "@taleofddh/response": "^1.2.1",
+    "@taleofddh/notification": "^1.2.1",
     "mailparser": "^3.7.5"
   },
   "devDependencies": {
