@@ -26,8 +26,10 @@
   "dependencies": {
     "@fast-csv/format": "^5.0.5",
     "@fast-csv/parse": "^5.0.5",
-    "@taleofddh/response": "^1.2.1",
-    "@taleofddh/storage": "^1.2.1",
+    "@taleofddh/distribution": "^2.0.0",
+    "@taleofddh/response": "^2.0.0",
+    "@taleofddh/secret": "^2.0.0",
+    "@taleofddh/storage": "^2.0.0",
     "dotenv": "^17.2.3",
     "fast-csv": "^5.0.5"
   },
