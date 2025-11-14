@@ -24,15 +24,15 @@
   },
   "homepage": "https://github.com/taleofddh/taleofddh-apii#readme",
   "dependencies": {
-    "@taleofddh/drive": "^1.2.1",
-    "@taleofddh/gmail": "^1.2.1",
-    "@taleofddh/identity": "^1.2.1",
-    "@taleofddh/notification": "^1.2.1",
-    "@taleofddh/response": "^1.2.1",
-    "@taleofddh/secret": "^1.2.1",
-    "@taleofddh/text": "^1.2.1",
-    "@taleofddh/whatsapp": "^1.2.1",
-    "@taleofddh/workbook": "^1.2.1"
+    "@taleofddh/drive": "^2.0.0",
+    "@taleofddh/gmail": "^2.0.0",
+    "@taleofddh/identity": "^2.0.0",
+    "@taleofddh/notification": "^2.0.0",
+    "@taleofddh/response": "^2.0.0",
+    "@taleofddh/secret": "^2.0.0",
+    "@taleofddh/text": "^2.0.0",
+    "@taleofddh/whatsapp": "^2.0.0",
+    "@taleofddh/workbook": "^2.0.0"
   },
   "devDependencies": {
     "@aws-sdk/client-secrets-manager": "^3.926.0",

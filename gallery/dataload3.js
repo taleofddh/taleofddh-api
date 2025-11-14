@@ -5,24 +5,24 @@ import { v6 as uuidv6 } from 'uuid';
 
 dotenv.config();
 
-let albumKey = [];
-let albumItem = [];
-fs.readFile('data/album.json', 'utf8', async (err, data) => {
-    let albumList = await JSON.parse(data);
+let galleryKey = [];
+let galleryItem = [];
+fs.readFile('data/gallery.json', 'utf8', async (err, data) => {
+    let galleryList = await JSON.parse(data);
     let docPromises = {};
-    docPromises = albumList.map(async (item) => {
+    docPromises = galleryList.map(async (item) => {
         //console.log(item);
-        albumKey = {
+        galleryKey = {
             Key: {
                 "name": item.name,
                 "startDateTime": item.startDateTime
             }
         };
-        await dbOperation("deleteItem", "gallery", albumKey);
+        await dbOperation("deleteItem", "gallery", galleryKey);
         const options = {
             msecs: new Date(item.startDateTime).getTime()
         }
-        albumItem = {
+        galleryItem = {
             Item: {
                 "id": uuidv6(options),
                 "category": item.category,
@@ -44,8 +44,8 @@ fs.readFile('data/album.json', 'utf8', async (err, data) => {
                 "updateDate": new Date().toDateString()
             }
         };
-        await dbOperation("writeItem", "gallery", albumItem);
-        return await dbOperation("getItem", "gallery", albumKey);
+        await dbOperation("writeItem", "gallery", galleryItem);
+        return await dbOperation("getItem", "gallery", galleryKey);
     });
     const docs = await Promise.all(docPromises);
     console.log(docs);

@@ -36,6 +36,9 @@ provider:
     SERVICE_NAME: ${env:SERVICE_NAME, 'core'}
     S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-data'}
     S3_MEDIA_BUCKET: ${env:S3_MEDIA_BUCKET, 'taleofddh-media'}
+    SIGNER_PRIVATE_KEY: ${env:SIGNER_PRIVATE_KEY, 'SIGNER_PRIVATE_KEY'}
+    CLOUDFRONT_PUBLIC_KEY_ID: ${env:CLOUDFRONT_PUBLIC_KEY_ID, 'K1XBUPGFMXTF6Q'}
+    MEDIA_PROTECTED_HOST: ${env:MEDIA_PROTECTED_HOST, 'https://media-protected.taleofddh.com'}
 
   apiGateway:
     shouldStartNameWithService: true
@@ -45,6 +48,8 @@ provider:
     - Effect: "Allow"
       Action:
         - lambda:InvokeFunction
+        - secretsmanager:GetSecretValue
+        - secretsmanager:PutSecretValue
         - kms:Encrypt
         - kms:Decrypt
         - kms:ReEncrypt*
