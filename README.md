@@ -5,7 +5,7 @@
 **Multi-module serverless Lambda repository with automated deployment scripts and comprehensive CI/CD workflows**
 
 [![Node.js](https://img.shields.io/badge/Node.js-22.0.0+-green.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/Version-2.0.0-orange.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-4.0.0-orange.svg)](package.json)
 [![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-orange.svg)](https://aws.amazon.com/lambda/)
 [![Serverless](https://img.shields.io/badge/Serverless-Framework-red.svg)](https://www.serverless.com/)
 
@@ -70,19 +70,19 @@ The repository follows a **multi-module serverless architecture** where each Lam
 
 ### 📦 Lambda Modules
 
-The repository contains **9 Lambda modules** (excluding the game folder):
+The repository contains **9 Lambda modules**:
 
 | Module | Purpose | Key Features |
 |--------|---------|--------------|
-| 🔐 **auth** | Authentication and authorization service | User management, security, CSV processing |
-| 💝 **charity** | Charity management APIs | Charitable organizations, donations |
+| �‍💼a **admin** | Administrative operations | Admin APIs, CSV processing, email integration |
+| � **authi** | Authentication and authorization service | User management, security, CSV processing |
+| 📝 **blog** | Blog management APIs | Blog posts, content management, storage |
 | ⚙️ **core** | Core business logic APIs | Fundamental application functionality |
-| 🎉 **event** | Event management APIs | Event creation, management, tracking |
+| � **emtail** | Email service APIs | Email notifications, mail parsing |
+| �️* **gallery** | Gallery and media management | Image galleries, CloudFront distribution, media storage |
 | 🔗 **integration** | Third-party integrations | Gmail, WhatsApp, Google Drive, etc. |
-| 📸 **media** | Media file management APIs | Uploads, storage, retrieval |
-| 🏢 **org** | Organization management APIs | Organizational structures |
+| � **linuk** | Link management APIs | URL shortening, link tracking |
 | 📝 **request** | Request handling APIs | Request processing, management |
-| 🎫 **ticket** | Ticket management APIs | Event ticketing, booking systems |
 
 ### ⚙️ Deployment Automation System
 
@@ -344,19 +344,19 @@ taleofddh-api/
 │   ├── deploy.js                   # Deployment automation script
 │   ├── install.js                  # Installation automation script
 │   └── utils.js                    # Shared utilities for scripts
-├── 🔐 auth/                        # Authentication service
+├── � ‍💼 admin/                       # Admin service
 │   ├── handler.js                  # Lambda function handlers
 │   ├── package.json               # Module dependencies
 │   ├── serverless.yml             # Serverless configuration
 │   └── .env                       # Environment variables
-├── 💝 charity/                     # Charity management service
+├── � auth/  /                      # Authentication service
+├── 📝 blog/                        # Blog management service
 ├── ⚙️ core/                        # Core business logic service
-├── 🎉 event/                       # Event management service
+├── � emtail/                       # Email service
+├── �️ gaillery/                     # Gallery and media management service
 ├── 🔗 integration/                 # Third-party integrations service
-├── 📸 media/                       # Media file management service
-├── 🏢 org/                         # Organization management service
+├── � rlink/                        # Link management service
 ├── 📝 request/                     # Request handling service
-├── 🎫 ticket/                      # Ticket management service
 ├── 📦 package.json                 # Root package.json with scripts
 └── 📖 README.md                    # This documentation
 ```
@@ -380,45 +380,48 @@ module-name/
 
 ## 📋 Module Details
 
-### 🔐 Authentication Service (auth)
+### �‍💼 Admtin Service (admin)
+- **🎯 Purpose**: Administrative operations and management
+- **📦 Dependencies**: @taleofddh/database, @taleofddh/email, @taleofddh/storage, @taleofddh/secret, @taleofddh/response, fast-csv, mailparser
+- **✨ Key Features**: Admin APIs, CSV data processing, email integration, secure storage
+
+### � Ahuthentication Service (auth)
 - **🎯 Purpose**: User authentication and authorization
 - **📦 Dependencies**: @taleofddh/database, @taleofddh/response, fast-csv
 - **✨ Key Features**: User management, security, CSV processing
 
-### 💝 Charity Service (charity)
-- **🎯 Purpose**: Charitable organization and donation management
-- **📦 Dependencies**: @taleofddh/array, @taleofddh/response, @taleofddh/storage
-- **✨ Key Features**: Charity data management, file storage integration
+### 📝 Blog Service (blog)
+- **🎯 Purpose**: Blog content management
+- **📦 Dependencies**: @taleofddh/database, @taleofddh/storage, @taleofddh/response, fast-csv
+- **✨ Key Features**: Blog post management, content storage, CSV data import/export
 
 ### ⚙️ Core Service (core)
 - **🎯 Purpose**: Fundamental application business logic
 - **📦 Dependencies**: @taleofddh/array, @taleofddh/response, @taleofddh/storage
 - **✨ Key Features**: Core functionality, data processing
 
-### 🎉 Event Service (event)
-- **🎯 Purpose**: Event creation, management, and tracking
-- **📦 Dependencies**: Multiple @taleofddh packages (database, date, identity, notification, etc.)
-- **✨ Key Features**: Event lifecycle management, notifications, identity handling
+### � Email Servnice (email)
+- **🎯 Purpose**: Email notifications and processing
+- **📦 Dependencies**: @taleofddh/response, @taleofddh/notification, mailparser
+- **✨ Key Features**: Email sending, mail parsing, notification integration
+
+### 🖼️ Gallery Service (gallery)
+- **🎯 Purpose**: Image gallery and media management
+- **📦 Dependencies**: @taleofddh/database, @taleofddh/storage, @taleofddh/distribution, @taleofddh/date, @taleofddh/array, @taleofddh/secret, fast-csv, uuid
+- **✨ Key Features**: Image galleries, CloudFront distribution, media storage, CSV data management
 
 ### 🔗 Integration Service (integration)
 - **🎯 Purpose**: Third-party service integrations
 - **✨ Key Features**: Gmail, WhatsApp, Google Drive, and other external API integrations
 
-### 📸 Media Service (media)
-- **🎯 Purpose**: Media file upload, storage, and retrieval
-- **✨ Key Features**: File management, S3 integration, media processing
-
-### 🏢 Organization Service (org)
-- **🎯 Purpose**: Organizational structure and management
-- **✨ Key Features**: Organization hierarchy, member management
+### 🔗 Link Service (link)
+- **🎯 Purpose**: Link management and URL operations
+- **📦 Dependencies**: @taleofddh/database, @taleofddh/storage, @taleofddh/response, fast-csv
+- **✨ Key Features**: URL shortening, link tracking, CSV data management
 
 ### 📝 Request Service (request)
 - **🎯 Purpose**: Request processing and management
 - **✨ Key Features**: Request lifecycle, processing workflows
-
-### 🎫 Ticket Service (ticket)
-- **🎯 Purpose**: Event ticketing and booking system
-- **✨ Key Features**: Ticket sales, booking management, event integration
 
 ---
 
@@ -545,7 +548,7 @@ git push origin feature/your-feature-name
 | 📂 **Repository** | https://github.com/taleofddh/taleofddh-api |
 | 🐛 **Issues** | https://github.com/taleofddh/taleofddh-api/issues |
 | 👨‍💻 **Author** | Devadyuti Das |
-| 🏷️ **Version** | 2.0.0 |
+| 🏷️ **Version** | 4.0.0 |
 | 🟢 **Node.js** | &gt;= 22.0.0 |
 | 📦 **npm** | &gt;= 10.0.0 |
 
