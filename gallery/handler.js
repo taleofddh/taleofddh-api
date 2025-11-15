@@ -566,7 +566,7 @@ export const findAlbum = async (event) => {
     const signatureParams3 = await getSignatureParameters(process.env['MEDIA_PROTECTED_HOST'] + prefix3, 1440);
 
     const albumList = albums.map((album) => {
-        if (album.name.toUpperCase() === name.toUpperCase()) {
+        if (album.name === name) {
             return {
                 ...album,
                 signedUrl: distribution.getSignedUrlWithPolicy(
