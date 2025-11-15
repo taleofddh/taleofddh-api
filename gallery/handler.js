@@ -8,7 +8,7 @@ import * as secret from '@taleofddh/secret';
 import * as storage from '@taleofddh/storage';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucketName = process.env['S3_MEDIA_BUCKET'];
-const source = "albums";
+const source = "gallery";
 
 export const findAlbumList = async (event) => {
     let userId = event.requestContext.identity.cognitoIdentityId;
