@@ -66,18 +66,18 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'album.csv'))
                     'name': albumItems[i].PutRequest.Item.titlePhoto
                 }
             }
-            const titleDoc = await dbOperation("findDoc", "photo", titleKey);
+            const titleDoc = await database.operation("findDoc", "photo", titleKey);
             albumItems[i].PutRequest.Item.titlePhoto = titleDoc;
         }
         const batchSize = 25;
         let len = albumItems.length;
         for (let i = 0; i < len; i += batchSize) {
             let tempAlbumDeleteKeys = albumDeleteKeys.slice(i, i + batchSize);
-            await dbOperation("deleteDocs", "album", tempAlbumDeleteKeys);
+            await database.operation("deleteDocs", "album", tempAlbumDeleteKeys);
             let tempAlbumItems = albumItems.slice(i, i + batchSize);
-            await dbOperation("insertDocs", "album", tempAlbumItems);
+            await database.operation("insertDocs", "album", tempAlbumItems);
             let tempAlbumGetKeys = albumGetKeys.slice(i, i + batchSize);
-            const docs = await dbOperation("findDocs", "album", tempAlbumGetKeys);
+            const docs = await database.operation("findDocs", "album", tempAlbumGetKeys);
             await console.log(docs);
         }
         const sequenceKey = {
@@ -86,78 +86,6 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'album.csv'))
                 "squence": rowCount
             }
         }
-        await dbOperation("updateDoc", "sequence", sequenceKey);
+        await database.operation("updateDoc", "sequence", sequenceKey);
         await console.log(`Parsed ${rowCount} rows`);
     });
-
-const dbOperation = async (operation, table, data) => {
-    var tableName = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + table;
-    var response;
-    var params;
-    try {
-        switch(operation) {
-            case 'findDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.get(params);
-                break;
-            case 'findDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: {
-                            "Keys": data
-                        }
-                    }
-                }
-                response = await database.batchGet(params, tableName);
-                break;
-            case 'insertDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.put(params);
-                break;
-            case 'insertDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'updateDoc':
-                //response = await database.collection(collection).updateOne(query, data);
-                break;
-            case 'udpateDocs':
-                //response = await database.collection(collection).updateMany(query, data);
-                break;
-            case 'deleteDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.delete(params);
-                break;
-            case 'deleteDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'queryDocs':
-                data.TableName = tableName
-                params = data;
-                response = await database.query(params);
-                break;
-            case 'scanDocs':
-                data.TableName = tableName
-                params = data;
-                response = await database.scan(params);
-                break;
-            default:
-                break;
-        }
-        return response;
-    } catch (error) {
-        console.error(error);
-    }
-}

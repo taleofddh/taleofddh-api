@@ -65,9 +65,9 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'blog.csv'))
         });
     })
     .on('end', async rowCount => {
-        await dbOperation("deleteDocs", "blog", blogDeleteKeys);
-        await dbOperation("insertDocs", "blog", blogItemKeys);
-        const docs = await dbOperation("findDocs", "blog", blogGetKeys);
+        await database.operation("deleteDocs", "blog", blogDeleteKeys);
+        await database.operation("insertDocs", "blog", blogItemKeys);
+        const docs = await database.operation("findDocs", "blog", blogGetKeys);
         await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
     });
@@ -113,88 +113,9 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'article.csv'))
         });
     })
     .on('end', async rowCount => {
-        await dbOperation("deleteDocs", "article", articleDeleteKeys);
-        await dbOperation("insertDocs", "article", articleItemKeys);
-        const docs = await dbOperation("findDocs", "article", articleGetKeys);
+        await database.operation("deleteDocs", "article", articleDeleteKeys);
+        await database.operation("insertDocs", "article", articleItemKeys);
+        const docs = await database.operation("findDocs", "article", articleGetKeys);
         await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
     });
-
-const dbOperation = async (operation, table, data) => {
-    var tableName = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + table;
-    var response;
-    var params;
-    try {
-        switch(operation) {
-            case 'findDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.get(params);
-                break;
-            case 'findDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: {
-                            "Keys": data
-                        }
-                    }
-                }
-                response = await database.batchGet(params, tableName);
-                break;
-            case 'insertDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.put(params);
-                break;
-            case 'insertDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'updateDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.put(params);
-                break;
-            case 'udpateDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'deleteDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.delete(params);
-                break;
-            case 'deleteDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'queryDocs':
-                data.TableName = tableName
-                params = data;
-                response = await database.query(params);
-                break;
-            case 'scanDocs':
-                data.TableName = tableName
-                params = data;
-                response = await database.scan(params);
-                break;
-            default:
-                break;
-        }
-        return response;
-    } catch (error) {
-        console.error(error);
-    }
-}
