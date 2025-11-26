@@ -181,14 +181,14 @@ plugins:
 custom:
   stage: ${opt:stage, self:provider.stage}
   domains:
-    prod: ${env:API_DOMAIN, 'api.adda-slough.org'}
-    dev: ${self:custom.stage}-${env:API_DOMAIN, 'api.adda-slough.org'}
+    prod: ${env:API_DOMAIN, 'api.taleofddh.com'}
+    dev: ${self:custom.stage}-${env:API_DOMAIN, 'api.taleofddh.com'}
   customDomain:
     domainName: ${self:custom.domains.${self:custom.stage}}
     basePath: ${env:BASE_PATH, 'org'}
     stage: ${self:custom.stage}
-    certificateName: ${env:CERTIFICATE_NAME, '*.adda-slough.org'}
-    hostedZoneId: ${env:HOSTED_ZONE_ID, 'Z09914281AGBJEU3L3LD'}
+    certificateName: ${env:CERTIFICATE_NAME, '*.taleofddh.com'}
+    hostedZoneId: ${env:HOSTED_ZONE_ID, 'Z044305914KLOWN7PAF5E'}
     createRoute53Record: true
     endpointType: ${env:ENDPOINT_TYPE, 'regional'}
     securityPolicy: ${env:SECURITY_POLICY,  'tls_1_2'}
