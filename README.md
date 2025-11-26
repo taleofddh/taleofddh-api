@@ -5,9 +5,10 @@
 **Multi-module serverless Lambda repository with automated deployment scripts and comprehensive CI/CD workflows**
 
 [![Node.js](https://img.shields.io/badge/Node.js-22.0.0+-green.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/Version-4.0.0-orange.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-4.1.0-orange.svg)](package.json)
 [![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-orange.svg)](https://aws.amazon.com/lambda/)
 [![Serverless](https://img.shields.io/badge/Serverless-Framework-red.svg)](https://www.serverless.com/)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 
 </div>
 
@@ -70,7 +71,7 @@ The repository follows a **multi-module serverless architecture** where each Lam
 
 ### 📦 Lambda Modules
 
-The repository contains **9 Lambda modules**:
+The repository contains **10 Lambda modules**:
 
 | Module | Purpose | Key Features |
 |--------|---------|--------------|
@@ -82,6 +83,7 @@ The repository contains **9 Lambda modules**:
 | �️* **gallery** | Gallery and media management | Image galleries, CloudFront distribution, media storage |
 | 🔗 **integration** | Third-party integrations | Gmail, WhatsApp, Google Drive, etc. |
 | � **linuk** | Link management APIs | URL shortening, link tracking |
+| 🏢 **org** | Organization management APIs | About us, people management, role-based menus |
 | 📝 **request** | Request handling APIs | Request processing, management |
 
 ### ⚙️ Deployment Automation System
