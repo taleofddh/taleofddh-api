@@ -1,23 +1,22 @@
 {
-  "name": "gallery-service",
+  "name": "org-service",
   "version": "4.1.0",
-  "description": "Gallery APIs for Tale of DDH",
+  "description": "Organisation APIs for Tale of DDH",
   "main": "handler.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Devadyuti Das",
-  "license": "GPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/taleofddh/taleofddh-api.git"
+    "url": "git+https://git@github.com/taleofddh/taleofddh-api.git"
   },
   "keywords": [
     "taleofddh",
     "ddhome",
     "db",
-    "gallery"
+    "organisation"
   ],
   "bugs": {
     "url": "https://github.com/taleofddh/taleofddh-api/issues"
@@ -26,20 +25,16 @@
   "dependencies": {
     "@fast-csv/format": "^5.0.5",
     "@fast-csv/parse": "^5.0.5",
-    "@taleofddh/array": "^2.3.1",
     "@taleofddh/database": "^2.3.1",
     "@taleofddh/distribution": "^2.3.1",
-    "@taleofddh/date": "^2.3.1",
     "@taleofddh/response": "^2.3.1",
     "@taleofddh/secret": "^2.3.1",
     "@taleofddh/storage": "^2.3.1",
     "dotenv": "^17.2.3",
-    "fast-csv": "^5.0.5",
-    "uuid": "^13.0.0"
+    "fast-csv": "^5.0.5"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.926.0",
-    "@aws-sdk/client-secrets-manager": "^3.926.0",
     "@aws-sdk/cloudfront-signer": "^3.921.0",
     "@aws-sdk/lib-dynamodb": "^3.926.0",
     "@aws-sdk/s3-request-presigner": "^3.926.0",

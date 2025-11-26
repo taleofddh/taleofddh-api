@@ -16,7 +16,7 @@ let userProfileGetKeys = [];
 fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
     .pipe(csv.parse({ headers: true }))
     .transform(data => ({
-        number: parseInt(data.number),
+        userId: data.userId,
         identityId: data.identityId,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -33,21 +33,22 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
         communityList: JSON.parse(data.communityList),
         mailingFlag: data.mailingFlag.toUpperCase() === 'TRUE',
         updatedAt: data.updatedAt,
-        lastLogin: data.lastLogin
+        lastLogin: data.lastLogin,
+        roles: JSON.parse(data.roles)
     }))
     .on('error', error => console.error(error))
     .on('data', row => {
         userProfileDeleteKeys.push({
             DeleteRequest: {
                 Key: {
-                    "number": row.number
+                    "userId": row.userId
                 }
             }
         });
         userProfileItems.push({
             PutRequest: {
                 Item: {
-                    "number": row.number,
+                    "userId": row.userId,
                     "identityId": row.identityId,
                     "firstName": row.firstName,
                     "lastName": row.lastName,
@@ -64,17 +65,18 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
                     "communityList": row.communityList,
                     "mailingFlag": row.mailingFlag,
                     "updatedAt": row.updatedAt,
-                    "lastLogin": row.lastLogin
+                    "lastLogin": row.lastLogin,
+                    "roles": row.roles
                 }
             }
         });
         userProfileGetKeys.push({
-            "number": row.number
+            "userId": row.userId
         });
     })
     .on('end', async rowCount => {
         /*const commParams = {};
-        const allCommunities = await dbOperation("scanDocs", "community", commParams);
+        const allCommunities = await database.operation("scanDocs", "community", commParams);
         allCommunities.sort((a, b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
         for(i in userProfileItems) {
             let communityList = [];
@@ -97,95 +99,9 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'userProfile.csv'))
             }
             userProfileItems[i].PutRequest.Item.communityList = communityList;
         }*/
-        await dbOperation("deleteDocs", "userProfile", userProfileDeleteKeys);
-        await dbOperation("insertDocs", "userProfile", userProfileItems);
-        const docs = await dbOperation("findDocs", "userProfile", userProfileGetKeys);
+        await database.operation("deleteItems", "userProfile", userProfileDeleteKeys);
+        await database.operation("writeItems", "userProfile", userProfileItems);
+        const docs = await database.operation("getItems", "userProfile", userProfileGetKeys);
         await console.log(docs);
-        const sequenceKey = {
-            Item: {
-                "key": "user_seq",
-                "sequence": rowCount
-            }
-        }
-        await dbOperation("updateDoc", "sequence", sequenceKey);
         await console.log(`Parsed ${rowCount} rows`);
     });
-
-const dbOperation = async (operation, table, data) => {
-    var tableName = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + table;
-    var response;
-    var params;
-    try {
-        switch(operation) {
-            case 'findDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.get(params);
-                break;
-            case 'findDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: {
-                            "Keys": data
-                        }
-                    }
-                }
-                response = await database.batchGet(params, tableName);
-                break;
-            case 'insertDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.put(params);
-                break;
-            case 'insertDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'updateDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.put(params);
-                break;
-            case 'udpateDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'deleteDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.delete(params);
-                break;
-            case 'deleteDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'queryDocs':
-                data.TableName = tableName
-                params = data;
-                response = await database.query(params);
-                break;
-            case 'scanDocs':
-                data.TableName = tableName
-                params = data;
-                response = await database.scan(params);
-                break;
-            default:
-                break;
-        }
-        return response;
-    } catch (error) {
-        console.error(error);
-    }
-}

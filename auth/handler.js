@@ -8,14 +8,7 @@ export const findIdentity = async (event) => {
     const identity = {
         identityId: userId
     }
-    return {
-        statusCode: 200,
-        body: JSON.stringify(identity),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(identity, 200);
 };
 
 export const findUser = async (event) => {
@@ -28,14 +21,7 @@ export const findUser = async (event) => {
         }
     }
     const user = await database.get(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(user),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(user, 200);
 };
 
 export const createUser = async (event) => {
@@ -61,14 +47,7 @@ export const createUser = async (event) => {
 
     const user = await database.put(newUser);
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(user),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(user, 200);
 };
 
 export const updateUser = async (event) => {
@@ -98,78 +77,44 @@ export const updateUser = async (event) => {
         ReturnValues: 'ALL_NEW'
     };
     const user = (!userId || userId === undefined) ? {} : await database.update(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(user),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(user, 200);
 };
 
 export const findUserProfile = async (event) => {
-    let userId = event.requestContext.identity.cognitoIdentityId;
+    let userId = event.requestContext.identity.cognitoAuthenticationProvider.match(/CognitoSignIn:([^:]+)$/)[1];
     let params = {
         TableName: table,
         Key: {
-            "identityId": userId
+            "userId": userId
         }
     };
     const userProfile = (!userId || userId === undefined) ? {} : await database.get(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(userProfile),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(userProfile, 200);
 };
 
-export const createUserProfile = async (event) => {
+export const createOrUpdateUserProfile = async (event) => {
     const data = JSON.parse(event.body);
-    let userId = event.requestContext.identity.cognitoIdentityId;
-    let params = data.email ?
-        {
-            TableName: table,
-            FilterExpression: '#email = :email',
-            ExpressionAttributeNames: {
-                '#email': 'email'
-            },
-            ExpressionAttributeValues: {
-                ':email': data.email
-            }
-        } : {
-            TableName: table,
-            FilterExpression: '#identityId = :identityId',
-            ExpressionAttributeNames: {
-                '#identityId': 'identityId'
-            },
-            ExpressionAttributeValues: {
-                ':identityId': data.identityId
-            }
-        };
-    const existingProfile = await database.scan(params);
+    let userId = event.requestContext.identity.cognitoAuthenticationProvider.match(/CognitoSignIn:([^:]+)$/)[1];
+    let params = {
+        TableName: table,
+        Key: {
+            "userId": userId
+        }
+    };
+    const existingProfile = await database.get(params);
     let userProfile;
-    if(existingProfile.length === 0) {
+    if(!existingProfile) {
         userProfile = await createProfile(data, userId);
     } else {
-        userProfile = await updateProfile(data, userId, existingProfile[0].number);
+        userProfile = await updateProfile(data, userId);
     }
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(userProfile),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
-};
+    return response.createResponse(userProfile, 200);
+}
 
 const createProfile = async (data, userId) => {
-    let params = {
+    let params = {};
+    /*params = {
         TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'sequence',
         Key: {
             "key": "user_seq"
@@ -181,7 +126,7 @@ const createProfile = async (data, userId) => {
         ExpressionAttributeValues: { ":inc": 1 },
         ReturnValues: "ALL_NEW"
     }
-    const sequenceDoc = await database.update(params);
+    const sequenceDoc = await database.update(params);*/
 
     let communityList = [];
     params = {
@@ -190,13 +135,73 @@ const createProfile = async (data, userId) => {
     const allCommunities = await database.scan(params)
     allCommunities.sort((a, b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
     for(let i in allCommunities) {
+        let checked = false;
+        if(data.hasOwnProperty('family') && data.family && data.family.hasOwnProperty('members') && allCommunities[i].name === 'Family') {
+            checked = true;
+        }
         communityList.push({"id": allCommunities[i].number, "name": allCommunities[i].name, "checked": false})
     }
+    /*params = {
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'sequence',
+        Key: {
+            "key": "userRole_seq"
+        },
+        UpdateExpression: "SET #sequence = #sequence + :inc",
+        ExpressionAttributeNames: {
+            "#sequence": "sequence"
+        },
+        ExpressionAttributeValues: { ":inc": 1 },
+        ReturnValues: "ALL_NEW"
+    }
+    const roleSequenceDoc = await database.update(params);*/
+    params = {
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'role',
+        Key: {
+            "code": "USER",
+        }
+    };
+    const defaultRole = await database.get(params);
+    let familyRoles = [];
+    if(data.hasOwnProperty('family') && data.family && data.family.hasOwnProperty('members')) {
+        params = {
+            TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + + '.' + process.env['SERVICE_NAME'] + '.' + 'role',
+            ProjectionExpression: "#number, code, #name, #type",
+            FilterExpression: '#type = :type',
+            ExpressionAttributeNames: {
+                '#number': 'number',
+                '#name': 'name',
+                '#type': 'type'
+            },
+            ExpressionAttributeValues: {
+                ':type': 'Family'
+            },
+        };
+        familyRoles = await database.scan(params);
+    }
+    const roles = [];
+    roles.push(defaultRole);
+    for(let i = 0; i< familyRoles.length; i++) {
+        roles.push(familyRoles[i]);
+    }
+    /*const userRole = {
+        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'userRole',
+        Item: {
+            number: roleSequenceDoc.sequence,
+            userNumber: sequenceDoc.sequence,
+            roleList: [{
+                id: defaultRole.number,
+                name: defaultRole.name
+            }]
+        }
+    }
+    await database.put(userRole);*/
+    const now = JSON.parse(JSON.stringify(new Date()));
     const profile = {
         TableName: data.hasOwnProperty('table') ? process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + data.table : table,
         Item: {
-            "number": sequenceDoc.sequence,
+            "userId": data.userId,
             "identityId": data.identityId,
+            "roles": roles,
             "firstName": data.firstName ? data.firstName : '',
             "lastName": data.lastName ? data.lastName : '',
             "dateOfBirth": data.dateOfBirth ? new Date(data.dateOfBirth) : '',
@@ -211,104 +216,29 @@ const createProfile = async (data, userId) => {
             "about": data.about ? data.about : '',
             "communityList": data.communityList ? data.communityList : communityList,
             "mailingFlag": data.mailingFlag ? data.mailingFlag.toUpperCase() === 'TRUE' : true,
-            "updatedAt": JSON.parse(JSON.stringify(new Date())),
-            "lastLogin": JSON.parse(JSON.stringify(new Date()))
+            "updatedAt": now,
+            "lastLogin": now
         }
     }
-    params = {
-        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'sequence',
-        Key: {
-            "key": "userRole_seq"
-        },
-        UpdateExpression: "SET #sequence = #sequence + :inc",
-        ExpressionAttributeNames: {
-            "#sequence": "sequence"
-        },
-        ExpressionAttributeValues: { ":inc": 1 },
-        ReturnValues: "ALL_NEW"
-    }
-    const roleSequenceDoc = await database.update(params);
-    params = {
-        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'role',
-        Key: {
-            "name": "User",
-        }
-    };
-    const defaultRole = await database.get(params);
-    const userRole = {
-        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'userRole',
-        Item: {
-            number: roleSequenceDoc.sequence,
-            userNumber: sequenceDoc.sequence,
-            roleList: [{
-                id: defaultRole.number,
-                name: defaultRole.name
-            }]
-        }
-    }
-    await database.put(userRole);
     const doc = (!userId || userId === undefined) ? {} : await database.put(profile);
     params = {
         TableName: data.hasOwnProperty('table') ? process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + data.table : table,
         Key: {
-            "number": sequenceDoc.sequence
+            "userId": data.userId
         }
     }
     return await database.get(params);
 }
 
-export const updateUserProfile = async (event) => {
-    const data = JSON.parse(event.body);
-    let userId = event.requestContext.identity.cognitoIdentityId;
-    let params = data.email ?
-        {
-            TableName: table,
-            FilterExpression: '#email = :email and #identityId = :identityId',
-            ExpressionAttributeNames: {
-                '#email': 'email',
-                '#identityId': 'identityId'
-            },
-            ExpressionAttributeValues: {
-                ':email': data.email,
-                ':identityId': data.identityId
-            }
-        } : {
-            TableName: table,
-            FilterExpression: '#identityId = :identityId',
-            ExpressionAttributeNames: {
-                '#identityId': 'identityId'
-            },
-            ExpressionAttributeValues: {
-                ':identityId': data.identityId
-            }
-        };
-    const existingProfile = await database.scan(params);
-    let userProfile;
-    if(existingProfile.length === 0) {
-        userProfile = await createProfile(data, userId);
-    } else {
-        userProfile = await updateProfile(data, userId, existingProfile[0].number);
-    }
-    return {
-        statusCode: 200,
-        body: JSON.stringify(userProfile),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
-};
-
-const updateProfile = async (data, userId, userNumber) => {
+const updateProfile = async (data, userId) => {
     let update = [];
     let expAttrValues = {};
+    let expAttrNames = {};
+    let params = {};
+
     if(data.hasOwnProperty('identityId')) {
         update.push('identityId = :identityId');
         expAttrValues[":identityId"] = data.identityId
-    }
-    if(data.hasOwnProperty('firstName')) {
-        update.push('firstName = :firstName');
-        expAttrValues[":firstName"] = data.firstName
     }
     if(data.hasOwnProperty('lastName')) {
         update.push('lastName = :lastName');
@@ -319,7 +249,6 @@ const updateProfile = async (data, userId, userNumber) => {
         expAttrValues[":dateOfBirth"] = data.dateOfBirth;
     }
     if(data.hasOwnProperty('gender')) {
-
         update.push('gender = :gender');
         expAttrValues[":gender"] = data.gender;
     }
@@ -328,42 +257,50 @@ const updateProfile = async (data, userId, userNumber) => {
         expAttrValues[":address1"] = data.address1;
     }
     if(data.hasOwnProperty('address2')) {
-
         update.push('address2 = :address2');
         expAttrValues[":address2"] = data.address2;
     }
     if(data.hasOwnProperty('city')) {
-
         update.push('city = :city');
         expAttrValues[":city"] = data.city;
     }
     if(data.hasOwnProperty('postCode')) {
-
         update.push('postCode = :postCode');
         expAttrValues[":postCode"] = data.postCode;
     }
     if(data.hasOwnProperty('countryCode')) {
-
         update.push('countryCode = :countryCode');
         expAttrValues[":countryCode"] = data.countryCode;
     }
     if(data.hasOwnProperty('phone')) {
-
         update.push('phone = :phone');
         expAttrValues[":phone"] = data.phone;
     }
     if(data.hasOwnProperty('about')) {
-
         update.push('about = :about');
         expAttrValues[":about"] = data.about;
     }
     if(data.hasOwnProperty('communityList')) {
-
         update.push('communityList = :communityList');
         expAttrValues[":communityList"] = data.communityList;
+    } else {
+        let communityList = [];
+        params = {
+            TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'community'
+        }
+        const allCommunities = await database.scan(params)
+        allCommunities.sort((a, b) => (a.number > b.number) ? 1 : ((b.number > a.number) ? -1 : 0));
+        for(let i in allCommunities) {
+            let checked = false;
+            if(data.hasOwnProperty('family') && data.family && data.family.hasOwnProperty('members') && allCommunities[i].name === 'Family') {
+                checked = true;
+            }
+            communityList.push({"id": allCommunities[i].number, "name": allCommunities[i].name, "checked": checked});
+        }
+        update.push('communityList = :communityList');
+        expAttrValues[":communityList"] = communityList;
     }
     if(data.hasOwnProperty('mailingFlag')) {
-
         update.push('mailingFlag = :mailingFlag');
         expAttrValues[":mailingFlag"] = data.mailingFlag;
     }
@@ -375,6 +312,50 @@ const updateProfile = async (data, userId, userNumber) => {
         update.push('lastLogin = :lastLogin');
         expAttrValues[":lastLogin"] = data.lastLogin;
     }
+    params = {
+        TableName: table,
+        Key: {
+            "userId": userId
+        },
+    }
+    const profile = await database.get(params);
+    const currentRoles = profile.roles;
+    let roles = [];
+    for (let i = 0; i < currentRoles.length; i++) {
+        roles.push(currentRoles[i]);
+    }
+
+    if(data.hasOwnProperty('family') && data.family && data.family.hasOwnProperty('members')) {
+        params = {
+            TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'role',
+            ProjectionExpression: "#number, code, #name, #type",
+            FilterExpression: '#type = :type',
+            ExpressionAttributeNames: {
+                '#number': 'number',
+                '#name': 'name',
+                '#type': 'type'
+            },
+            ExpressionAttributeValues: {
+                ':type': 'Family'
+            },
+        };
+        const familyRoles = await database.scan(params);
+        for (let i = 0; i < familyRoles.length; i++) {
+            let match = false;
+            for(let j = 0; j < currentRoles.length; j++) {
+                if(currentRoles[j].code === familyRoles[i].code) {
+                    match = true;
+                    break;
+                }
+            }
+            if(!match) {
+                roles.push(familyRoles[i]);
+            }
+        }
+    }
+    update.push('#roles = :roles');
+    expAttrValues[":roles"] = roles;
+    expAttrNames["#roles"] = 'roles';
 
     let updateExpr = '';
     for(let i = 0; i < update.length; i++) {
@@ -386,67 +367,19 @@ const updateProfile = async (data, userId, userNumber) => {
         updateExpr += update[i];
     }
 
-    let conditionalExpr = '';
-    if(data.email) {
-        conditionalExpr = 'email = :email and identityId = :identityId';
-        expAttrValues[':email'] = data.email;
-        expAttrValues[':identityId'] = data.identityId;
-    } else {
-        conditionalExpr = 'identityId = :identityId'
-        expAttrValues[':identityId'] = data.identityId;
-    }
+    let conditionalExpr = 'userId = :userId'
+    expAttrValues[':userId'] = data.userId;
 
-    let params = {
+    params = {
         TableName: table,
         Key: {
-            "number": userNumber
+            "userId": userId
         },
         ConditionExpression: conditionalExpr,
         UpdateExpression: updateExpr,
+        ExpressionAttributeNames: expAttrNames,
         ExpressionAttributeValues: expAttrValues,
         ReturnValues: 'ALL_NEW'
     };
-    const userProfile = (!userId || userId === undefined) ? {} : await database.update(params);
-    return {
-        statusCode: 200,
-        body: JSON.stringify(userProfile),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return (!userId || userId === undefined) ? {} : await database.update(params);
 };
-
-export const findUserRole = async (event) => {
-    const data = JSON.parse(event.body);
-    let identityId = event.requestContext.identity.cognitoIdentityId;
-    let params = {
-        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'userProfile',
-        FilterExpression: '#identityId = :identityId',
-        ExpressionAttributeNames: {
-            '#identityId': 'identityId',
-        },
-        ExpressionAttributeValues: {':identityId': identityId}
-    };
-    const userProfile = await database.scan(params);
-    let userRole;
-    if(userProfile) {
-        params = {
-            TableName: table,
-            Key: {
-                "userNumber": userProfile[0].number
-            }
-        };
-        userRole = await database.get(params);
-    } else {
-        userRole = {};
-    }
-    return {
-        statusCode: 200,
-        body: JSON.stringify(userRole),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
-}

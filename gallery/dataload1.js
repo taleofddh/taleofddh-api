@@ -70,11 +70,11 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'photo.csv'))
         let len = photoItems.length;
         for (let i = 0; i < len; i += batchSize) {
             let tempPhotoDeleteKeys = photoDeleteKeys.slice(i, i + batchSize);
-            await dbOperation("deleteDocs", "photo", tempPhotoDeleteKeys);
+            await database.operation("deleteDocs", "photo", tempPhotoDeleteKeys);
             let tempPhotoItems = photoItems.slice(i, i + batchSize);
-            await dbOperation("insertDocs", "photo", tempPhotoItems);
+            await database.operation("insertDocs", "photo", tempPhotoItems);
             let tempPhotoGetKeys = photoGetKeys.slice(i, i + batchSize);
-            const docs = await dbOperation("findDocs", "photo", tempPhotoGetKeys);
+            const docs = await database.operation("findDocs", "photo", tempPhotoGetKeys);
             await console.log(docs);
         }
         const sequenceKey = {
@@ -83,86 +83,6 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'photo.csv'))
                 "squence": rowCount
             }
         }
-        await dbOperation("updateDoc", "sequence", sequenceKey);
+        await database.operation("updateDoc", "sequence", sequenceKey);
         await console.log(`Parsed ${rowCount} rows`);
     });
-
-
-const dbOperation = async (operation, table, data) => {
-    var tableName = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + table;
-    var response;
-    var params;
-    try {
-        switch(operation) {
-            case 'findDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.get(params);
-                break;
-            case 'findDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: {
-                            "Keys": data
-                        }
-                    }
-                }
-                response = await database.batchGet(params, tableName);
-                break;
-            case 'insertDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.put(params);
-                break;
-            case 'insertDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'updateDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.put(params);
-                break;
-            case 'udpateDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'deleteDoc':
-                data.TableName = tableName;
-                params = data;
-                response = await database.delete(params);
-                break;
-            case 'deleteDocs':
-                params = {
-                    "RequestItems": {
-                        [tableName]: data
-                    }
-                }
-                response = await database.batchWrite(params);
-                break;
-            case 'queryDocs':
-                data.TableName = tableName
-                params = data;
-                response = await database.query(params);
-                break;
-            case 'scanDocs':
-                data.TableName = tableName
-                params = data;
-                response = await database.scan(params);
-                break;
-            default:
-                break;
-        }
-        return response;
-    } catch (error) {
-        console.error(error);
-    }
-}

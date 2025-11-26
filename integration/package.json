@@ -24,14 +24,14 @@
   },
   "homepage": "https://github.com/taleofddh/taleofddh-apii#readme",
   "dependencies": {
-    "@taleofddh/drive": "^2.0.0",
-    "@taleofddh/gmail": "^2.0.0",
-    "@taleofddh/identity": "^2.0.0",
-    "@taleofddh/notification": "^2.0.0",
-    "@taleofddh/response": "^2.0.0",
-    "@taleofddh/secret": "^2.0.0",
-    "@taleofddh/text": "^2.0.0",
-    "@taleofddh/whatsapp": "^2.0.0",
+    "@taleofddh/drive": "^2.3.1",
+    "@taleofddh/gmail": "^2.3.1",
+    "@taleofddh/identity": "^2.3.1",
+    "@taleofddh/notification": "^2.3.1",
+    "@taleofddh/response": "^2.3.1",
+    "@taleofddh/secret": "^2.3.1",
+    "@taleofddh/text": "^2.3.1",
+    "@taleofddh/whatsapp": "^2.3.1",
     "@taleofddh/workbook": "^2.0.0"
   },
   "devDependencies": {

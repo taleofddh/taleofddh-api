@@ -1,5 +1,5 @@
 {
-  "name": "core-service",
+  "name": "link-service",
   "version": "4.1.0",
   "description": "Link APIs for Tale of DDH",
   "main": "handler.js",
@@ -26,9 +26,9 @@
   "dependencies": {
     "@fast-csv/format": "^5.0.5",
     "@fast-csv/parse": "^5.0.5",
-    "@taleofddh/database": "^2.0.0",
-    "@taleofddh/response": "^2.0.0",
-    "@taleofddh/storage": "^2.0.0",
+    "@taleofddh/database": "^2.3.1",
+    "@taleofddh/response": "^2.3.1",
+    "@taleofddh/storage": "^2.3.1",
     "dotenv": "^17.2.3",
     "fast-csv": "^5.0.5"
   },

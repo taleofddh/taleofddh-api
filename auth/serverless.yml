@@ -111,6 +111,17 @@ functions:
     environment:
       TABLE_NAME: "user"
 
+  createOrUpdateUserProfile:
+    handler: handler.createOrUpdateUserProfile
+    events:
+      - http:
+          path: createOrUpdateUserProfile
+          method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      TABLE_NAME: "userProfile"
+
   findUserProfile:
     handler: handler.findUserProfile
     events:
@@ -121,39 +132,6 @@ functions:
           authorizer: aws_iam
     environment:
       TABLE_NAME: "userProfile"
-
-  createUserProfile:
-    handler: handler.createUserProfile
-    events:
-      - http:
-          path: createUserProfile
-          method: post
-          cors: true
-          authorizer: aws_iam
-    environment:
-      TABLE_NAME: "userProfile"
-
-  updateUserProfile:
-    handler: handler.updateUserProfile
-    events:
-      - http:
-          path: updateUserProfile
-          method: put
-          cors: true
-          authorizer: aws_iam
-    environment:
-      TABLE_NAME: "userProfile"
-
-  findUserRole:
-    handler: handler.findUserRole
-    events:
-      - http:
-          path: findUserRole
-          method: get
-          cors: true
-          authorizer: aws_iam
-    environment:
-      TABLE_NAME: "userRole"
 
 # you can add CloudFormation resource templates here
 resources:
