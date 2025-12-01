@@ -34,6 +34,11 @@ provider:
     REGION: ${opt:region, 'eu-west-1'}
     APP_NAME: ${env:APP_NAME, 'taleofddh'}
     SERVICE_NAME: ${env:SERVICE_NAME, 'blog'}
+    S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-blogs'}
+    S3_MEDIA_BUCKET: ${env:S3_MEDIA_BUCKET, 'taleofddh-media'}
+    SIGNER_PRIVATE_KEY: ${env:SIGNER_PRIVATE_KEY, 'SIGNER_PRIVATE_KEY'}
+    CLOUDFRONT_PUBLIC_KEY_ID: ${env:CLOUDFRONT_PUBLIC_KEY_ID, 'K1XBUPGFMXTF6Q'}
+    MEDIA_PROTECTED_HOST: ${env:MEDIA_PROTECTED_HOST, 'https://media-protected.taleofddh.com'}
 
   apiGateway:
     shouldStartNameWithService: true
@@ -53,11 +58,15 @@ provider:
     - Effect: "Allow"
       Action:
         - s3:ListBucket
-      Resource: arn:aws:s3:::${env:S3_BUCKET, 'taleofddh-blogs'}
+      Resource:
+        - arn:aws:s3:::${env:S3_BUCKET, 'taleofddh-blogs'}
+        - arn:aws:s3:::${env:S3_MEDIA_BUCKET, 'taleofddh-media'}
     - Effect: "Allow"
       Action:
         - s3:GetObject
-      Resource: arn:aws:s3:::${env:S3_BUCKET, 'taleofddh-blogs'}/*
+      Resource:
+        - arn:aws:s3:::${env:S3_BUCKET, 'taleofddh-blogs'}/*
+        - arn:aws:s3:::${env:S3_MEDIA_BUCKET, 'taleofddh-media'}/*
     - Effect: "Allow"
       Action:
         - dynamodb:BatchGetItem
@@ -159,6 +168,65 @@ functions:
             contentHandling: CONVERT_TO_BINARY
     environment:
       S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-blogs'}
+
+  findHistoricalBlogCategories:
+    handler: handler.findHistoricalBlogCategories
+    events:
+      - http:
+          path: blogHistoricalCategories
+          method: get
+          cors: true
+    environment:
+      TABLE_NAME: "blog"
+
+  findBlogCategories:
+    handler: handler.findBlogCategories
+    events:
+      - http:
+          path: blogCategories
+          method: get
+          cors: true
+    environment:
+      TABLE_NAME: "blog"
+
+  findHistoricalBlogNames:
+    handler: handler.findHistoricalBlogNames
+    events:
+      - http:
+          path: blogHistoricalNames/{category}
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                category: true
+    environment:
+      TABLE_NAME: "blog"
+
+  findBlogCategoryNames:
+    handler: handler.findBlogCategoryNames
+    events:
+      - http:
+          path: blogCategoryNames
+          method: get
+          cors: true
+    environment:
+      TABLE_NAME: "blog"
+
+  findBlog:
+    handler: handler.findBlog
+    events:
+      - http:
+          path: blog/{category}/{name}
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                category: true
+                name: true
+    environment:
+      TABLE_NAME: "blog"
 
 # you can add CloudFormation resource templates here
 resources:

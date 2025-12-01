@@ -3,14 +3,16 @@ import path from 'path';
 import csv from 'fast-csv';
 import dotenv from 'dotenv';
 import * as database from '@taleofddh/database';
-import { fileURLToPath } from 'url';
+import {v6 as uuidv6} from 'uuid';
+
+import {fileURLToPath} from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-let blogDeleteKeys = [];
+/*let blogDeleteKeys = [];
 let blogItemKeys = [];
 let blogGetKeys = [];
 fs.createReadStream(path.resolve(__dirname, 'data', 'blog.csv'))
@@ -70,13 +72,56 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'blog.csv'))
         const docs = await database.operation("findDocs", "blog", blogGetKeys);
         await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
+    });*/
+
+let blogKey = [];
+let blogItem = [];
+fs.readFile('data/blog.json', 'utf8', async (err, data) => {
+    let blogList = await JSON.parse(data);
+    let docPromises = {};
+    docPromises = blogList.map(async (item) => {
+        //console.log(item);
+        blogKey = {
+            Key: {
+                "name": item.name,
+                "startDateTime": item.startDateTime
+            }
+        };
+        await database.operation("deleteItem", "blog", blogKey);
+        const options = {
+            msecs: new Date(item.startDateTime).getTime()
+        }
+        blogItem = {
+            Item: {
+                "id": uuidv6(options),
+                "category": item.category,
+                "name": item.name,
+                "header": item.header,
+                "titlePhoto": item.titlePhoto,
+                "startDateTime": item.startDateTime,
+                "endDateTime": item.endDateTime,
+                "viewCount": item.viewCount,
+                "summary": item.summary,
+                "homePageFlag": item.homePageFlag,
+                "link": item.link,
+                "author": item.author,
+                "title": item.title,
+                "contents": item.contents,
+                "searchName": item.name.toUpperCase()
+            }
+        };
+        await database.operation("writeItem", "blog", blogItem);
+        return await database.operation("getItem", "blog", blogKey);
     });
+    const docs = await Promise.all(docPromises);
+    console.log(docs);
+});
 
 let articleDeleteKeys = [];
 let articleItemKeys = [];
 let articleGetKeys = [];
 fs.createReadStream(path.resolve(__dirname, 'data', 'article.csv'))
-    .pipe(csv.parse({ headers: true }))
+    .pipe(csv.parse({headers: true}))
     .transform(data => ({
         sequence: parseInt(data.sequence),
         blogName: data.blogName,
@@ -113,9 +158,9 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'article.csv'))
         });
     })
     .on('end', async rowCount => {
-        await database.operation("deleteDocs", "article", articleDeleteKeys);
-        await database.operation("insertDocs", "article", articleItemKeys);
-        const docs = await database.operation("findDocs", "article", articleGetKeys);
+        await database.operation("deleteItems", "article", articleDeleteKeys);
+        await database.operation("writeItems", "article", articleItemKeys);
+        const docs = await database.operation("getItems", "article", articleGetKeys);
         await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
     });
