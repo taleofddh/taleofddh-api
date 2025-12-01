@@ -26,11 +26,17 @@
   "dependencies": {
     "@fast-csv/format": "^5.0.5",
     "@fast-csv/parse": "^5.0.5",
+    "@taleofddh/array": "^2.3.1",
     "@taleofddh/database": "^2.3.1",
-    "@taleofddh/storage": "^2.3.1",
+    "@taleofddh/date": "^2.3.1",
+    "@taleofddh/distribution": "^2.3.1",
     "@taleofddh/response": "^2.3.1",
+    "@taleofddh/secret": "^2.3.1",
+    "@taleofddh/storage": "^2.3.1",
+    "all": "^0.0.0",
     "dotenv": "^17.2.3",
-    "fast-csv": "^5.0.5"
+    "fast-csv": "^5.0.5",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.926.0",

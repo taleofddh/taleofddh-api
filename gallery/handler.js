@@ -184,6 +184,30 @@ export const updatePhotoViewCount = async (event) => {
     return response.createResponse(updatedPhoto, 200);
 };
 
+export const findAlbumCategories = async (event) => {
+    let historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+    const params = {
+        TableName: table,
+        IndexName: "category-index",
+        ProjectionExpression: "category, #name, startDateTime, endDateTime",
+        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
+        ExpressionAttributeNames: {
+            '#name': 'name',
+            '#startDateTime': "startDateTime",
+            '#production': 'production'
+        },
+        ExpressionAttributeValues: {
+            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
+            ':production': true
+        }
+    };
+    const albums = await database.scan(params);
+
+    let categories = array.distinctValues(albums, "category");
+
+    return response.createResponse(categories, 200);
+}
+
 export const findHistoricalAlbumCategories = async (event) => {
     const historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
@@ -216,46 +240,8 @@ export const findHistoricalAlbumCategories = async (event) => {
         }
     });
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(albumCategoryList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(albumCategoryList, 200);
 };
-
-export const findAlbumCategories = async (event) => {
-    let historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
-    const params = {
-        TableName: table,
-        IndexName: "category-index",
-        ProjectionExpression: "category, #name, startDateTime, endDateTime",
-        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
-        ExpressionAttributeNames: {
-            '#name': 'name',
-            '#startDateTime': "startDateTime",
-            '#production': 'production'
-        },
-        ExpressionAttributeValues: {
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
-            ':production': true
-        }
-    };
-    const albums = await database.scan(params);
-
-    let categories = array.distinctValues(albums, "category");
-
-    return {
-        statusCode: 200,
-        body: JSON.stringify(categories),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
-}
 
 export const findHistoricalAlbumSubCategories = async (event) => {
     const category = decodeURI(event.pathParameters.category);
@@ -292,14 +278,7 @@ export const findHistoricalAlbumSubCategories = async (event) => {
         }
     });
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(albumSubCategoryList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(albumSubCategoryList, 200);
 };
 
 export const findAlbumCategorySubCategories = async (event) => {
@@ -328,14 +307,7 @@ export const findAlbumCategorySubCategories = async (event) => {
         return {category: item, subCategories: array.distinctValues(categorizedAlbums, "subCategory")};
     })
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(categorySubCategories),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(categorySubCategories, 200);
 }
 
 export const findHistoricalAlbumCollections = async (event) => {
@@ -377,14 +349,7 @@ export const findHistoricalAlbumCollections = async (event) => {
         }
     });
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(albumCollectionList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(albumCollectionList, 200);
 };
 
 export const findAlbumCategorySubCategoryCollections = async (event) => {
@@ -419,14 +384,7 @@ export const findAlbumCategorySubCategoryCollections = async (event) => {
         })
     })
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(categorySubCategoryCollections),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(categorySubCategoryCollections, 200);
 }
 
 export const findAlbumHistoricalNames = async (event) => {
@@ -469,14 +427,7 @@ export const findAlbumHistoricalNames = async (event) => {
         }
     });
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(albumList),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(albumList, 200);
 };
 
 export const findAlbumCategorySubCategoryCollectionNames = async (event) => {
@@ -516,14 +467,7 @@ export const findAlbumCategorySubCategoryCollectionNames = async (event) => {
         })
     })
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(categorySubCategoryCollectionNames),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(categorySubCategoryCollectionNames, 200);
 }
 
 export const findAlbum = async (event) => {
@@ -591,14 +535,7 @@ export const findAlbum = async (event) => {
     });
     console.log(JSON.stringify(albumList));
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(albumList[0]),
-        headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": true,
-        }
-    };
+    return response.createResponse(albumList[0], 200);
 };
 
 const getPrefix = (isHost = true, type = 'images', source, category, subCategory, collection, name) => {
