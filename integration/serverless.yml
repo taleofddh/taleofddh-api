@@ -92,7 +92,7 @@ functions:
                 - sqs
                 - Ref: AWS::Region
                 - Ref: AWS::AccountId
-                - ${env:MESSAGE_QUEUE, 'taleofddh-message'}-${opt:stage}
+                - ${env:MESSAGE_QUEUE, 'taleofddh-message'}-${opt:stage, 'dev'}
 
   sendWhatsAppMessage:
     handler: handler.sendWhatsAppMessage
@@ -106,8 +106,8 @@ functions:
                 - sns
                 - Ref: AWS::Region
                 - Ref: AWS::AccountId
-                - ${env:WHATSAPP_NOTIFICATION_TOPIC, 'taleofddh-whatsapp'}-${opt:stage}
-          topicName: ${env:MESSAGE_QUEUE, 'taleofddh-message'}-${opt:stage}
+                - ${env:WHATSAPP_NOTIFICATION_TOPIC, 'taleofddh-whatsapp'}-${opt:stage, 'dev'}
+          topicName: ${env:MESSAGE_QUEUE, 'taleofddh-message'}-${opt:stage, 'dev'}
 
   createOrUpdateReportFile:
     handler: handler.createOrUpdateReportFile
@@ -121,10 +121,10 @@ functions:
                 - sns
                 - Ref: AWS::Region
                 - Ref: AWS::AccountId
-                - ${env:GOOGLE_DRIVE_NOTIFICATION_TOPIC, 'taleofddh-google-drive'}-${opt:stage}
-          topicName: ${env:MESSAGE_QUEUE, 'taleofddh-message'}-${opt:stage}
+                - ${env:GOOGLE_DRIVE_NOTIFICATION_TOPIC, 'taleofddh-google-drive'}-${opt:stage, 'dev'}
+          topicName: ${env:MESSAGE_QUEUE, 'taleofddh-message'}-${opt:stage, 'dev'}
     environment:
-      EMAIL_NOTIFICATION_TOPIC: ${env:EMAIL_NOTIFICATION_TOPIC, 'taleofddh-email'}-${opt:stage}
+      EMAIL_NOTIFICATION_TOPIC: ${env:EMAIL_NOTIFICATION_TOPIC, 'taleofddh-email'}-${opt:stage, 'dev'}
 
 # you can add CloudFormation resource templates here
 #resources:
