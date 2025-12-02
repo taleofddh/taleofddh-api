@@ -4,80 +4,13 @@ import * as response from '@taleofddh/response';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
 export const findIdentity = async (event) => {
-    let userId = event.requestContext.identity.cognitoIdentityId;
+    let userId = event.requestContext.identity.cognitoAuthenticationProvider.match(/CognitoSignIn:([^:]+)$/)[1];
+    let identityId = event.requestContext.identity.cognitoIdentityId;
     const identity = {
-        identityId: userId
+        userId: userId,
+        identityId: identityId
     }
     return response.createResponse(identity, 200);
-};
-
-export const findUser = async (event) => {
-    const data = JSON.parse(event.body);
-    const params = {
-        TableName: table,
-        Key: {
-            "username": data.username,
-            "password": data.password
-        }
-    }
-    const user = await database.get(params);
-    return response.createResponse(user, 200);
-};
-
-export const createUser = async (event) => {
-    const data = JSON.parse(event.body);
-    const profile = {
-        table: 'userProfile',
-        number: sequence,
-        identityId: data.userProfile.identityId,
-        email: data.userProfile.email,
-        mailingFlag: true
-    }
-    const userProfile = await createProfile(profile);
-
-    const newUser = {
-        TableName: table,
-        Item: {
-            "number": sequence,
-            "username": data.username,
-            "password": data.password,
-            "userProfile": userProfile
-        }
-    }
-
-    const user = await database.put(newUser);
-
-    return response.createResponse(user, 200);
-};
-
-export const updateUser = async (event) => {
-    const data = JSON.parse(event.body);
-    let update = [];
-    let expAttrValues = {};
-    if(data.hasOwnProperty('password')) {
-        update.push('password = :password');
-        expAttrValues[":password"] = data.password;
-    }
-
-    let updateExpr = 'SET ';
-    for(let i in update) {
-        if(i > 0)  {
-            updateExpr += ', ';
-        }
-        updateExpr += update[i];
-    }
-
-    expAttrValues['username'] = data.username;
-
-    let params = {
-        TableName: table,
-        ConditionExpression: 'username = :username',
-        UpdateExpression: updateExpr,
-        ExpressionAttributeValues: expAttrValues,
-        ReturnValues: 'ALL_NEW'
-    };
-    const user = (!userId || userId === undefined) ? {} : await database.update(params);
-    return response.createResponse(user, 200);
 };
 
 export const findUserProfile = async (event) => {
@@ -88,7 +21,7 @@ export const findUserProfile = async (event) => {
             "userId": userId
         }
     };
-    const userProfile = (!userId || userId === undefined) ? {} : await database.get(params);
+    const userProfile = (!userId || false) ? {} : await database.get(params);
     return response.createResponse(userProfile, 200);
 };
 
@@ -220,7 +153,7 @@ const createProfile = async (data, userId) => {
             "lastLogin": now
         }
     }
-    const doc = (!userId || userId === undefined) ? {} : await database.put(profile);
+    const doc = (!userId || false) ? {} : await database.put(profile);
     params = {
         TableName: data.hasOwnProperty('table') ? process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + data.table : table,
         Key: {
@@ -381,5 +314,5 @@ const updateProfile = async (data, userId) => {
         ExpressionAttributeValues: expAttrValues,
         ReturnValues: 'ALL_NEW'
     };
-    return (!userId || userId === undefined) ? {} : await database.update(params);
+    return (!userId || false) ? {} : await database.update(params);
 };

@@ -87,23 +87,18 @@ package:
   individually: true
 
 functions:
-  findBlogList:
-    handler: handler.findBlogList
-    events:
-      - http:
-          path: blogList
-          method: get
-          cors: true
-    environment:
-      TABLE_NAME: "blog"
-
   findCategorizedBlogList:
     handler: handler.findCategorizedBlogList
     events:
       - http:
-          path: blogListCategorized
-          method: post
+          path: blogListCategorized/{category}/{homePageFlag}
+          method: get
           cors: true
+          request:
+            parameters:
+              paths:
+                category: true
+                homePageFlag: true
     environment:
       TABLE_NAME: "blog"
 
@@ -117,55 +112,42 @@ functions:
     environment:
       TABLE_NAME: "blog"
 
-  findBlogArticleList:
-    handler: handler.findBlogArticleList
+  findBlogCommentList:
+    handler: handler.findBlogCommentList
     events:
       - http:
-          path: blogArticleList
+          path: blogCommentList/{blogName}
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                blogName: true
+    environment:
+      TABLE_NAME: "comment"
+
+  addBlogComment:
+    handler: handler.addBlogComment
+    events:
+      - http:
+          path: blogComment
           method: post
           cors: true
     environment:
-      TABLE_NAME: "article"
+      TABLE_NAME: "comment"
 
-  findArticleList:
-    handler: handler.findArticleList
+  getBlogDocument:
+    handler: handler.getBlogDocument
     events:
       - http:
-          path: articleList
-          method: post
+          path: blogDocument/{prefix}/{file}
+          method: get
           cors: true
-    environment:
-      TABLE_NAME: "article"
-
-  findArticleCommentList:
-    handler: handler.findArticleCommentList
-    events:
-      - http:
-          path: articleCommentList
-          method: post
-          cors: true
-    environment:
-      TABLE_NAME: "articleComment"
-
-  addArticleComment:
-    handler: handler.addArticleComment
-    events:
-      - http:
-          path: articleComment
-          method: post
-          cors: true
-    environment:
-      TABLE_NAME: "articleComment"
-
-  getArticleDocument:
-    handler: handler.getArticleDocument
-    events:
-      - http:
-          path: articleDocument
-          method: post
-          cors: true
-          response:
-            contentHandling: CONVERT_TO_BINARY
+          request:
+            parameters:
+              paths:
+                prefix: true
+                file: true
     environment:
       S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-blogs'}
 
