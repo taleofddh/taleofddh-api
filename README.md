@@ -5,7 +5,7 @@
 **Multi-module serverless Lambda repository with automated deployment scripts and comprehensive CI/CD workflows**
 
 [![Node.js](https://img.shields.io/badge/Node.js-22.0.0+-green.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/Version-4.1.0-orange.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-4.2.0-orange.svg)](package.json)
 [![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-orange.svg)](https://aws.amazon.com/lambda/)
 [![Serverless](https://img.shields.io/badge/Serverless-Framework-red.svg)](https://www.serverless.com/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)

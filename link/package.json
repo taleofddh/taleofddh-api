@@ -1,6 +1,6 @@
 {
   "name": "link-service",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Link APIs for Tale of DDH",
   "main": "handler.js",
   "type": "module",
