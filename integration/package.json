@@ -1,6 +1,6 @@
 {
   "name": "integration-service",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Integration API for Tale of DDH",
   "type": "module",
   "main": "handler.js",
