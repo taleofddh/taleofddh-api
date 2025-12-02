@@ -49,7 +49,6 @@ provider:
       Action:
         - lambda:InvokeFunction
         - secretsmanager:GetSecretValue
-        - secretsmanager:PutSecretValue
         - kms:Encrypt
         - kms:Decrypt
         - kms:ReEncrypt*
