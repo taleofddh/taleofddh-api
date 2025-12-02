@@ -7,5 +7,3 @@ REM RUN DATALOADING SCRIPTS
 node dataload1.js
 
 node dataload2.js
-
-REM node dataload3.js

@@ -84,27 +84,6 @@ package:
   individually: true
 
 functions:
-  findAlbumList:
-    handler: handler.findAlbumList
-    events:
-      - http:
-          path: albumList
-          method: get
-          cors: true
-    environment:
-      TABLE_NAME: "album"
-
-  findRestrictedAlbumList:
-    handler: handler.findRestrictedAlbumList
-    events:
-      - http:
-          path: albumListRestricted
-          method: post
-          cors: true
-          authorizer: aws_iam
-    environment:
-      TABLE_NAME: "album"
-
   updateAlbumViewCount:
     handler: handler.updateAlbumViewCount
     events:
@@ -114,40 +93,7 @@ functions:
           cors: true
           authorizer: aws_iam
     environment:
-      TABLE_NAME: "album"
-
-  findAlbumPhotoList:
-    handler: handler.findAlbumPhotoList
-    events:
-      - http:
-          path: albumPhotoList
-          method: post
-          cors: true
-          authorizer: aws_iam
-    environment:
-      TABLE_NAME: "photo"
-
-  findPhotoList:
-    handler: handler.findPhotoList
-    events:
-      - http:
-          path: photoList
-          method: post
-          cors: true
-          authorizer: aws_iam
-    environment:
-      TABLE_NAME: "photo"
-
-  findRestrictedPhotoList:
-    handler: handler.findRestrictedPhotoList
-    events:
-      - http:
-          path: photoListRestricted
-          method: post
-          cors: true
-          authorizer: aws_iam
-    environment:
-      TABLE_NAME: "photo"
+      TABLE_NAME: "gallery"
 
   updatePhotoViewCount:
     handler: handler.updatePhotoViewCount

@@ -10,18 +10,9 @@ const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' +
 const bucket = process.env['S3_BUCKET'];
 const source = "blogs";
 
-export const findBlogList = async (event) => {
-    const params = {
-        TableName: table
-    };
-    const blogList = await database.scan(params);
-    blogList.sort((a, b) => a.category.localeCompare(b.category) || new Date(b.date) - new Date(a.date));
-    return response.createResponse(blogList, 200);
-};
-
 export const findCategorizedBlogList = async (event) => {
-    const data = JSON.parse(event.body);
-    let homePageFlag = data.homePageBlog === 'true';
+    const category = decodeURI(event.pathParameters.category);
+    const homePageFlag = decodeURI(event.pathParameters.category) === 'true';
     const params = {
         TableName: table,
         FilterExpression: homePageFlag ? '#category = :category and #homePageFlag = :homePageFlag' : '#category = :category',
@@ -31,7 +22,7 @@ export const findCategorizedBlogList = async (event) => {
         } : {
             '#category': 'category'
         },
-        ExpressionAttributeValues: homePageFlag ? {':category': data.category, ':homePageFlag': homePageFlag} : {':category': data.category}
+        ExpressionAttributeValues: homePageFlag ? {':category': category, ':homePageFlag': homePageFlag} : {':category': category}
     };
     const blogList = await database.scan(params);
     blogList.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0) || a.date - b.date);
@@ -57,60 +48,22 @@ export const updateBlogViewCount = async (event) => {
     return response.createResponse(updatedBlog, 200);
 };
 
-export const findBlogArticleList = async (event) => {
-    const data = JSON.parse(event.body);
-    let params = {
-        TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'blog',
-        Key: {
-            'name': data.blogName,
-            'category': data.category
-        }
-    };
-    const blog = await database.get(params);
-    params = {
-        TableName: table,
-        KeyConditionExpression: '#blogName = :blogName',
-        ExpressionAttributeNames: {
-            '#blogName': 'blogName',
-        },
-        ExpressionAttributeValues: {':blogName': data.blogName}
-    };
-    blog.contents = await database.query(params);
-    blog.contents.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0));
-    return response.createResponse(blog, 200);
-};
-
-export const findArticleList = async (event) => {
-    const data = JSON.parse(event.body);
+export const findBlogCommentList = async (event) => {
+    const blogName = decodeURI(event.pathParameters.blogName);
     const params = {
         TableName: table,
         KeyConditionExpression: '#blogName = :blogName',
         ExpressionAttributeNames: {
             '#blogName': 'blogName',
         },
-        ExpressionAttributeValues: {':blogName': data.blogName}
-    };
-    const articleList = await database.query(params);
-    articleList.sort((a,b) => (a.sectionId > b.sectionId) ? 1 : ((b.sectionId > a.sectionId) ? -1 : 0));
-    return response.createResponse(articleList, 200);
-};
-
-export const findArticleCommentList = async (event) => {
-    const data = JSON.parse(event.body);
-    const params = {
-        TableName: table,
-        KeyConditionExpression: '#blogName = :blogName',
-        ExpressionAttributeNames: {
-            '#blogName': 'blogName',
-        },
-        ExpressionAttributeValues: {':blogName': data.blogName},
+        ExpressionAttributeValues: {':blogName': blogName},
         ScanIndexForward: false
     };
-    const articleCommentList = await database.query(params);
-    return response.createResponse(articleCommentList, 200);
+    const blogCommentList = await database.query(params);
+    return response.createResponse(blogCommentList, 200);
 };
 
-export const addArticleComment = async (event) => {
+export const addBlogComment = async (event) => {
     const data = JSON.parse(event.body);
     const params = {
         TableName: table,
@@ -121,14 +74,13 @@ export const addArticleComment = async (event) => {
             "date": data.date
         }
     }
-    const articleComment = await database.put(params);
-    return response.createResponse(articleComment, 200);
+    const blogComment = await database.put(params);
+    return response.createResponse(blogComment, 200);
 };
 
-export const getArticleDocument = async (event) => {
-    const data = JSON.parse(event.body);
-    const prefix = data.prefix;
-    const file = data.file;
+export const getBlogDocument = async (event) => {
+    const prefix = decodeURI(event.pathParameters.prefix);
+    const file = decodeURI(event.pathParameters.file);
     let object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + file});
     return {
         statusCode: 200,
