@@ -37,7 +37,8 @@ fs.readFile('data/blog.json', 'utf8', async (err, data) => {
                 "link": item.link,
                 "author": item.author,
                 "title": item.title,
-                "contents": item.contents,
+                "content": item.content,
+                "images": item.images,
                 "searchName": item.name.toUpperCase()
             }
         };

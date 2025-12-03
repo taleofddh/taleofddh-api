@@ -218,7 +218,7 @@ export const findBlog = async (event) => {
     let currentDate = new Date();
     const params = {
         TableName: table,
-        ProjectionExpression: "id, category, #name, startDateTime, endDateTime, header, title, titlePhoto, author, #searchName, viewCount, contents",
+        ProjectionExpression: "id, category, #name, startDateTime, endDateTime, header, title, titlePhoto, author, #searchName, viewCount, content, images",
         FilterExpression: '#searchName = :searchName and #category = :category and #startDateTime < :currentDate',
         ExpressionAttributeNames: {
             "#name": 'name',
