@@ -222,11 +222,142 @@ function displaySummary(results, skippedModules = []) {
 }
 
 /**
+ * Check if root package.json has changes
+ * @returns {boolean} True if root package.json has changes
+ */
+function hasRootChanges() {
+    const rootPath = process.cwd();
+    const packageJsonPath = path.join(rootPath, 'package.json');
+    const nodeModulesPath = path.join(rootPath, 'node_modules');
+    
+    // If no node_modules, needs installation
+    if (!fs.existsSync(nodeModulesPath)) {
+        return true;
+    }
+    
+    // Check for Git changes
+    const repoRoot = executeCommand('git rev-parse --show-toplevel', process.cwd(), true);
+    if (repoRoot.success) {
+        // Check for unstaged changes
+        const unstagedChanges = executeCommand(
+            'git diff --name-only -- package.json package-lock.json',
+            process.cwd(),
+            true
+        );
+        
+        if (unstagedChanges.success) {
+            const changedFiles = unstagedChanges.output.trim().split('\n').filter(f => f.length > 0);
+            if (changedFiles.length > 0) {
+                return true;
+            }
+        }
+        
+        // Check for staged changes
+        const stagedChanges = executeCommand(
+            'git diff --cached --name-only -- package.json package-lock.json',
+            process.cwd(),
+            true
+        );
+        
+        if (stagedChanges.success) {
+            const changedFiles = stagedChanges.output.trim().split('\n').filter(f => f.length > 0);
+            if (changedFiles.length > 0) {
+                return true;
+            }
+        }
+    }
+    
+    // Check file timestamps
+    const installMarkerPath = path.join(nodeModulesPath, '.install-timestamp');
+    let lastInstallTime = 0;
+    
+    if (fs.existsSync(installMarkerPath)) {
+        try {
+            const markerStat = fs.statSync(installMarkerPath);
+            lastInstallTime = markerStat.mtime.getTime();
+        } catch (error) {
+            return true;
+        }
+    }
+    
+    // Check if package.json is newer than last install
+    if (fs.existsSync(packageJsonPath)) {
+        const packageJsonStat = fs.statSync(packageJsonPath);
+        if (packageJsonStat.mtime.getTime() > lastInstallTime) {
+            return true;
+        }
+    }
+    
+    // Check if package-lock.json is newer than last install
+    const packageLockPath = path.join(rootPath, 'package-lock.json');
+    if (fs.existsSync(packageLockPath)) {
+        const packageLockStat = fs.statSync(packageLockPath);
+        if (packageLockStat.mtime.getTime() > lastInstallTime) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Install root package.json dependencies
+ * Always runs npm install if package.json exists, even without dependencies
+ * This ensures version bumps and other package.json changes are processed
+ * @returns {Promise<Object>} Installation result
+ */
+async function installRootDependencies() {
+    const rootPath = process.cwd();
+    const packageJsonPath = path.join(rootPath, 'package.json');
+    
+    // Check if root package.json exists
+    if (!fs.existsSync(packageJsonPath)) {
+        return { skipped: true, reason: 'No package.json found' };
+    }
+    
+    // Skip if no changes detected and not in force mode
+    if (!CONFIG.force && !hasRootChanges()) {
+        return { skipped: true, reason: 'No changes detected' };
+    }
+    
+    try {
+        logWithColor('\n📦 Installing root package.json...', 'cyan');
+        const startTime = Date.now();
+        
+        const result = executeCommand('npm install', rootPath, !CONFIG.verbose);
+        const duration = Date.now() - startTime;
+        
+        if (result.success) {
+            // Create timestamp marker
+            try {
+                const nodeModulesPath = path.join(rootPath, 'node_modules');
+                if (!fs.existsSync(nodeModulesPath)) {
+                    fs.mkdirSync(nodeModulesPath, { recursive: true });
+                }
+                const installMarkerPath = path.join(nodeModulesPath, '.install-timestamp');
+                fs.writeFileSync(installMarkerPath, new Date().toISOString());
+            } catch (error) {
+                logWithColor(`⚠️  Could not create install marker for root: ${error.message}`, 'yellow');
+            }
+            
+            logWithColor(`✅ Root package.json installed successfully (${duration}ms)`, 'green');
+            return { success: true, duration };
+        } else {
+            logWithColor(`❌ Root installation failed: ${result.error}`, 'red');
+            return { success: false, duration, error: result.error };
+        }
+    } catch (error) {
+        logWithColor(`❌ Root installation failed: ${error.message}`, 'red');
+        return { success: false, error: error.message };
+    }
+}
+
+/**
  * Main installation function
  */
 async function main() {
     try {
-        logWithColor('🚀 Starting Lambda modules installation...', 'cyan');
+        logWithColor('🚀 Starting installation process...', 'cyan');
         
         // Parse command line arguments
         const args = process.argv.slice(2);
@@ -246,7 +377,18 @@ async function main() {
             logWithColor(`Concurrency set to ${CONFIG.concurrency}`, 'yellow');
         }
         
+        // Install root dependencies first
+        const rootResult = await installRootDependencies();
+        if (rootResult.success === false) {
+            logWithColor('\n⚠️  Root dependencies installation failed, but continuing with Lambda modules...', 'yellow');
+        } else if (rootResult.skipped) {
+            logWithColor(`\n⏭️  Skipping root dependencies: ${rootResult.reason}`, 'yellow');
+        } else {
+            logWithColor('\n✅ Root dependencies installation complete', 'green');
+        }
+        
         // Discover modules
+        logWithColor('\n🔍 Discovering Lambda modules...', 'cyan');
         const allModules = discoverModules();
         
         if (allModules.length === 0) {
@@ -289,16 +431,26 @@ async function main() {
         // Display summary
         displaySummary(results, skippedModules);
         
+        // Include root installation status in final message
+        if (rootResult.success === false) {
+            logWithColor('\n⚠️  Note: Root dependencies installation failed', 'yellow');
+        }
+        
         // Determine exit code
         const failedCount = results.filter(r => !r.success).length;
-        if (failedCount === 0) {
-            logWithColor('\n🎉 All required modules installed successfully!', 'green');
+        const hasRootFailure = rootResult.success === false;
+        
+        if (failedCount === 0 && !hasRootFailure) {
+            logWithColor('\n🎉 All installations completed successfully!', 'green');
             process.exit(0);
-        } else if (failedCount === results.length) {
-            logWithColor('\n💥 All module installations failed!', 'red');
+        } else if (failedCount === results.length && hasRootFailure) {
+            logWithColor('\n💥 All installations failed!', 'red');
             process.exit(2);
         } else {
-            logWithColor(`\n⚠️  ${failedCount} module(s) failed to install`, 'yellow');
+            const failureMessages = [];
+            if (hasRootFailure) failureMessages.push('root dependencies');
+            if (failedCount > 0) failureMessages.push(`${failedCount} module(s)`);
+            logWithColor(`\n⚠️  Failed to install: ${failureMessages.join(', ')}`, 'yellow');
             process.exit(1);
         }
         
@@ -316,7 +468,9 @@ main();
 
 export {
     hasModuleChanges,
+    hasRootChanges,
     installModule,
+    installRootDependencies,
     processModulesWithConcurrency,
     displaySummary,
     main
