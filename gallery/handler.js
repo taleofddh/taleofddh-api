@@ -46,18 +46,19 @@ export const updatePhotoViewCount = async (event) => {
         ExpressionAttributeValues: { ":inc": 1 },
         ReturnValues: "UPDATED_NEW"
     }
-    const updatedPhoto = (!userId || userId === undefined) ? {} : await database.update(params);
+    const updatedPhoto = (!userId || false) ? {} : await database.update(params);
     return response.createResponse(updatedPhoto, 200);
 };
 
-export const findAlbumCategories = async (event) => {
-    let historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+export const findRecentAlbumNames = async (event) => {
+    const historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
         TableName: table,
         IndexName: "category-index",
-        ProjectionExpression: "category, #name, startDateTime, endDateTime",
-        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
+        ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime, photoCount, viewCount",
+        FilterExpression: '#startDateTime >= :historicalDate and #production = :production',
         ExpressionAttributeNames: {
+            '#collection': 'collection',
             '#name': 'name',
             '#startDateTime': "startDateTime",
             '#production': 'production'
@@ -68,11 +69,29 @@ export const findAlbumCategories = async (event) => {
         }
     };
     const albums = await database.scan(params);
+    albums.sort((a,b) => (a.startDateTime > b.startDateTime) ? 1 : ((b.startDateTime > a.startDateTime) ? -1 : 0));
 
-    let categories = array.distinctValues(albums, "category");
+    const signerPrivateKey = await secret.getSecretValue({SecretId: process.env['SIGNER_PRIVATE_KEY']});
 
-    return response.createResponse(categories, 200);
-}
+    const albumList = albums.map((album) => {
+        const prefix = getPrefix(true, 'images', source, album.category, album.subCategory, album.collection);
+        const signatureParams = distribution.getSignatureParameters(
+                                    process.env['CLOUDFRONT_PUBLIC_KEY_ID'],
+                                    signerPrivateKey,
+                                    true,
+                                    prefix,
+                                    1440);
+        return {
+            ...album,
+            signedUrl: distribution.getSignedUrlWithPolicy(
+                    {...signatureParams, url: prefix + album.name.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
+            )
+        }
+    });
+
+    return response.createResponse(albumList, 200);
+
+};
 
 export const findHistoricalAlbumCategories = async (event) => {
     const historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
@@ -101,12 +120,36 @@ export const findHistoricalAlbumCategories = async (event) => {
         return {
             name: category,
             signedUrl: distribution.getSignedUrlWithPolicy(
-                {...signatureParams, url: prefix + category.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
+                    {...signatureParams, url: prefix + category.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
             )
         }
     });
 
     return response.createResponse(albumCategoryList, 200);
+};
+
+export const findAlbumCategories = async (event) => {
+    let historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+    const params = {
+        TableName: table,
+        IndexName: "category-index",
+        ProjectionExpression: "category, #name, startDateTime, endDateTime",
+        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
+        ExpressionAttributeNames: {
+            '#name': 'name',
+            '#startDateTime': "startDateTime",
+            '#production': 'production'
+        },
+        ExpressionAttributeValues: {
+            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
+            ':production': true
+        }
+    };
+    const albums = await database.scan(params);
+
+    let categories = array.distinctValues(albums, "category");
+
+    return response.createResponse(categories, 200);
 };
 
 export const findHistoricalAlbumSubCategories = async (event) => {
