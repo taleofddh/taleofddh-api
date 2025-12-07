@@ -94,19 +94,16 @@ export const findRecentAlbumNames = async (event) => {
 };
 
 export const findHistoricalAlbumCategories = async (event) => {
-    const historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
         TableName: table,
         IndexName: "category-index",
         ProjectionExpression: "#name, category, startDateTime, endDateTime",
-        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
+        FilterExpression: '#production = :production',
         ExpressionAttributeNames: {
             '#name': 'name',
-            '#startDateTime': 'startDateTime',
             '#production': 'production'
         },
         ExpressionAttributeValues: {
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
             ':production': true
         },
     };
@@ -129,19 +126,16 @@ export const findHistoricalAlbumCategories = async (event) => {
 };
 
 export const findAlbumCategories = async (event) => {
-    let historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
         TableName: table,
         IndexName: "category-index",
         ProjectionExpression: "category, #name, startDateTime, endDateTime",
-        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
+        FilterExpression: '#production = :production',
         ExpressionAttributeNames: {
             '#name': 'name',
-            '#startDateTime': "startDateTime",
             '#production': 'production'
         },
         ExpressionAttributeValues: {
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
             ':production': true
         }
     };
@@ -154,21 +148,18 @@ export const findAlbumCategories = async (event) => {
 
 export const findHistoricalAlbumSubCategories = async (event) => {
     const category = decodeURI(event.pathParameters.category);
-    const historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
         TableName: table,
         IndexName: "category-index",
         ProjectionExpression: "category, subCategory, #name, startDateTime, endDateTime",
-        FilterExpression: '#category = :category and #startDateTime < :historicalDate and #production = :production',
+        FilterExpression: '#category = :category and #production = :production',
         ExpressionAttributeNames: {
             '#name': 'name',
             '#category': 'category',
-            '#startDateTime': "startDateTime",
             '#production': 'production'
         },
         ExpressionAttributeValues: {
             ':category': category,
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
             ':production': true
         }
     };
@@ -191,19 +182,16 @@ export const findHistoricalAlbumSubCategories = async (event) => {
 };
 
 export const findAlbumCategorySubCategories = async (event) => {
-    let historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
         TableName: table,
         IndexName: "category-index",
         ProjectionExpression: "category, subCategory, #name, startDateTime, endDateTime",
-        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
+        FilterExpression: '#production = :production',
         ExpressionAttributeNames: {
             '#name': 'name',
-            '#startDateTime': "startDateTime",
             '#production': 'production'
         },
         ExpressionAttributeValues: {
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
             ':production': true
         }
     };
@@ -222,24 +210,21 @@ export const findAlbumCategorySubCategories = async (event) => {
 export const findHistoricalAlbumCollections = async (event) => {
     const category = decodeURI(event.pathParameters.category);
     const subCategory = decodeURI(event.pathParameters.subCategory);
-    const historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
         TableName: table,
         IndexName: "category-index",
         ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime",
-        FilterExpression: '#category = :category and #subCategory = :subCategory and #startDateTime < :historicalDate and #production = :production',
+        FilterExpression: '#category = :category and #subCategory = :subCategory and #production = :production',
         ExpressionAttributeNames: {
             '#collection': 'collection',
             '#name': 'name',
             '#category': 'category',
             '#subCategory': 'subCategory',
-            '#startDateTime': "startDateTime",
             '#production': 'production'
         },
         ExpressionAttributeValues: {
             ':category': category,
             ':subCategory': subCategory,
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
             ':production': true
         }
     };
@@ -262,20 +247,17 @@ export const findHistoricalAlbumCollections = async (event) => {
 };
 
 export const findAlbumCategorySubCategoryCollections = async (event) => {
-    let historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
         TableName: table,
         IndexName: "category-index",
         ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime",
-        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
+        FilterExpression: '#production = :production',
         ExpressionAttributeNames: {
             '#collection': 'collection',
             '#name': 'name',
-            '#startDateTime': "startDateTime",
             '#production': 'production'
         },
         ExpressionAttributeValues: {
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
             ':production': true
         }
     };
@@ -300,25 +282,22 @@ export const findAlbumHistoricalNames = async (event) => {
     const category = decodeURI(event.pathParameters.category);
     const subCategory = decodeURI(event.pathParameters.subCategory);
     const collection = decodeURI(event.pathParameters.collection);
-    const historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
         TableName: table,
         IndexName: "category-index",
         ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime, photoCount, viewCount",
-        FilterExpression: '#category = :category and #subCategory = :subCategory and #collection = :collection and #startDateTime < :historicalDate and #production = :production',
+        FilterExpression: '#category = :category and #subCategory = :subCategory and #collection = :collection and #production = :production',
         ExpressionAttributeNames: {
             '#collection': 'collection',
             '#name': 'name',
             '#category': 'category',
             '#subCategory': 'subCategory',
-            '#startDateTime': "startDateTime",
             '#production': 'production'
         },
         ExpressionAttributeValues: {
             ':category': category,
             ':subCategory': subCategory,
             ':collection': collection,
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
             ':production': true
         }
     };
@@ -340,20 +319,17 @@ export const findAlbumHistoricalNames = async (event) => {
 };
 
 export const findAlbumCategorySubCategoryCollectionNames = async (event) => {
-    let historicalDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1));
     const params = {
         TableName: table,
         IndexName: "category-index",
         ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime",
-        FilterExpression: '#startDateTime < :historicalDate and #production = :production',
+        FilterExpression: '#production = :production',
         ExpressionAttributeNames: {
             '#collection': 'collection',
             '#name': 'name',
-            '#startDateTime': "startDateTime",
             '#production': 'production'
         },
         ExpressionAttributeValues: {
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
             ':production': true
         }
     };
@@ -384,25 +360,22 @@ export const findAlbum = async (event) => {
     const subCategory = decodeURI(event.pathParameters.subCategory);
     const collection = decodeURI(event.pathParameters.collection);
     const name = decodeURI(event.pathParameters.name);
-    let currentDate = new Date();
     const params = {
         TableName: table,
         ProjectionExpression: "id, category, subCategory, #collection, #name, startDateTime, endDateTime, description, titlePhoto, albumLocation, #searchName, photoCount, viewCount, production",
-        FilterExpression: '#searchName = :searchName and #collection = :collection and #subCategory = :subCategory and #category = :category and #startDateTime < :currentDate',
+        FilterExpression: '#searchName = :searchName and #collection = :collection and #subCategory = :subCategory and #category = :category',
         ExpressionAttributeNames: {
             "#name": 'name',
             '#collection': 'collection',
             '#subCategory': 'subCategory',
             '#category': 'category',
-            '#startDateTime': "startDateTime",
             '#searchName': 'searchName'
         },
         ExpressionAttributeValues: {
             ':searchName': name.toUpperCase(),
             ':collection': collection,
             ':subCategory': subCategory,
-            ':category': category,
-            ':currentDate': date.dateTimeFullFormatToString(currentDate)
+            ':category': category
         }
     };
     const albums = await database.scan(params);
@@ -442,7 +415,7 @@ export const findAlbum = async (event) => {
             }
         }
     });
-    console.log(JSON.stringify(albumList));
+    //console.log(JSON.stringify(albumList));
 
     return response.createResponse(albumList[0], 200);
 };
