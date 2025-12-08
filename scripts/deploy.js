@@ -18,17 +18,17 @@ class DeploymentManager {
         this.stage = stage;
         this.deploymentResults = [];
         this.startTime = Date.now();
-        this.deploymentStateFile = path.join(process.cwd(), '.kiro', 'deployment-state.json');
+        this.deploymentStateFile = path.join(process.cwd(), '.serverless', 'deployment-state.json');
         this.ensureStateDirectory();
     }
 
     /**
-     * Ensure the .kiro directory exists for storing deployment state
+     * Ensure the .serverless directory exists for storing deployment state
      */
     ensureStateDirectory() {
-        const kiroDir = path.join(process.cwd(), '.kiro');
-        if (!fs.existsSync(kiroDir)) {
-            fs.mkdirSync(kiroDir, { recursive: true });
+        const serverlessDir = path.join(process.cwd(), '.serverless');
+        if (!fs.existsSync(serverlessDir)) {
+            fs.mkdirSync(serverlessDir, { recursive: true });
         }
     }
 
