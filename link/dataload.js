@@ -51,9 +51,9 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'link.csv'))
         });
     })
     .on('end', async rowCount => {
-        await database.operation("deleteDocs", "link", linkDeleteKeys);
-        await database.operation("insertDocs", "link", linkItems);
-        const docs = await database.operation("findDocs", "link", linkGetKeys);
+        await database.operation("deleteItems", "link", linkDeleteKeys);
+        await database.operation("writeItems", "link", linkItems);
+        const docs = await database.operation("getItems", "link", linkGetKeys);
         await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
     });
@@ -93,9 +93,9 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'visitStatus.csv'))
         });
     })
     .on('end', async rowCount => {
-        await database.operation("deleteDocs", "visitStatus", visitStatusDeleteKeys);
-        await database.operation("insertDocs", "visitStatus", visitStatusItems);
-        const docs = await database.operation("findDocs", "visitStatus", visitStatusGetKeys);
+        await database.operation("deleteItems", "visitStatus", visitStatusDeleteKeys);
+        await database.operation("writeItems", "visitStatus", visitStatusItems);
+        const docs = await database.operation("getItems", "visitStatus", visitStatusGetKeys);
         await console.log(docs);
         await console.log(`Parsed ${rowCount} rows`);
     });
@@ -139,11 +139,11 @@ fs.createReadStream(path.resolve(__dirname, 'data', 'countryVisit.csv'))
         let len = countryVisitItems.length;
         for (let i = 0; i < len; i += batchSize) {
             let tempCountryVisitDeleteKeys = countryVisitDeleteKeys.slice(i, i + batchSize);
-            await database.operation("deleteDocs", "countryVisit", tempCountryVisitDeleteKeys);
+            await database.operation("deleteItems", "countryVisit", tempCountryVisitDeleteKeys);
             let tempCountryVisitItems = countryVisitItems.slice(i, i + batchSize);
-            await database.operation("insertDocs", "countryVisit", tempCountryVisitItems);
+            await database.operation("writeItems", "countryVisit", tempCountryVisitItems);
             let tempCountryVisitGetKeys = countryVisitGetKeys.slice(i, i + batchSize);
-            const docs = await database.operation("findDocs", "countryVisit", tempCountryVisitGetKeys);
+            const docs = await database.operation("getItems", "countryVisit", tempCountryVisitGetKeys);
             await console.log(docs);
         }
         await console.log(`Parsed ${rowCount} rows`);

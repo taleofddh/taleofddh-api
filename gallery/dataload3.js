@@ -36,7 +36,6 @@ fs.readFile('data/gallery.json', 'utf8', async (err, data) => {
                 "restrictedFlag": item.restrictedFlag,
                 "defaultFlag": item.defaultFlag,
                 "viewCount": item.viewCount,
-                "sequence": item.sequence,
                 "photoCount": item.photoCount,
                 "production": item.production,
                 "searchName": item.name.toUpperCase(),

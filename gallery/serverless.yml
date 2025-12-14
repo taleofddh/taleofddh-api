@@ -84,6 +84,44 @@ package:
   individually: true
 
 functions:
+  createOrUpdateAlbum:
+    handler: handler.createOrUpdateAlbum
+    events:
+      - http:
+          path: createOrUpdateAlbum
+          method: post
+          cors: true
+          authorizer: aws_iam
+    environment:
+      TABLE_NAME: "gallery"
+
+  findAlbum:
+    handler: handler.findAlbum
+    events:
+      - http:
+          path: album/{name}/{startDateTime}
+          method: get
+          cors: true
+          authorizer: aws_iam
+          request:
+            parameters:
+              paths:
+                name: true
+                startDateTime: true
+    environment:
+      TABLE_NAME: "gallery"
+
+  findAlbums:
+    handler: handler.findAlbums
+    events:
+      - http:
+          path: albums
+          method: get
+          cors: true
+          authorizer: aws_iam
+    environment:
+      TABLE_NAME: "gallery"
+
   updateAlbumViewCount:
     handler: handler.updateAlbumViewCount
     events:
@@ -211,11 +249,11 @@ functions:
     environment:
       TABLE_NAME: "gallery"
 
-  findAlbum:
-    handler: handler.findAlbum
+  findAlbumWithMedia:
+    handler: handler.findAlbumWithMedia
     events:
       - http:
-          path: album/{category}/{subCategory}/{collection}/{name}
+          path: albumWithMedia/{category}/{subCategory}/{collection}/{name}
           method: get
           cors: true
           request:
