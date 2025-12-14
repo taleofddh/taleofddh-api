@@ -95,6 +95,22 @@ functions:
     environment:
       TABLE_NAME: "gallery"
 
+  findAlbum:
+    handler: handler.findAlbum
+    events:
+      - http:
+          path: album/{name}/{startDateTime}
+          method: get
+          cors: true
+          authorizer: aws_iam
+          request:
+            parameters:
+              paths:
+                name: true
+                startDateTime: true
+    environment:
+      TABLE_NAME: "gallery"
+
   findAlbums:
     handler: handler.findAlbums
     events:
