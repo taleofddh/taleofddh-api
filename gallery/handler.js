@@ -6,9 +6,143 @@ import * as date from '@taleofddh/date';
 import * as response from '@taleofddh/response';
 import * as secret from '@taleofddh/secret';
 import * as storage from '@taleofddh/storage';
+import { v6 as uuidv6 } from 'uuid';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucketName = process.env['S3_MEDIA_BUCKET'];
 const source = "gallery";
+
+export const createOrUpdateAlbum = async (event) => {
+    const data = JSON.parse(event.body);
+    let userId = event.requestContext.identity.cognitoIdentityId;
+
+    let album;
+    const existingAlbum = (!userId || false) ? {} : await getAlbum(data.name, data.startDateTime);
+    if(!existingAlbum) {
+        album = await createAlbum(data, userId);
+    } else {
+        album = await updateAlbum(data, userId);
+    }
+
+    return response.createResponse(album, 200);
+}
+
+export const findAlbum = async (event) => {
+    const name = decodeURI(event.pathParameters.name);
+    const startDateTime = decodeURI(event.pathParameters.startDateTime);
+    let userId = event.requestContext.identity.cognitoIdentityId;
+
+    const album = (!userId || false) ? {} : await getAlbum(name, startDateTime);
+
+    return response.createResponse(album, 200);
+}
+
+export const findAlbums = async (event) => {
+    const params = {
+        TableName: table,
+        ProjectionExpression: "id, category, subCategory, #collection, #name, startDateTime, endDateTime, description, titlePhoto, albumLocation, #searchName, photoCount, viewCount, production",
+        FilterExpression: '#production = :production',
+        ExpressionAttributeNames: {
+            "#name": 'name',
+            '#collection': 'collection',
+            '#searchName': 'searchName',
+            '#production': 'production'
+        },
+        ExpressionAttributeValues: {
+            ':production': true
+        }
+    }
+    const albums = await database.scan(params);
+
+    return response.createResponse(albums, 200);
+}
+
+const getAlbum = async (name, startDateTime) => {
+    const params = {
+        TableName: table,
+        Key: {
+            "name": name,
+            "startDateTime": startDateTime
+        }
+    }
+    return await database.get(params);
+}
+
+const createAlbum = async (data, userId) => {
+    const options = {
+        msecs: new Date(data.startDateTime).getTime()
+    }
+    const params = {
+        TableName: table,
+        Item: {
+            "name": data.name,
+            "startDateTime": data.startDateTime,
+            "id": uuidv6(options),
+            "endDateTime": data.endDateTime,
+            "category": data.category,
+            "subCategory": data.subCategory,
+            "collection": data.collection,
+            "production": data.production,
+            "description": data.description,
+            "photoCount": parseInt(data.photoCount),
+            "viewCount": parseInt(data.viewCount),
+            "titlePhoto": data.titlePhoto,
+            "restrictedFlag": data.restrictedFlag,
+            "defaultFlag": data.defaultFlag,
+            "searchName": data.name.toUpperCase(),
+            "createDate": new Date().toDateString(),
+            "updateDate": new Date().toDateString()
+        }
+    }
+    const res = (!userId || false) ? {} : await database.put(params);
+
+    return await getAlbum(data.name, data.startDateTime);
+}
+
+const updateAlbum = async(data, userId) => {
+    const params = {
+        TableName: table,
+        Key: {
+            "name": data.name,
+            "startDateTime": data.startDateTime
+        },
+        UpdateExpression: "SET " +
+                "#collection = :collection, " +
+                "#endDateTime = :endDateTime, " +
+                "#category = :category, " +
+                "#subCategory = :subCategory, " +
+                "#production = :production, " +
+                "#description = :description, " +
+                "#photoCount = :photoCount, " +
+                "#viewCount = :viewCount" +
+                "updateDate = :updateDate",
+        ExpressionAttributeNames: {
+            "#collection": "collection",
+            "#endDateTime": "endDateTime",
+            "#category": "category",
+            "#subCategory": "subCategory",
+            "#production": "production",
+            "#description": "description",
+            "#photoCount": "photoCount",
+            "#viewCount": "viewCount",
+            "#updateDate": "updateDate"
+        },
+        ExpressionAttributeValues: {
+            ":collection": data.collection,
+            ":endDateTime": data.endDateTime,
+            ":category": data.category,
+            ":subCategory": data.subCategory,
+            ":production": data.production,
+            ":description": data.description,
+            ":photoCount": parseInt(data.photoCount),
+            ":viewCount": parseInt(data.viewCount),
+            ":updateDate": new Date().toDateString()
+        },
+        ReturnValues: "ALL_NEW"
+    }
+    const res = (!userId || false) ? {} : await database.update(params);
+
+    return await getAlbum(data.name, data.startDateTime);
+}
 
 export const updateAlbumViewCount = async (event) => {
     const data = JSON.parse(event.body);
@@ -355,7 +489,7 @@ export const findAlbumCategorySubCategoryCollectionNames = async (event) => {
     return response.createResponse(categorySubCategoryCollectionNames, 200);
 }
 
-export const findAlbum = async (event) => {
+export const findAlbumWithMedia = async (event) => {
     const category = decodeURI(event.pathParameters.category);
     const subCategory = decodeURI(event.pathParameters.subCategory);
     const collection = decodeURI(event.pathParameters.collection);
