@@ -150,7 +150,7 @@ const createProfile = async (data, userId) => {
             "communityList": data.communityList ? data.communityList : communityList,
             "mailingFlag": data.mailingFlag ? data.mailingFlag.toUpperCase() === 'TRUE' : true,
             "updatedAt": now,
-            "lastLogin": now
+            "lastLogin": data.lastLogin ? new Date(data.lastLogin) : now
         }
     }
     const doc = (!userId || false) ? {} : await database.put(profile);
@@ -301,7 +301,7 @@ const updateProfile = async (data, userId) => {
     }
 
     let conditionalExpr = 'userId = :userId'
-    expAttrValues[':userId'] = data.userId;
+    expAttrValues[':userId'] = userId;
 
     params = {
         TableName: table,
