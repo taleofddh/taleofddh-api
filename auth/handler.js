@@ -173,6 +173,10 @@ const updateProfile = async (data, userId) => {
         update.push('identityId = :identityId');
         expAttrValues[":identityId"] = data.identityId
     }
+    if(data.hasOwnProperty('firstName')) {
+        update.push('firstName = :firstName');
+        expAttrValues[":firstName"] = data.firstName
+    }
     if(data.hasOwnProperty('lastName')) {
         update.push('lastName = :lastName');
         expAttrValues[":lastName"] = data.lastName;
@@ -235,7 +239,7 @@ const updateProfile = async (data, userId) => {
     }
     if(data.hasOwnProperty('mailingFlag')) {
         update.push('mailingFlag = :mailingFlag');
-        expAttrValues[":mailingFlag"] = data.mailingFlag;
+        expAttrValues[":mailingFlag"] = data.mailingFlag.toUpperCase() === 'TRUE';
     }
     if(data.hasOwnProperty('updatedAt') && !data.lastLogin) {
         update.push('updatedAt = :updatedAt');
