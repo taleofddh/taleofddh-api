@@ -550,7 +550,7 @@ git push origin feature/your-feature-name
 | 📂 **Repository** | https://github.com/taleofddh/taleofddh-api |
 | 🐛 **Issues** | https://github.com/taleofddh/taleofddh-api/issues |
 | 👨‍💻 **Author** | Devadyuti Das |
-| 🏷️ **Version** | 4.0.0 |
+| 🏷️ **Version** | 4.3.0 |
 | 🟢 **Node.js** | &gt;= 22.0.0 |
 | 📦 **npm** | &gt;= 10.0.0 |
 
