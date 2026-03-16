@@ -1,6 +1,6 @@
 {
   "name": "core-service",
-  "version": "4.2.0",
+  "version": "4.3.0",
   "description": "Core APIs for Tale of DDH",
   "main": "handler.js",
   "type": "module",
@@ -26,15 +26,15 @@
   "dependencies": {
     "@fast-csv/format": "^5.0.5",
     "@fast-csv/parse": "^5.0.5",
-    "@taleofddh/response": "^2.3.1",
-    "@taleofddh/storage": "^2.3.1",
-    "dotenv": "^17.2.3",
+    "@taleofddh/response": "^3.0.1",
+    "@taleofddh/storage": "^3.0.1",
+    "dotenv": "^17.3.1",
     "fast-csv": "^5.0.5"
   },
   "devDependencies": {
-    "@aws-sdk/s3-request-presigner": "^3.926.0",
-    "serverless-domain-manager": "^8.0.0",
-    "serverless-offline": "^14.4.0"
+    "@aws-sdk/s3-request-presigner": "^3.1009.0",
+    "serverless-domain-manager": "^10.0.0",
+    "serverless-offline": "^14.5.0"
   },
   "engines": {
     "node": ">=22.0.0"
