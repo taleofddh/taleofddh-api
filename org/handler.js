@@ -15,7 +15,7 @@ export const findAboutUsList = async (event) => {
     const res = await storage.getObject(params);
     const aboutUsList = JSON.parse(await res.Body.transformToString());
 
-    const prefix = process.env['MEDIA_PROTECTED_HOST'] + '/protected/images/about-us/';
+    const prefix = process.env['MEDIA_HOST'] + '/protected/images/about-us/';
     const signerPrivateKey = await secret.getSecretValue({SecretId: process.env['SIGNER_PRIVATE_KEY']});
     const signatureParams = distribution.getSignatureParameters(
             process.env['CLOUDFRONT_PUBLIC_KEY_ID'],

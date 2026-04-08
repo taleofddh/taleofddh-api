@@ -250,7 +250,7 @@ export const findBlog = async (event) => {
 
 const getPrefix = (isHost = true, type = 'images', source, category, name) => {
     return (
-            (isHost ? process.env['MEDIA_PROTECTED_HOST'] + '/' : '') + 'protected/' + type + '/' + source + '/'
+            (isHost ? process.env['MEDIA_HOST'] + '/' : '') + 'protected/' + type + '/' + source + '/'
             + (category ? category.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '/' : '')
             + (name ? name.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '/' : '')
     );

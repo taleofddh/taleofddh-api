@@ -519,11 +519,11 @@ export const findAlbumWithMedia = async (event) => {
 
     const prefix2 = getPrefix(false, 'images', source, category, subCategory, collection, name);
     let photos = await storage.listFolder({ Bucket: bucketName, Delimiter: '/', Prefix: prefix2 });
-    const signatureParams2 = await getSignatureParameters(process.env['MEDIA_PROTECTED_HOST'] + prefix2, 1440);
+    const signatureParams2 = await getSignatureParameters(process.env['MEDIA_HOST'] + prefix2, 1440);
 
     const prefix3 = getPrefix(false, 'videos', source, category, subCategory, collection, name);
     let videos = await storage.listFolder({ Bucket: bucketName, Delimiter: '/', Prefix: prefix3 });
-    const signatureParams3 = await getSignatureParameters(process.env['MEDIA_PROTECTED_HOST'] + prefix3, 1440);
+    const signatureParams3 = await getSignatureParameters(process.env['MEDIA_HOST'] + prefix3, 1440);
 
     const albumList = albums.map((album) => {
         if (album.name === name) {
@@ -536,14 +536,14 @@ export const findAlbumWithMedia = async (event) => {
                     return {
                         name: item1,
                         signedPhotoUrl: distribution.getSignedUrlWithPolicy(
-                            {...signatureParams2, url: process.env['MEDIA_PROTECTED_HOST'] + '/'  + prefix2 + item1}
+                            {...signatureParams2, url: process.env['MEDIA_HOST'] + '/'  + prefix2 + item1}
                         )}
                 }),
                 videoList: videos.filter((item) => { return item !== ''; }).map((item1) => {
                     return {
                         name: item1,
                         signedVideoUrl: distribution.getSignedUrlWithPolicy(
-                            {...signatureParams3, url: process.env['MEDIA_PROTECTED_HOST'] + '/'  + prefix3 + item1}
+                            {...signatureParams3, url: process.env['MEDIA_HOST'] + '/'  + prefix3 + item1}
                         )}
                 })
             }
@@ -556,7 +556,7 @@ export const findAlbumWithMedia = async (event) => {
 
 const getPrefix = (isHost = true, type = 'images', source, category, subCategory, collection, name) => {
     return (
-        (isHost ? process.env['MEDIA_PROTECTED_HOST'] + '/' : '') + 'protected/' + type + '/' + source + '/'
+        (isHost ? process.env['MEDIA_HOST'] + '/' : '') + 'protected/' + type + '/' + source + '/'
         + (category ? category.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '/' : '')
         + (subCategory ? subCategory.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '/' : '')
         + (collection ? collection.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '/' : '')
