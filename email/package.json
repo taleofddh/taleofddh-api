@@ -1,6 +1,6 @@
 {
   "name": "email-service",
-  "version": "4.3.0",
+  "version": "5.0.0",
   "description": "Email API for Tale of DDH",
   "main": "handler.js",
   "type": "module",
@@ -24,14 +24,14 @@
   },
   "homepage": "https://github.com/taleofddh/taleofddh-api#readme",
   "dependencies": {
-    "@taleofddh/email": "^3.0.1",
-    "@taleofddh/response": "^3.0.1"
+    "@taleofddh/email": "^4.0.0",
+    "@taleofddh/response": "^4.0.0"
   },
   "devDependencies": {
     "serverless-domain-manager": "^10.0.0",
     "serverless-offline": "^14.5.0"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   }
 }
