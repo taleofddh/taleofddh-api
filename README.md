@@ -4,8 +4,8 @@
 
 **Multi-module serverless Lambda repository with automated deployment scripts and comprehensive CI/CD workflows**
 
-[![Node.js](https://img.shields.io/badge/Node.js-22.0.0+-green.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/Version-4.3.0-orange.svg)](package.json)
+[![Node.js](https://img.shields.io/badge/Node.js-24.0.0+-green.svg)](https://nodejs.org/)
+[![Version](https://img.shields.io/badge/Version-5.0.0-orange.svg)](package.json)
 [![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-orange.svg)](https://aws.amazon.com/lambda/)
 [![Serverless](https://img.shields.io/badge/Serverless-Framework-red.svg)](https://www.serverless.com/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
@@ -105,8 +105,8 @@ Before getting started, ensure you have the following installed:
 
 | Requirement | Version | Installation |
 |-------------|---------|--------------|
-| 🟢 **Node.js** | &gt;= 22.0.0 | [Download](https://nodejs.org/) |
-| 📦 **npm** | &gt;= 10.0.0 | Included with Node.js |
+| 🟢 **Node.js** | &gt;= 24.0.0 | [Download](https://nodejs.org/) |
+| 📦 **npm** | &gt;= 11.0.0 | Included with Node.js |
 | ☁️ **AWS CLI** | Latest | `pip install awscli` |
 | ⚡ **Serverless Framework** | v4.x | `npm install -g serverless` |
 | 🔧 **Git** | Latest | [Download](https://git-scm.com/) |
@@ -456,7 +456,7 @@ npm install -g serverless
 **❌ Error**: `npm install failed for module X`
 
 **✅ Solutions**:
-- Check Node.js version (must be &gt;= 22.0.0)
+- Check Node.js version (must be &gt;= 24.0.0)
 - Clear node_modules and reinstall: `rm -rf node_modules && npm install`
 - Use force installation: `node scripts/install.js --force`
 
@@ -550,9 +550,9 @@ git push origin feature/your-feature-name
 | 📂 **Repository** | https://github.com/taleofddh/taleofddh-api |
 | 🐛 **Issues** | https://github.com/taleofddh/taleofddh-api/issues |
 | 👨‍💻 **Author** | Devadyuti Das |
-| 🏷️ **Version** | 4.3.0 |
-| 🟢 **Node.js** | &gt;= 22.0.0 |
-| 📦 **npm** | &gt;= 10.0.0 |
+| 🏷️ **Version** | 5.0.0 |
+| 🟢 **Node.js** | &gt;= 24.0.0 |
+| 📦 **npm** | &gt;= 11.0.0 |
 
 ---
 

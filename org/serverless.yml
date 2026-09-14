@@ -22,7 +22,7 @@ frameworkVersion: '4'
 
 provider:
   name: aws
-  runtime: ${env:RUNTIME, 'nodejs22.x'}
+  runtime: ${env:RUNTIME, 'nodejs24.x'}
   endpointType: ${env:ENDPOINT_TYPE, 'regional'}
   profile: ${env:APP_NAME, 'taleofddh'}
 

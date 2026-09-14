@@ -20,7 +20,7 @@ permissions:
   packages: read
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '24'
   AWS_REGION: 'eu-west-1'
 
 jobs:

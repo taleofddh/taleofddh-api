@@ -1,6 +1,6 @@
 {
     "name": "taleofddh-api",
-    "version": "4.3.0",
+    "version": "5.0.0",
     "description": "Multi-module serverless Lambda repository with automated deployment scripts",
     "type": "module",
     "scripts": {
@@ -9,8 +9,8 @@
         "deploy:prod": "node scripts/deploy.js prod"
     },
     "engines": {
-        "node": ">=22.0.0",
-        "npm": ">=10.0.0"
+        "node": ">=24.0.0",
+        "npm": ">=11.0.0"
     },
     "keywords": [
         "serverless",
