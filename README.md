@@ -5,7 +5,7 @@
 **Multi-module serverless Lambda repository with automated deployment scripts and comprehensive CI/CD workflows**
 
 [![Node.js](https://img.shields.io/badge/Node.js-24.0.0+-green.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/Version-5.0.0-orange.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-5.1.0-orange.svg)](package.json)
 [![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-orange.svg)](https://aws.amazon.com/lambda/)
 [![Serverless](https://img.shields.io/badge/Serverless-Framework-red.svg)](https://www.serverless.com/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
@@ -550,7 +550,7 @@ git push origin feature/your-feature-name
 | 📂 **Repository** | https://github.com/taleofddh/taleofddh-api |
 | 🐛 **Issues** | https://github.com/taleofddh/taleofddh-api/issues |
 | 👨‍💻 **Author** | Devadyuti Das |
-| 🏷️ **Version** | 5.0.0 |
+| 🏷️ **Version** | 5.1.0 |
 | 🟢 **Node.js** | &gt;= 24.0.0 |
 | 📦 **npm** | &gt;= 11.0.0 |
 
