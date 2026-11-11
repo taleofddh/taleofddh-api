@@ -90,6 +90,8 @@ functions:
           cors: true
     environment:
       TABLE_NAME: "request"
+      TURNSTILE_CREDENTIALS_KEY: ${env:TURNSTILE_CREDENTIALS_KEY, 'TURNSTILE_CREDENTIALS'}
+      TURNSTILE_ENFORCED: ${env:TURNSTILE_ENFORCED, self:custom.turnstileEnforced.${self:custom.stage}}
 
   updateSubscription:
     handler: handler.updateSubscription
@@ -101,6 +103,8 @@ functions:
     environment:
       TABLE_NAME: "subscription"
       SEND_SUBSCRIPTION_URL: https://${self:custom.domains.${self:custom.stage}}/email/sendSubscriptionMessage
+      TURNSTILE_CREDENTIALS_KEY: ${env:TURNSTILE_CREDENTIALS_KEY, 'TURNSTILE_CREDENTIALS'}
+      TURNSTILE_ENFORCED: ${env:TURNSTILE_ENFORCED, self:custom.turnstileEnforced.${self:custom.stage}}
 
 # you can add CloudFormation resource templates here
 resources:
@@ -117,6 +121,12 @@ plugins:
 
 custom:
   stage: ${opt:stage, self:provider.stage}
+  # Turnstile enforcement is on in prod and off in dev by default, resolved by
+  # stage at deploy time. An explicit TURNSTILE_ENFORCED env var still overrides
+  # it (e.g. for a one-off dev test), so CI needs no extra configuration.
+  turnstileEnforced:
+    prod: 'true'
+    dev: 'false'
   domains:
     prod: ${env:API_DOMAIN, 'api.taleofddh.com'}
     dev: ${self:custom.stage}-${env:API_DOMAIN, 'api.taleofddh.com'}

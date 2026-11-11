@@ -2,10 +2,34 @@
 import fetch from 'node-fetch';
 import * as database from '@taleofddh/database';
 import * as response from '@taleofddh/response';
+import * as secret from '@taleofddh/secret';
+import { verifyTurnstileToken } from '@taleofddh/turnstile';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
 export const createRequest = async (event) => {
     const data = JSON.parse(event.body);
+    // Human-verification (Cloudflare Turnstile) gate. Enforcement is opt-in per
+    // environment via TURNSTILE_ENFORCED so the UI change can ship first. When
+    // enforcement is OFF we skip the siteverify call entirely (simplest rollout
+    // behavior: no network cost, and the single-use token is not spent). When ON,
+    // the Cloudflare secret is resolved from Secrets Manager and injected into
+    // the verifier (the package never reads it from env); a missing/empty or
+    // unverifiable token is rejected BEFORE any S3 read, sequence update,
+    // database.put, or SNS publish.
+    if (process.env['TURNSTILE_ENFORCED'] === 'true') {
+        const remoteIp = event.requestContext?.identity?.sourceIp;
+        const credentials = await getCredentials('TURNSTILE_CREDENTIALS_KEY');
+        const verification = await verifyTurnstileToken(data?.turnstileToken, credentials.TURNSTILE_CREDENTIALS_KEY, remoteIp);
+        if (!verification.ok) {
+            // Log the detailed reason server-side; keep the client message generic.
+            console.warn(JSON.stringify({
+                event: 'turnstile_rejected',
+                handler: 'createRequest',
+                errorCodes: verification.errorCodes
+            }));
+            return response.createForbiddenResponse('Verification failed');
+        }
+    }
     let params = {
         TableName: process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + 'type',
         Key: {
@@ -120,6 +144,28 @@ export const findRequest = async (event) => {
 
 export const updateSubscription = async (event) => {
     const data = JSON.parse(event.body);
+    // Human-verification (Cloudflare Turnstile) gate. Enforcement is opt-in per
+    // environment via TURNSTILE_ENFORCED so the UI change can ship first. When
+    // enforcement is OFF we skip the siteverify call entirely (simplest rollout
+    // behavior: no network cost, and the single-use token is not spent). When ON,
+    // the Cloudflare secret is resolved from Secrets Manager and injected into
+    // the verifier (the package never reads it from env); a missing/empty or
+    // unverifiable token is rejected BEFORE any S3 read, sequence update,
+    // database.put, or SNS publish.
+    if (process.env['TURNSTILE_ENFORCED'] === 'true') {
+        const remoteIp = event.requestContext?.identity?.sourceIp;
+        const credentials = await getCredentials('TURNSTILE_CREDENTIALS_KEY');
+        const verification = await verifyTurnstileToken(data?.turnstileToken, credentials.TURNSTILE_CREDENTIALS_KEY, remoteIp);
+        if (!verification.ok) {
+            // Log the detailed reason server-side; keep the client message generic.
+            console.warn(JSON.stringify({
+                event: 'turnstile_rejected',
+                handler: 'createRequest',
+                errorCodes: verification.errorCodes
+            }));
+            return response.createForbiddenResponse('Verification failed');
+        }
+    }
     const params = {
         TableName: table,
         Key: {
