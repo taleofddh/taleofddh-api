@@ -80,6 +80,8 @@ functions:
     environment:
       TABLE_NAME: "request"
       SEND_ENQUIRY_URL: https://${self:custom.domains.${self:custom.stage}}/email/sendRequestMessage
+      TURNSTILE_CREDENTIALS_KEY: ${env:TURNSTILE_CREDENTIALS_KEY, 'TURNSTILE_CREDENTIALS'}
+      TURNSTILE_ENFORCED: ${env:TURNSTILE_ENFORCED, self:custom.turnstileEnforced.${self:custom.stage}}
 
   findRequest:
     handler: handler.findRequest
@@ -90,8 +92,6 @@ functions:
           cors: true
     environment:
       TABLE_NAME: "request"
-      TURNSTILE_CREDENTIALS_KEY: ${env:TURNSTILE_CREDENTIALS_KEY, 'TURNSTILE_CREDENTIALS'}
-      TURNSTILE_ENFORCED: ${env:TURNSTILE_ENFORCED, self:custom.turnstileEnforced.${self:custom.stage}}
 
   updateSubscription:
     handler: handler.updateSubscription
