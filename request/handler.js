@@ -6,6 +6,17 @@ import * as secret from '@taleofddh/secret';
 import { verifyTurnstileToken } from '@taleofddh/turnstile';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 
+// Resolve credentials from AWS Secrets Manager. The env var named by `key`
+// holds only the Secret ID (lookup key), never the secret value itself. The
+// stored secret is a JSON document; we parse it the same way the ticket and
+// integration services do.
+const getCredentials = async (key) => {
+    const params = {
+        SecretId: process.env[key]
+    };
+    return JSON.parse(await secret.getSecretValue(params));
+};
+
 export const createRequest = async (event) => {
     const data = JSON.parse(event.body);
     // Human-verification (Cloudflare Turnstile) gate. Enforcement is opt-in per
@@ -160,7 +171,7 @@ export const updateSubscription = async (event) => {
             // Log the detailed reason server-side; keep the client message generic.
             console.warn(JSON.stringify({
                 event: 'turnstile_rejected',
-                handler: 'createRequest',
+                handler: 'updateSubscription',
                 errorCodes: verification.errorCodes
             }));
             return response.createForbiddenResponse('Verification failed');
