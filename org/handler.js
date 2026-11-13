@@ -21,7 +21,7 @@ export const findAboutUsList = async (event) => {
             process.env['CLOUDFRONT_PUBLIC_KEY_ID'],
             signerPrivateKey,
             true,
-            prefix
+            prefix + '*'
     );
 
     for (let i = 0; i < aboutUsList.length; i++) {

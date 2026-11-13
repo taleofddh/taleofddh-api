@@ -10,6 +10,7 @@ import { v6 as uuidv6 } from 'uuid';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucketName = process.env['S3_MEDIA_BUCKET'];
 const source = "gallery";
+const SIGNED_URL_EXPIRY_MINUTES = 30;
 
 export const createOrUpdateAlbum = async (event) => {
     const data = JSON.parse(event.body);
@@ -205,21 +206,13 @@ export const findRecentAlbumNames = async (event) => {
     const albums = await database.scan(params);
     albums.sort((a,b) => (a.startDateTime > b.startDateTime) ? 1 : ((b.startDateTime > a.startDateTime) ? -1 : 0));
 
-    const signerPrivateKey = await secret.getSecretValue({SecretId: process.env['SIGNER_PRIVATE_KEY']});
+    const signerPrivateKey = await getSignerPrivateKey();
 
     const albumList = albums.map((album) => {
         const prefix = getPrefix(true, 'images', source, album.category, album.subCategory, album.collection);
-        const signatureParams = distribution.getSignatureParameters(
-                                    process.env['CLOUDFRONT_PUBLIC_KEY_ID'],
-                                    signerPrivateKey,
-                                    true,
-                                    prefix,
-                                    1440);
         return {
             ...album,
-            signedUrl: distribution.getSignedUrlWithPolicy(
-                    {...signatureParams, url: prefix + album.name.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
-            )
+            signedUrl: signFile(prefix + toSlug(album.name) + '.jpg', signerPrivateKey)
         }
     });
 
@@ -246,13 +239,11 @@ export const findHistoricalAlbumCategories = async (event) => {
 
     const albumCategories = array.distinctValues(albums, "category");
     const prefix = getPrefix(true, 'images', source);
-    const signatureParams = await getSignatureParameters(prefix, 30);
+    const signerPrivateKey = await getSignerPrivateKey();
     const albumCategoryList = albumCategories.map((category) => {
         return {
             name: category,
-            signedUrl: distribution.getSignedUrlWithPolicy(
-                    {...signatureParams, url: prefix + category.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
-            )
+            signedUrl: signFile(prefix + toSlug(category) + '.jpg', signerPrivateKey)
         }
     });
 
@@ -302,13 +293,11 @@ export const findHistoricalAlbumSubCategories = async (event) => {
 
     const albumSubCategories = array.distinctValues(albums, "subCategory");
     const prefix = getPrefix(true,'images', source, category);
-    const signatureParams = await getSignatureParameters(prefix, 1440);
+    const signerPrivateKey = await getSignerPrivateKey();
     const albumSubCategoryList = albumSubCategories.map((subCategory) => {
         return {
             name: subCategory,
-            signedUrl: distribution.getSignedUrlWithPolicy(
-                {...signatureParams, url: prefix + subCategory.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
-            )
+            signedUrl: signFile(prefix + toSlug(subCategory) + '.jpg', signerPrivateKey)
         }
     });
 
@@ -367,13 +356,11 @@ export const findHistoricalAlbumCollections = async (event) => {
 
     const albumCollections = array.distinctValues(albums, "collection");
     const prefix = getPrefix(true, 'images', source, category, subCategory);
-    const signatureParams = await getSignatureParameters(prefix, 1440);
+    const signerPrivateKey = await getSignerPrivateKey();
     const albumCollectionList = albumCollections.map((collection) => {
         return {
             name: collection,
-            signedUrl: distribution.getSignedUrlWithPolicy(
-                {...signatureParams, url: prefix + collection.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
-            )
+            signedUrl: signFile(prefix + toSlug(collection) + '.jpg', signerPrivateKey)
         }
     });
 
@@ -439,13 +426,11 @@ export const findAlbumHistoricalNames = async (event) => {
     albums.sort((a,b) => (a.name.localeCompare(b.name)));
 
     const prefix = getPrefix(true, 'images', source, category, subCategory, collection);
-    const signatureParams = await getSignatureParameters(prefix, 1440);
+    const signerPrivateKey = await getSignerPrivateKey();
     const albumList = albums.map((album) => {
         return {
             ...album,
-            signedUrl: distribution.getSignedUrlWithPolicy(
-                {...signatureParams, url: prefix + album.name.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
-            )
+            signedUrl: signFile(prefix + toSlug(album.name) + '.jpg', signerPrivateKey)
         }
     });
 
@@ -514,44 +499,39 @@ export const findAlbumWithMedia = async (event) => {
     };
     const albums = await database.scan(params);
 
-    const prefix1 = getPrefix(true, 'images', source, category, subCategory, collection);
-    let signatureParams1 = await getSignatureParameters(prefix1, 1440);
+    const album = albums.find((item) => item.name === name);
+    if (!album) {
+        return response.createNotFoundResponse('Album', name);
+    }
 
-    const prefix2 = getPrefix(false, 'images', source, category, subCategory, collection, name);
-    let photos = await storage.listFolder({ Bucket: bucketName, Delimiter: '/', Prefix: prefix2 });
-    const signatureParams2 = await getSignatureParameters(process.env['MEDIA_HOST'] + prefix2, 1440);
+    const signerPrivateKey = await getSignerPrivateKey();
 
-    const prefix3 = getPrefix(false, 'videos', source, category, subCategory, collection, name);
-    let videos = await storage.listFolder({ Bucket: bucketName, Delimiter: '/', Prefix: prefix3 });
-    const signatureParams3 = await getSignatureParameters(process.env['MEDIA_HOST'] + prefix3, 1440);
+    const coverPrefix = getPrefix(true, 'images', source, category, subCategory, collection);
 
-    const albumList = albums.map((album) => {
-        if (album.name === name) {
+    const photoPrefix = getPrefix(false, 'images', source, category, subCategory, collection, name);
+    const photos = await storage.listFolder({ Bucket: bucketName, Delimiter: '/', Prefix: photoPrefix });
+
+    const videoPrefix = getPrefix(false, 'videos', source, category, subCategory, collection, name);
+    const videos = await storage.listFolder({ Bucket: bucketName, Delimiter: '/', Prefix: videoPrefix });
+
+    const albumWithMedia = {
+        ...album,
+        signedUrl: signFile(coverPrefix + toSlug(album.name) + '.jpg', signerPrivateKey),
+        photoList: photos.filter((item) => item !== '').map((item) => {
             return {
-                ...album,
-                signedUrl: distribution.getSignedUrlWithPolicy(
-                    {...signatureParams1, url: prefix1 + album.name.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
-                ),
-                photoList: photos.filter((item) => { return item !== ''; }).map((item1) => {
-                    return {
-                        name: item1,
-                        signedPhotoUrl: distribution.getSignedUrlWithPolicy(
-                            {...signatureParams2, url: process.env['MEDIA_HOST'] + '/'  + prefix2 + item1}
-                        )}
-                }),
-                videoList: videos.filter((item) => { return item !== ''; }).map((item1) => {
-                    return {
-                        name: item1,
-                        signedVideoUrl: distribution.getSignedUrlWithPolicy(
-                            {...signatureParams3, url: process.env['MEDIA_HOST'] + '/'  + prefix3 + item1}
-                        )}
-                })
+                name: item,
+                signedPhotoUrl: signFile(process.env['MEDIA_HOST'] + '/' + photoPrefix + item, signerPrivateKey)
             }
-        }
-    });
-    //console.log(JSON.stringify(albumList));
+        }),
+        videoList: videos.filter((item) => item !== '').map((item) => {
+            return {
+                name: item,
+                signedVideoUrl: signFile(process.env['MEDIA_HOST'] + '/' + videoPrefix + item, signerPrivateKey)
+            }
+        })
+    };
 
-    return response.createResponse(albumList[0], 200);
+    return response.createResponse(albumWithMedia, 200);
 };
 
 const getPrefix = (isHost = true, type = 'images', source, category, subCategory, collection, name) => {
@@ -564,13 +544,21 @@ const getPrefix = (isHost = true, type = 'images', source, category, subCategory
     );
 }
 
-const getSignatureParameters = async (prefix, minutesToExpire) => {
-    const signerPrivateKey = await secret.getSecretValue({SecretId: process.env['SIGNER_PRIVATE_KEY']});
-    return distribution.getSignatureParameters(
+const getSignerPrivateKey = async () => {
+    return await secret.getSecretValue({SecretId: process.env['SIGNER_PRIVATE_KEY']});
+}
+
+// Signs one exact URL (CloudFront custom policy whose Resource is the URL itself, no wildcard),
+// so the signature cannot be reused on any other file.
+const signFile = (url, signerPrivateKey, minutesToExpire = SIGNED_URL_EXPIRY_MINUTES) => {
+    const signatureParams = distribution.getSignatureParameters(
         process.env['CLOUDFRONT_PUBLIC_KEY_ID'],
         signerPrivateKey,
-        true,
-        prefix,
+        false,
+        url,
         minutesToExpire
     );
+    return distribution.getSignedUrlWithParameters({...signatureParams, url: url});
 }
+
+const toSlug = (value) => value.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase();
