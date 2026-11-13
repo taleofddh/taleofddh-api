@@ -36,7 +36,7 @@ provider:
     SERVICE_NAME: ${env:SERVICE_NAME, 'gallery'}
     S3_MEDIA_BUCKET: ${env:S3_MEDIA_BUCKET, 'taleofddh-media'}
     SIGNER_PRIVATE_KEY: ${env:SIGNER_PRIVATE_KEY, 'SIGNER_PRIVATE_KEY'}
-    CLOUDFRONT_PUBLIC_KEY_ID: ${env:CLOUDFRONT_PUBLIC_KEY_ID, 'K1XBUPGFMXTF6Q'}
+    CLOUDFRONT_PUBLIC_KEY_ID: ${env:CLOUDFRONT_PUBLIC_KEY_ID, 'K3AVJNUCBZPEMY'}
     MEDIA_HOST: ${env:MEDIA_HOST, 'https://media.taleofddh.com'}
 
   apiGateway:
@@ -256,6 +256,7 @@ functions:
           path: albumWithMedia/{category}/{subCategory}/{collection}/{name}
           method: get
           cors: true
+          authorizer: aws_iam
           request:
             parameters:
               paths:

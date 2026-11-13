@@ -262,7 +262,7 @@ const getSignatureParameters = async (prefix, minutesToExpire) => {
             process.env['CLOUDFRONT_PUBLIC_KEY_ID'],
             signerPrivateKey,
             true,
-            prefix,
+            prefix + '*',
             minutesToExpire
     );
 }
