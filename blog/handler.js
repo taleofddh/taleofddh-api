@@ -2,13 +2,13 @@
 import * as array from '@taleofddh/array';
 import * as database from '@taleofddh/database';
 import * as date from '@taleofddh/date';
-import * as distribution from '@taleofddh/distribution';
 import * as response from '@taleofddh/response';
-import * as secret from '@taleofddh/secret';
 import * as storage from '@taleofddh/storage';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucket = process.env['S3_BUCKET'];
 const source = "blogs";
+// Blog images are public: plain CloudFront URLs under /public/images/blogs/..., no signing.
+// The field is still named signedUrl because the shared UI list-module reads it.
 
 export const findCategorizedBlogList = async (event) => {
     const category = decodeURI(event.pathParameters.category);
@@ -113,14 +113,11 @@ export const findHistoricalBlogCategories = async (event) => {
     blogs.sort((a,b) => (a.category.localeCompare(b.category)));
 
     const blogCategories = array.distinctValues(blogs, "category");
-    const prefix = getPrefix(true, 'images', source);
-    const signatureParams = await getSignatureParameters(prefix, 30);
+    const prefix = getPrefix(source);
     const albumCategoryList = blogCategories.map((category) => {
         return {
             name: category,
-            signedUrl: distribution.getSignedUrlWithPolicy(
-                    {...signatureParams, url: prefix + category.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
-            )
+            signedUrl: prefix + toSlug(category) + '.jpg'
         }
     });
 
@@ -171,14 +168,11 @@ export const findHistoricalBlogNames = async (event) => {
     const blogs = await database.scan(params);
     blogs.sort((a,b) => (a.name.localeCompare(b.name)));
 
-    const prefix = getPrefix(true, 'images', source, category);
-    const signatureParams = await getSignatureParameters(prefix, 1440);
+    const prefix = getPrefix();
     const blogList = blogs.map((blog) => {
         return {
             ...blog,
-            signedUrl: distribution.getSignedUrlWithPolicy(
-                    {...signatureParams, url: prefix + blog.titlePhoto.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
-            )
+            signedUrl: prefix + getImagePath(category, blog.titlePhoto)
         }
     });
 
@@ -234,35 +228,26 @@ export const findBlog = async (event) => {
     };
     const blogs = await database.scan(params);
 
-    const prefix = getPrefix(true, 'images', source, category);
-    const signatureParams = await getSignatureParameters(prefix, 1440);
+    const prefix = getPrefix();
     const blogList = blogs.map((blog) => {
         return {
             ...blog,
-            signedUrl: distribution.getSignedUrlWithPolicy(
-                    {...signatureParams, url: prefix + blog.name.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '.jpg'}
-            )
+            signedUrl: prefix + getImagePath(category, blog.titlePhoto)
         }
     });
 
     return response.createResponse(blogList[0], 200);
 };
 
-const getPrefix = (isHost = true, type = 'images', source, category, name) => {
-    return (
-            (isHost ? process.env['MEDIA_HOST'] + '/' : '') + 'protected/' + type + '/' + source + '/'
-            + (category ? category.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '/' : '')
-            + (name ? name.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase() + '/' : '')
-    );
+// e.g. https://media.taleofddh.com/public/images/ or .../public/images/blogs/
+const getPrefix = (folder) => {
+    return process.env['MEDIA_HOST'] + '/public/images/' + (folder ? folder + '/' : '');
 }
 
-const getSignatureParameters = async (prefix, minutesToExpire) => {
-    const signerPrivateKey = await secret.getSecretValue({SecretId: process.env['SIGNER_PRIVATE_KEY']});
-    return distribution.getSignatureParameters(
-            process.env['CLOUDFRONT_PUBLIC_KEY_ID'],
-            signerPrivateKey,
-            true,
-            prefix + '*',
-            minutesToExpire
-    );
+const toSlug = (value) => value.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase();
+
+// Every blog image lives at blogs/<category>/<slug>/<file>.jpg. Recipe and Technical titlePhoto values
+// already start with that; Travel ones (e.g. vacation/africa/...) get blogs/<category>/ added.
+const getImagePath = (category, titlePhoto) => {
+    return titlePhoto.startsWith('blogs/') ? titlePhoto : 'blogs/' + toSlug(category) + '/' + titlePhoto;
 }

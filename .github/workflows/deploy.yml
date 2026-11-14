@@ -41,6 +41,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@taleofddh'
       
@@ -60,8 +61,8 @@ jobs:
       
 
 
-  install:
-    name: Install Dependencies
+  deploy:
+    name: Deploy to ${{ needs.setup.outputs.stage }}
     runs-on: ubuntu-latest
     needs: setup
     
@@ -74,107 +75,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@taleofddh'
-      
-      - name: Configure npm for GitHub packages
-        run: |
-          # Use NPM_TOKEN if available, otherwise fall back to GITHUB_TOKEN
-          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "Using NPM_TOKEN for authentication"
-            echo "@taleofddh:registry=https://npm.pkg.github.com" >> ~/.npmrc
-            echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> ~/.npmrc
-          else
-            echo "Using GITHUB_TOKEN for authentication"
-            echo "@taleofddh:registry=https://npm.pkg.github.com" >> ~/.npmrc
-            echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> ~/.npmrc
-          fi
-          echo "Configured npm for GitHub packages in install job"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Install root dependencies
-        run: |
-          if [ -f package.json ]; then
-            npm ci
-          else
-            echo "No root package.json found, skipping root install"
-          fi
-      
-      - name: Clean stale package locks and node_modules
-        run: |
-          echo "Cleaning stale package-lock.json files and node_modules..."
-          for dir in */; do
-            if [ -f "${dir}package.json" ] && [ -d "${dir}" ]; then
-              echo "Cleaning ${dir%/}..."
-              # Remove package-lock.json to force regeneration with correct versions
-              if [ -f "${dir}package-lock.json" ]; then
-                rm "${dir}package-lock.json"
-                echo "  Removed stale package-lock.json"
-              fi
-              # Remove node_modules to ensure clean install
-              if [ -d "${dir}node_modules" ]; then
-                rm -rf "${dir}node_modules"
-                echo "  Removed node_modules"
-              fi
-            fi
-          done
-      
-      - name: Create .npmrc files for all modules
-        run: |
-          echo "Creating .npmrc files for all Lambda modules..."
-          for dir in */; do
-            if [ -f "${dir}package.json" ] && [ -d "${dir}" ]; then
-              echo "Creating .npmrc for module: ${dir%/}"
-              if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
-                cat > "${dir}.npmrc" << EOF
-          //npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}
-          @taleofddh:registry=https://npm.pkg.github.com
-          EOF
-              else
-                cat > "${dir}.npmrc" << EOF
-          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
-          @taleofddh:registry=https://npm.pkg.github.com
-          EOF
-              fi
-            fi
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Install module dependencies
-        run: |
-          echo "Installing dependencies for all Lambda modules..."
-          node scripts/install.js
-        env:
-          CI: true
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
-      
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            node_modules
-            */node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-  deploy:
-    name: Deploy to ${{ needs.setup.outputs.stage }}
-    runs-on: ubuntu-latest
-    needs: [setup, install]
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@taleofddh'
       
@@ -216,16 +117,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Restore cached dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            node_modules
-            */node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      
+      - name: Install module dependencies from committed lockfiles
+        run: |
+          set -e
+          for dir in */; do
+            if [ -f "${dir}package.json" ]; then
+              if [ ! -f "${dir}package-lock.json" ]; then
+                echo "::error::${dir%/} has no package-lock.json; commit one so CI installs exact versions"
+                exit 1
+              fi
+              echo "npm ci in ${dir%/}"
+              (cd "$dir" && npm ci --no-audit --no-fund)
+            fi
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
+
       - name: Configure AWS Profile
         run: |
           mkdir -p ~/.aws
