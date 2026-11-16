@@ -96,6 +96,7 @@ package:
 functions:
   createOrUpdateAlbum:
     handler: handler.createOrUpdateAlbum
+    timeout: 15
     events:
       - http:
           path: createOrUpdateAlbum
@@ -117,6 +118,7 @@ functions:
             identitySource: method.request.header.Authorization
     environment:
       TABLE_NAME: "gallery"
+      AMPLIFY_WEBHOOK_URL: ${self:custom.amplifyWebhookSecret}
 
   findAlbum:
     handler: handler.findAlbum
@@ -357,6 +359,8 @@ plugins:
 
 custom:
   stage: ${opt:stage, self:provider.stage}
+  # One Secrets Manager secret with a webhook URL per stage: {"dev": "https://...", "prod": "https://..."} (shared with the blog service)
+  amplifyWebhookSecret: ${env:AMPLIFY_WEBHOOK_URL, 'AMPLIFY_WEBHOOK_URL'}
   # Cognito user pools that issue the ID tokens checked by the admin endpoints
   userPoolArns:
     dev: ${env:USER_POOL_ARN_DEV, 'arn:aws:cognito-idp:eu-west-1:216439337168:userpool/eu-west-1_Bp47pzJru'}
