@@ -1,4 +1,5 @@
 'use strict';
+import { getCaller, loadRolePermissionsFromTable, requirePermission } from '@taleofddh/auth';
 import * as database from '@taleofddh/database';
 import * as storage from '@taleofddh/storage';
 import * as secret from '@taleofddh/secret';
@@ -32,6 +33,11 @@ export const processInboundMessage = async (event) => {
 }
 
 export const processStoredMessage = async (event) => {
+    try {
+        await requirePermission(event, 'messages:processStoredMessage');
+    } catch (error) {
+        return response.createErrorResponse(error.message, error.statusCode || 500);
+    }
     const data = JSON.parse(event.body);
     const prefix = data.prefix;
     // Retrieve the message from your bucket
@@ -74,6 +80,11 @@ export const processStoredMessage = async (event) => {
 }
 
 export const findMessageList = async (event) => {
+    try {
+        await requirePermission(event, 'messages:findMessageList');
+    } catch (error) {
+        return response.createErrorResponse(error.message, error.statusCode || 500);
+    }
     const data = JSON.parse(event.body);
     const folder = data.folder;
 
@@ -97,6 +108,11 @@ export const findMessageList = async (event) => {
 }
 
 export const getEmailMessage = async (event) => {
+    try {
+        await requirePermission(event, 'messages:getEmailMessage');
+    } catch (error) {
+        return response.createErrorResponse(error.message, error.statusCode || 500);
+    }
     const data = JSON.parse(event.body);
     const prefix = data.prefix;
     const file = data.file;
@@ -112,4 +128,30 @@ export const getEmailMessage = async (event) => {
             "Content-Disposition": "attachment; filename=" + file,
         }
     };
+}
+/**
+ * Permissions the signed-in user holds in this service, from this service's rolePermissions table.
+ * Display-only, for the UI; every endpoint still enforces its permission with requirePermission.
+ * A "*" row is returned as "messages:*" so it can't be read as access to other services.
+ */
+export const findPermissions = async (event) => {
+    let caller;
+    let rolePermissions;
+    try {
+        caller = getCaller(event);
+        rolePermissions = await loadRolePermissionsFromTable();
+    } catch (error) {
+        if (error.statusCode === 401) {
+            return response.createErrorResponse(error.message, 401);
+        }
+        console.error('findPermissions failed', error);
+        return response.createErrorResponse('Role permissions are unavailable', 500);
+    }
+    const permissions = new Set();
+    for (const group of caller.groups) {
+        for (const permission of rolePermissions.get(group) || []) {
+            permissions.add(permission === '*' ? 'messages:*' : permission);
+        }
+    }
+    return response.createResponse({ permissions: [...permissions].sort() }, 200);
 }

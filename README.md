@@ -36,6 +36,7 @@
 - [🔄 GitHub Actions Workflow](#-github-actions-workflow)
 - [📁 Project Structure](#-project-structure)
 - [📋 Module Details](#-module-details)
+- [🔐 Role-Based Access (Cognito Groups)](#-role-based-access-cognito-groups)
 - [🔧 Troubleshooting](#-troubleshooting)
 - [🤝 Contributing](#-contributing)
 - [ℹ️ Repository Information](#ℹ️-repository-information)
@@ -424,6 +425,130 @@ module-name/
 ### 📝 Request Service (request)
 - **🎯 Purpose**: Request processing and management
 - **✨ Key Features**: Request lifecycle, processing workflows
+
+---
+
+## 🔐 Role-Based Access (Cognito Groups)
+
+Admin endpoints are authorized by permissions. A user's Cognito groups are their roles. Each service owns a `rolePermissions` table that maps each role to that service's permissions. Adding or changing a role is a data change only, with no code change or deploy. Profile `roles` (auth service) are not used for authorization.
+
+| Endpoint (service)                          | Permission                      |
+|---------------------------------------------|---------------------------------|
+| `createOrUpdateAlbum` (gallery)             | `gallery:createOrUpdateAlbum`   |
+| `album/{name}/{startDateTime}` (gallery)    | `gallery:findAlbum`             |
+| `albums` (gallery)                          | `gallery:findAlbums`            |
+| `processMessage` (admin)                    | `messages:processStoredMessage` |
+| `messageList` (admin)                       | `messages:findMessageList`      |
+| `emailMessage` (admin)                      | `messages:getEmailMessage`      |
+
+Each service also has `GET /<service>/permissions` (Cognito authorizer, no permission needed). It returns the signed-in user's permissions in that service, for example `{"permissions": ["gallery:findAlbums"]}`. It is for the UI only: it shows menus, and the endpoints still enforce access. A `*` row comes back scoped to the service (`gallery:*`, `messages:*`), so it never reads as access to another service.
+
+### ⚙ How It Works
+
+1. API Gateway's Cognito user pool authorizer (`cognitoUserPoolAuthorizer`) verifies the token in the `Authorization` header. A missing or invalid token gets a **401** from API Gateway before the Lambda runs.
+2. The handler calls `requirePermission(event, '<service>:<action>')` from `@taleofddh/auth`. It reads `cognito:groups` from the verified claims only and looks each group up in the service's own `rolePermissions` table. If none of the caller's roles has the permission (or `*`), the handler returns **403**. Groups with no row in the table, such as `<poolId>_Google`, grant nothing.
+3. Who did it comes from `getCaller(event).sub`, never from the request body.
+
+The UI must send the raw **ID token** as the header value (`Authorization: <idToken>`). These methods have no OAuth scopes configured, so API Gateway accepts ID tokens. The ID token is what carries `cognito:groups`.
+
+User pools (account `216439337168`, `eu-west-1`):
+
+| Stage | Pool name                 | Pool ID               |
+|-------|---------------------------|-----------------------|
+| dev   | `taleofddh-user-pool-dev` | `eu-west-1_Bp47pzJru` |
+| prod  | `taleofddh-user-pool`     | `eu-west-1_EV9nheb0T` |
+
+The ARNs live in `custom.userPoolArns` in `admin/serverless.yml` and `gallery/serverless.yml`. You can override them with `USER_POOL_ARN_DEV` / `USER_POOL_ARN_PROD`.
+
+### 🗂 Role Permissions Tables
+
+Authorization is per service, so each service owns `<stage>.taleofddh.<service>.rolePermissions` (partition key `role`, string). Each table holds one item per Cognito group that has access to that service: `{ "role": "<group>", "permissions": ["<service>:<action>", ...] }`. `"*"` grants every permission in that service.
+
+| Table                  | Role              | Seeded permissions                                                       | Seed script                     |
+|------------------------|-------------------|--------------------------------------------------------------------------|---------------------------------|
+| `gallery.rolePermissions` | `admin`        | `*`                                                                      | `gallery/dataload4.js`          |
+|                        | `gallery-manager` | `gallery:createOrUpdateAlbum`, `gallery:findAlbum`, `gallery:findAlbums` |                                 |
+| `admin.rolePermissions`   | `admin`        | `*`                                                                      | `admin/dataload.js`             |
+
+- Seed or re-seed: `cd <service> && AWS_PROFILE=taleofddh REGION=eu-west-1 ENVIRONMENT=<stage> node <seed script>` (also run by `dataload.cmd`). The table must exist first; nothing in this repo creates DynamoDB tables. The script upserts the rows above and leaves other rows alone.
+- Each service reads its table through `ROLE_PERMISSIONS_TABLE`. An IAM `Deny` makes the table read-only for the service's Lambdas.
+- Permissions are cached in each Lambda instance for 5 minutes (`ROLE_PERMISSIONS_CACHE_TTL_SECONDS`), so a table edit can take up to 5 minutes to apply.
+- If the table can't be read, that service's admin endpoints return **500** and deny access.
+
+**Adding a new role:** create the Cognito group and add the users. Then put a row in the table of each service the role should use. No code change or deploy is needed.
+
+### 👥 Managing Groups
+
+The groups `admin`, `gallery-manager` and `blog-manager` exist in both pools.
+
+```bash
+POOL=eu-west-1_Bp47pzJru   # dev; use eu-west-1_EV9nheb0T for prod
+
+# Create a group
+aws cognito-idp create-group --profile taleofddh --region eu-west-1 \
+  --user-pool-id "$POOL" --group-name <group>
+
+# Grant a role
+aws cognito-idp admin-add-user-to-group --profile taleofddh --region eu-west-1 \
+  --user-pool-id "$POOL" --username <username> --group-name <group>
+
+# List a user's groups
+aws cognito-idp admin-list-groups-for-user --profile taleofddh --region eu-west-1 \
+  --user-pool-id "$POOL" --username <username>
+```
+
+Each federated sign-in (Google, Facebook) is a separate user in the pool. To grant a role, add that user to the group as well (for example, `google_<id>`). Cognito also puts federated users in the provider groups it manages, such as `<poolId>_Google`. Those groups show up in `cognito:groups` but grant nothing.
+
+Group changes take effect on the next token refresh (sign out and in again, or wait for the ID token to expire).
+
+### ⏱ Token Lifetime (Optional)
+
+```bash
+aws cognito-idp update-user-pool-client --profile taleofddh --region eu-west-1 \
+  --user-pool-id "$POOL" --client-id <app-client-id> \
+  --id-token-validity 60 --access-token-validity 60 \
+  --token-validity-units IdToken=minutes,AccessToken=minutes
+```
+
+`update-user-pool-client` resets any setting you leave out to its default. Run `describe-user-pool-client` first and pass the existing settings back in (callback URLs, auth flows, refresh token validity, and so on).
+
+### 🚫 Revoking Access Immediately
+
+```bash
+aws cognito-idp admin-remove-user-from-group --profile taleofddh --region eu-west-1 \
+  --user-pool-id "$POOL" --username <username> --group-name <group>
+aws cognito-idp admin-user-global-sign-out --profile taleofddh --region eu-west-1 \
+  --user-pool-id "$POOL" --username <username>
+```
+
+Global sign-out revokes refresh tokens. An ID token that was already issued keeps working until it expires, which is why a short ID token lifetime helps.
+
+### 📜 Audit
+
+`CreateGroup`, `AdminAddUserToGroup`, `AdminRemoveUserFromGroup` and `AdminUserGlobalSignOut` are recorded as CloudTrail management events (event source `cognito-idp.amazonaws.com`):
+
+```bash
+aws cloudtrail lookup-events --profile taleofddh --region eu-west-1 \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=AdminAddUserToGroup
+```
+
+### 🚀 Rollout
+
+1. lib release (`@taleofddh/*` 5.2.0, including `@taleofddh/auth` with `requirePermission`)
+2. Create the groups and add the owner (dev), then create and seed the gallery and admin `rolePermissions` tables (dev)
+3. Deploy `admin` and `gallery` to dev
+4. Ship the UI story on dev (send the ID token, menus driven by groups)
+5. Verify the acceptance criteria
+6. prod
+7. IAM clean-up (below)
+
+### 🧹 IAM Clean-up (After the Switch Is Verified)
+
+These roles are not managed in this repo. On the Cognito identity pool **authenticated** roles (dev and prod):
+
+- Remove the `execute-api:Invoke` entries for `admin/*` (`processMessage`, `messageList`, `emailMessage`) and gallery `createOrUpdateAlbum`, `album/*`, `albums`. Also remove their hard-coded identity-ID conditions.
+- Remove the `taleofddh-messages` S3 statements if the admin pages only use the API.
+- Keep the `execute-api` permissions for the endpoints that are still `aws_iam`: `albumViewCount`, `photoViewCount`, `albumWithMedia`, and the other services' `aws_iam` endpoints.
 
 ---
 
