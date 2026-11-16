@@ -31,7 +31,26 @@ export const createOrUpdateAlbum = async (event) => {
         album = await updateAlbum(data, userId);
     }
 
+    await triggerRebuild();
     return response.createResponse(album, 200);
+}
+
+// Starts the Amplify rebuild so the static gallery pages pick up the change. One secret holds a webhook URL
+// per stage: {"dev": "https://...", "prod": "https://..."}. The URL is never logged; a failed call doesn't fail the save.
+const triggerRebuild = async () => {
+    try {
+        const urls = JSON.parse(await secret.getSecretValue({ SecretId: process.env['AMPLIFY_WEBHOOK_URL'] }) || '');
+        const url = String(urls[process.env['ENVIRONMENT']] || '').trim();
+        if (!url.startsWith('https://')) {
+            throw new Error('No https webhook URL for this stage');
+        }
+        const result = await fetch(url, { method: 'POST', signal: AbortSignal.timeout(5000) });
+        if (!result.ok) {
+            throw new Error(`Webhook returned ${result.status}`);
+        }
+    } catch (error) {
+        console.error('Amplify rebuild trigger failed', error.name);
+    }
 }
 
 export const findAlbum = async (event) => {

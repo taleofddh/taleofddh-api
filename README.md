@@ -469,6 +469,8 @@ Authorization is per service, so each service owns `<stage>.taleofddh.<service>.
 | `gallery.rolePermissions` | `admin`        | `*`                                                                      | `gallery/dataload4.js`          |
 |                        | `gallery-manager` | `gallery:createOrUpdateAlbum`, `gallery:findAlbum`, `gallery:findAlbums` |                                 |
 | `admin.rolePermissions`   | `admin`        | `*`                                                                      | `admin/dataload.js`             |
+| `blog.rolePermissions` | `admin`           | `*`                                                                      | `blog/dataload2.js`             |
+|                        | `blog-manager`    | `blog:createOrUpdateBlog`, `blog:blogForEdit`, `blog:blogTitlePhotoUploadUrl` |                            |
 
 - Seed or re-seed: `cd <service> && AWS_PROFILE=taleofddh REGION=eu-west-1 ENVIRONMENT=<stage> node <seed script>` (also run by `dataload.cmd`). The table must exist first; nothing in this repo creates DynamoDB tables. The script upserts the rows above and leaves other rows alone.
 - Each service reads its table through `ROLE_PERMISSIONS_TABLE`. An IAM `Deny` makes the table read-only for the service's Lambdas.
@@ -689,3 +691,15 @@ git push origin feature/your-feature-name
 [![GitHub forks](https://img.shields.io/github/forks/taleofddh/taleofddh-api?style=social)](https://github.com/taleofddh/taleofddh-api/network/members)
 
 </div>
+
+### ✍ Blog Management (blog service)
+Cognito-protected, `blog-manager` and `admin` only. `admin` has `*`, so it is implied. Send `Authorization: <idToken>`.
+
+| Method | Path | Permission | Purpose |
+|--------|------|------------|---------|
+| POST | `/blog/createOrUpdateBlog` | `blog:createOrUpdateBlog` | Body `mode` (`create`/`update`), `name, title, header, category, author, startDateTime, endDateTime, content` (markdown). Writes `taleofddh-blogs/<Category>/<name>.md`, upserts the record, then calls the Amplify webhook. 409 if a create finds an existing blog, 404 if an update finds none, 400 on invalid input. `startDateTime` is part of the table key and can't change on update. |
+| GET | `/blog/permissions` | none (Cognito only) | Returns the caller's blog permissions for the UI, for example `{"permissions": ["blog:*"]}`. |
+| GET | `/blog/blogForEdit/{category}/{name}` | `blog:blogForEdit` | Returns `{ blog, markdown }`. |
+| POST | `/blog/blogTitlePhotoUploadUrl` | `blog:blogTitlePhotoUploadUrl` | Body `category, name, size` (bytes, max 2 MB). Returns a presigned PUT URL for `public/images/blogs/<category>/<name>/<name>.jpg`, valid 5 minutes. The client must send `Content-Type: image/jpeg` and a body of exactly `size` bytes. |
+
+One Secrets Manager secret, `AMPLIFY_WEBHOOK_URL` (override with `AMPLIFY_WEBHOOK_URL`), holds both stage URLs: `{"dev": "https://...", "prod": "https://..."}`. The Lambda picks the key matching its stage. The gallery service's `createOrUpdateAlbum` uses the same secret to rebuild after a save. If the rebuild call fails, the save still succeeds; the blog response has `rebuildTriggered: false`.

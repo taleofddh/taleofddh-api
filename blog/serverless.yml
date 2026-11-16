@@ -37,22 +37,36 @@ provider:
     S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-blogs'}
     S3_MEDIA_BUCKET: ${env:S3_MEDIA_BUCKET, 'taleofddh-media'}
     MEDIA_HOST: ${env:MEDIA_HOST, 'https://media.taleofddh.com'}
+    # This service's role -> permissions table (read by @taleofddh/auth requirePermission)
+    ROLE_PERMISSIONS_TABLE: ${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.rolePermissions
 
   apiGateway:
     shouldStartNameWithService: true
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
+    # The role permissions table is read-only for the service (Scan comes from the service table statement below)
+    - Effect: "Deny"
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:BatchWriteItem
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.rolePermissions
     - Effect: "Allow"
       Action:
         - lambda:InvokeFunction
-        - secretsmanager:GetSecretValue
         - kms:Encrypt
         - kms:Decrypt
         - kms:ReEncrypt*
         - kms:GenerateDataKey*
         - kms:DescribeKey
       Resource: "*"
+    # Amplify webhook URLs: this secret only
+    - Effect: "Allow"
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource: arn:aws:secretsmanager:${self:provider.region}:*:secret:${self:custom.amplifyWebhookSecret}-*
     - Effect: "Allow"
       Action:
         - s3:ListBucket
@@ -65,6 +79,16 @@ provider:
       Resource:
         - arn:aws:s3:::${env:S3_BUCKET, 'taleofddh-blogs'}/*
         - arn:aws:s3:::${env:S3_MEDIA_BUCKET, 'taleofddh-media'}/*
+    # Blog markdown documents
+    - Effect: "Allow"
+      Action:
+        - s3:PutObject
+      Resource: arn:aws:s3:::${env:S3_BUCKET, 'taleofddh-blogs'}/*
+    # Title photo upload URLs are presigned for this prefix only
+    - Effect: "Allow"
+      Action:
+        - s3:PutObject
+      Resource: arn:aws:s3:::${env:S3_MEDIA_BUCKET, 'taleofddh-media'}/public/images/blogs/*
     - Effect: "Allow"
       Action:
         - dynamodb:BatchGetItem
@@ -208,6 +232,108 @@ functions:
     environment:
       TABLE_NAME: "blog"
 
+  createOrUpdateBlog:
+    handler: handler.createOrUpdateBlog
+    timeout: 15
+    events:
+      - http:
+          path: createOrUpdateBlog
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
+    environment:
+      TABLE_NAME: "blog"
+      S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-blogs'}
+      AMPLIFY_WEBHOOK_URL: ${self:custom.amplifyWebhookSecret}
+  
+  blogForEdit:
+    handler: handler.blogForEdit
+    events:
+      - http:
+          path: blogForEdit/{category}/{name}
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
+          request:
+            parameters:
+              paths:
+                category: true
+                name: true
+    environment:
+      TABLE_NAME: "blog"
+      S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-blogs'}
+  
+  blogTitlePhotoUploadUrl:
+    handler: handler.blogTitlePhotoUploadUrl
+    events:
+      - http:
+          path: blogTitlePhotoUploadUrl
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
+    environment:
+      S3_MEDIA_BUCKET: ${env:S3_MEDIA_BUCKET, 'taleofddh-media'}
+
+  findPermissions:
+    handler: handler.findPermissions
+    events:
+      - http:
+          path: permissions
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors
@@ -228,6 +354,12 @@ plugins:
 
 custom:
   stage: ${opt:stage, self:provider.stage}
+  # Cognito user pools that issue the ID tokens checked by the blog management endpoints
+  userPoolArns:
+    dev: ${env:USER_POOL_ARN_DEV, 'arn:aws:cognito-idp:eu-west-1:216439337168:userpool/eu-west-1_Bp47pzJru'}
+    prod: ${env:USER_POOL_ARN_PROD, 'arn:aws:cognito-idp:eu-west-1:216439337168:userpool/eu-west-1_EV9nheb0T'}
+  # One Secrets Manager secret with a webhook URL per stage: {"dev": "https://...", "prod": "https://..."}
+  amplifyWebhookSecret: ${env:AMPLIFY_WEBHOOK_URL, 'AMPLIFY_WEBHOOK_URL'}
   domains:
     prod: ${env:API_DOMAIN, 'api.taleofddh.com'}
     dev: ${self:custom.stage}-${env:API_DOMAIN, 'api.taleofddh.com'}
