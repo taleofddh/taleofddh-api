@@ -8,4 +8,6 @@ REM node dataload1.js
 
 REM node dataload2.js
 
-node dataload3.js
+REM node dataload3.js
+
+node dataload4.js

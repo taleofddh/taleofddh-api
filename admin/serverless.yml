@@ -34,12 +34,22 @@ provider:
     REGION: ${opt:region, 'eu-west-1'}
     APP_NAME: ${env:APP_NAME, 'taleofddh'}
     SERVICE_NAME: ${env:SERVICE_NAME, 'admin'}
+    # This service's role -> permissions table (read by @taleofddh/auth requirePermission)
+    ROLE_PERMISSIONS_TABLE: ${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.rolePermissions
 
   apiGateway:
     shouldStartNameWithService: true
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
+    # The role permissions table is read-only for the service (Scan comes from the service table statement below)
+    - Effect: "Deny"
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:BatchWriteItem
+      Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.rolePermissions
     - Effect: "Allow"
       Action:
         - lambda:InvokeFunction
@@ -94,8 +104,21 @@ functions:
       - http:
           path: processMessage
           method: post
-          cors: true
-          authorizer: aws_iam
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
     environment:
       S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-messages'}
       TABLE_NAME: "inbox"
@@ -106,8 +129,21 @@ functions:
       - http:
           path: messageList
           method: post
-          cors: true
-          authorizer: aws_iam
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
     environment:
       S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-messages'}
 
@@ -117,13 +153,47 @@ functions:
       - http:
           path: emailMessage
           method: post
-          cors: true
-          authorizer: aws_iam
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
           response:
             contentHandling: CONVERT_TO_BINARY
     environment:
       S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-messages'}
 
+  findPermissions:
+    handler: handler.findPermissions
+    events:
+      - http:
+          path: permissions
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors
@@ -135,6 +205,10 @@ plugins:
 
 custom:
   stage: ${opt:stage, self:provider.stage}
+  # Cognito user pools that issue the ID tokens checked by the admin endpoints
+  userPoolArns:
+    dev: ${env:USER_POOL_ARN_DEV, 'arn:aws:cognito-idp:eu-west-1:216439337168:userpool/eu-west-1_Bp47pzJru'}
+    prod: ${env:USER_POOL_ARN_PROD, 'arn:aws:cognito-idp:eu-west-1:216439337168:userpool/eu-west-1_EV9nheb0T'}
   domains:
     prod: ${env:API_DOMAIN, 'api.taleofddh.com'}
     dev: ${self:custom.stage}-${env:API_DOMAIN, 'api.taleofddh.com'}

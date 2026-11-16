@@ -1,5 +1,6 @@
 'use strict';
 import * as array from '@taleofddh/array';
+import { getCaller, loadRolePermissionsFromTable, requirePermission } from '@taleofddh/auth';
 import * as database from '@taleofddh/database';
 import * as distribution from '@taleofddh/distribution';
 import * as date from '@taleofddh/date';
@@ -13,8 +14,14 @@ const source = "gallery";
 const SIGNED_URL_EXPIRY_MINUTES = 30;
 
 export const createOrUpdateAlbum = async (event) => {
+    let caller;
+    try {
+        caller = await requirePermission(event, 'gallery:createOrUpdateAlbum');
+    } catch (error) {
+        return response.createErrorResponse(error.message, error.statusCode || 500);
+    }
     const data = JSON.parse(event.body);
-    let userId = event.requestContext.identity.cognitoIdentityId;
+    const userId = caller.sub;
 
     let album;
     const existingAlbum = (!userId || false) ? {} : await getAlbum(data.name, data.startDateTime);
@@ -30,7 +37,13 @@ export const createOrUpdateAlbum = async (event) => {
 export const findAlbum = async (event) => {
     const name = decodeURI(event.pathParameters.name);
     const startDateTime = decodeURI(event.pathParameters.startDateTime);
-    let userId = event.requestContext.identity.cognitoIdentityId;
+    let caller;
+    try {
+        caller = await requirePermission(event, 'gallery:findAlbum');
+    } catch (error) {
+        return response.createErrorResponse(error.message, error.statusCode || 500);
+    }
+    const userId = caller.sub;
 
     const album = (!userId || false) ? {} : await getAlbum(name, startDateTime);
 
@@ -38,6 +51,11 @@ export const findAlbum = async (event) => {
 }
 
 export const findAlbums = async (event) => {
+    try {
+        await requirePermission(event, 'gallery:findAlbums');
+    } catch (error) {
+        return response.createErrorResponse(error.message, error.statusCode || 500);
+    }
     const params = {
         TableName: table,
         ProjectionExpression: "id, category, subCategory, #collection, #name, startDateTime, endDateTime, description, titlePhoto, albumLocation, #searchName, photoCount, viewCount, production",
@@ -114,8 +132,8 @@ const updateAlbum = async(data, userId) => {
                 "#production = :production, " +
                 "#description = :description, " +
                 "#photoCount = :photoCount, " +
-                "#viewCount = :viewCount" +
-                "updateDate = :updateDate",
+                "#viewCount = :viewCount, " +
+                "#updateDate = :updateDate",
         ExpressionAttributeNames: {
             "#collection": "collection",
             "#endDateTime": "endDateTime",
@@ -562,3 +580,29 @@ const signFile = (url, signerPrivateKey, minutesToExpire = SIGNED_URL_EXPIRY_MIN
 }
 
 const toSlug = (value) => value.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase();
+/**
+ * Permissions the signed-in user holds in this service, from this service's rolePermissions table.
+ * Display-only, for the UI; every endpoint still enforces its permission with requirePermission.
+ * A "*" row is returned as "gallery:*" so it can't be read as access to other services.
+ */
+export const findPermissions = async (event) => {
+    let caller;
+    let rolePermissions;
+    try {
+        caller = getCaller(event);
+        rolePermissions = await loadRolePermissionsFromTable();
+    } catch (error) {
+        if (error.statusCode === 401) {
+            return response.createErrorResponse(error.message, 401);
+        }
+        console.error('findPermissions failed', error);
+        return response.createErrorResponse('Role permissions are unavailable', 500);
+    }
+    const permissions = new Set();
+    for (const group of caller.groups) {
+        for (const permission of rolePermissions.get(group) || []) {
+            permissions.add(permission === '*' ? 'gallery:*' : permission);
+        }
+    }
+    return response.createResponse({ permissions: [...permissions].sort() }, 200);
+}
