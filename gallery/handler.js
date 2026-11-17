@@ -243,13 +243,11 @@ export const findRecentAlbumNames = async (event) => {
     const albums = await database.scan(params);
     albums.sort((a,b) => (a.startDateTime > b.startDateTime) ? 1 : ((b.startDateTime > a.startDateTime) ? -1 : 0));
 
-    const signerPrivateKey = await getSignerPrivateKey();
-
     const albumList = albums.map((album) => {
-        const prefix = getPrefix(true, 'images', source, album.category, album.subCategory, album.collection);
+        const prefix = getPublicPrefix(album.category, album.subCategory, album.collection);
         return {
             ...album,
-            signedUrl: signFile(prefix + toSlug(album.name) + '.jpg', signerPrivateKey)
+            signedUrl: prefix + toSlug(album.name) + '.jpg'
         }
     });
 
@@ -275,12 +273,11 @@ export const findHistoricalAlbumCategories = async (event) => {
     albums.sort((a,b) => (a.category.localeCompare(b.category)));
 
     const albumCategories = array.distinctValues(albums, "category");
-    const prefix = getPrefix(true, 'images', source);
-    const signerPrivateKey = await getSignerPrivateKey();
+    const prefix = getPublicPrefix();
     const albumCategoryList = albumCategories.map((category) => {
         return {
             name: category,
-            signedUrl: signFile(prefix + toSlug(category) + '.jpg', signerPrivateKey)
+            signedUrl: prefix + toSlug(category) + '.jpg'
         }
     });
 
@@ -329,12 +326,11 @@ export const findHistoricalAlbumSubCategories = async (event) => {
     albums.sort((a,b) => (a.subCategory.localeCompare(b.subCategory)));
 
     const albumSubCategories = array.distinctValues(albums, "subCategory");
-    const prefix = getPrefix(true,'images', source, category);
-    const signerPrivateKey = await getSignerPrivateKey();
+    const prefix = getPublicPrefix(category);
     const albumSubCategoryList = albumSubCategories.map((subCategory) => {
         return {
             name: subCategory,
-            signedUrl: signFile(prefix + toSlug(subCategory) + '.jpg', signerPrivateKey)
+            signedUrl: prefix + toSlug(subCategory) + '.jpg'
         }
     });
 
@@ -392,12 +388,11 @@ export const findHistoricalAlbumCollections = async (event) => {
     albums.sort((a,b) => (a.collection.localeCompare(b.collection)));
 
     const albumCollections = array.distinctValues(albums, "collection");
-    const prefix = getPrefix(true, 'images', source, category, subCategory);
-    const signerPrivateKey = await getSignerPrivateKey();
+    const prefix = getPublicPrefix(category, subCategory);
     const albumCollectionList = albumCollections.map((collection) => {
         return {
             name: collection,
-            signedUrl: signFile(prefix + toSlug(collection) + '.jpg', signerPrivateKey)
+            signedUrl: prefix + toSlug(collection) + '.jpg'
         }
     });
 
@@ -462,12 +457,11 @@ export const findAlbumHistoricalNames = async (event) => {
     const albums = await database.scan(params);
     albums.sort((a,b) => (a.name.localeCompare(b.name)));
 
-    const prefix = getPrefix(true, 'images', source, category, subCategory, collection);
-    const signerPrivateKey = await getSignerPrivateKey();
+    const prefix = getPublicPrefix(category, subCategory, collection);
     const albumList = albums.map((album) => {
         return {
             ...album,
-            signedUrl: signFile(prefix + toSlug(album.name) + '.jpg', signerPrivateKey)
+            signedUrl: prefix + toSlug(album.name) + '.jpg'
         }
     });
 
@@ -581,6 +575,15 @@ const getPrefix = (isHost = true, type = 'images', source, category, subCategory
     );
 }
 
+// Browse-page covers (gallery, category, sub-category, collection) are public: plain CloudFront URLs
+// under /public/images/gallery/..., no signing. The field is still named signedUrl because the shared
+// UI list-module reads it. Only findAlbumWithMedia signs, for the album's own cover, photos and videos.
+const getPublicPrefix = (category, subCategory, collection) => {
+    return process.env['MEDIA_HOST'] + '/public/images/' + source + '/'
+        + (category ? toSlug(category) + '/' : '')
+        + (subCategory ? toSlug(subCategory) + '/' : '')
+        + (collection ? toSlug(collection) + '/' : '');
+}
 const getSignerPrivateKey = async () => {
     return await secret.getSecretValue({SecretId: process.env['SIGNER_PRIVATE_KEY']});
 }
