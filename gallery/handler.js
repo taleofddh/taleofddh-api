@@ -8,6 +8,7 @@ import * as response from '@taleofddh/response';
 import * as secret from '@taleofddh/secret';
 import * as storage from '@taleofddh/storage';
 import { v6 as uuidv6 } from 'uuid';
+import { latestModified, toPublicAlbum, toPublicLevelMeta, validateAlbumMeta, validateLevelMeta, validateLevelPath, LEVELS } from './seo-text.js';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucketName = process.env['S3_MEDIA_BUCKET'];
 const source = "gallery";
@@ -20,19 +21,45 @@ export const createOrUpdateAlbum = async (event) => {
     } catch (error) {
         return response.createErrorResponse(error.message, error.statusCode || 500);
     }
-    const data = JSON.parse(event.body);
+    const data = parseBody(event);
+    const { errors, value: meta } = validateAlbumMeta(data);
+    if (!data || typeof data !== 'object' || errors.length > 0) {
+        return response.createValidationErrorResponse('Invalid request', { errors: errors.length > 0 ? errors : ['Request body must be a JSON object'] });
+    }
     const userId = caller.sub;
 
     let album;
     const existingAlbum = (!userId || false) ? {} : await getAlbum(data.name, data.startDateTime);
+    const videoCount = await countVideos(data);
     if(!existingAlbum) {
-        album = await createAlbum(data, userId);
+        album = await createAlbum(data, userId, meta, videoCount);
     } else {
-        album = await updateAlbum(data, userId);
+        album = await updateAlbum(data, userId, meta, videoCount);
     }
 
     await triggerRebuild();
     return response.createResponse(album, 200);
+}
+
+const parseBody = (event) => {
+    try {
+        return JSON.parse(event.body || '');
+    } catch (error) {
+        return null;
+    }
+}
+
+// Videos are counted from the protected media folder at save time, so the public lists can show videoCount
+// without listing storage on every request. Returns undefined when the count can't be read (the stored value is kept).
+const countVideos = async (data) => {
+    try {
+        const prefix = getPrefix(false, 'videos', source, data.category, data.subCategory, data.collection, data.name);
+        const videos = await storage.listFolder({ Bucket: bucketName, Delimiter: '/', Prefix: prefix });
+        return videos.filter((item) => item !== '').length;
+    } catch (error) {
+        console.error('Video count failed', error.name);
+        return undefined;
+    }
 }
 
 // Starts the Amplify rebuild so the static gallery pages pick up the change. One secret holds a webhook URL
@@ -77,7 +104,7 @@ export const findAlbums = async (event) => {
     }
     const params = {
         TableName: table,
-        ProjectionExpression: "id, category, subCategory, #collection, #name, startDateTime, endDateTime, description, titlePhoto, albumLocation, #searchName, photoCount, viewCount, production",
+        ProjectionExpression: "id, category, subCategory, #collection, #name, startDateTime, endDateTime, description, titlePhoto, albumLocation, #searchName, photoCount, viewCount, production, summary, coverAlt, locationLabel, videoCount, updatedDateTime",
         FilterExpression: '#production = :production',
         ExpressionAttributeNames: {
             "#name": 'name',
@@ -105,7 +132,7 @@ const getAlbum = async (name, startDateTime) => {
     return await database.get(params);
 }
 
-const createAlbum = async (data, userId) => {
+const createAlbum = async (data, userId, meta = {}, videoCount) => {
     const options = {
         msecs: new Date(data.startDateTime).getTime()
     }
@@ -120,7 +147,7 @@ const createAlbum = async (data, userId) => {
             "subCategory": data.subCategory,
             "collection": data.collection,
             "production": data.production,
-            "description": data.description,
+            "description": meta.description !== undefined ? meta.description : data.description,
             "photoCount": parseInt(data.photoCount),
             "viewCount": parseInt(data.viewCount),
             "titlePhoto": data.titlePhoto,
@@ -128,15 +155,20 @@ const createAlbum = async (data, userId) => {
             "defaultFlag": data.defaultFlag,
             "searchName": data.name.toUpperCase(),
             "createDate": new Date().toDateString(),
-            "updateDate": new Date().toDateString()
+            "updateDate": new Date().toDateString(),
+            "updatedDateTime": new Date().toISOString()
         }
     }
+    for (const field of ['summary', 'coverAlt', 'locationLabel']) {
+        if (meta[field] !== undefined) params.Item[field] = meta[field];
+    }
+    if (videoCount !== undefined) params.Item.videoCount = videoCount;
     const res = (!userId || false) ? {} : await database.put(params);
 
     return await getAlbum(data.name, data.startDateTime);
 }
 
-const updateAlbum = async(data, userId) => {
+const updateAlbum = async(data, userId, meta = {}, videoCount) => {
     const params = {
         TableName: table,
         Key: {
@@ -170,12 +202,21 @@ const updateAlbum = async(data, userId) => {
             ":category": data.category,
             ":subCategory": data.subCategory,
             ":production": data.production,
-            ":description": data.description,
+            ":description": meta.description !== undefined ? meta.description : data.description,
             ":photoCount": parseInt(data.photoCount),
             ":viewCount": parseInt(data.viewCount),
             ":updateDate": new Date().toDateString()
         },
         ReturnValues: "ALL_NEW"
+    }
+    // New text fields are only written when the request carries them, so older clients don't blank them.
+    const extra = { ...meta, updatedDateTime: new Date().toISOString() };
+    delete extra.description;
+    if (videoCount !== undefined) extra.videoCount = videoCount;
+    for (const [field, value] of Object.entries(extra)) {
+        params.UpdateExpression += `, #${field} = :${field}`;
+        params.ExpressionAttributeNames[`#${field}`] = field;
+        params.ExpressionAttributeValues[`:${field}`] = value;
     }
     const res = (!userId || false) ? {} : await database.update(params);
 
@@ -227,7 +268,7 @@ export const findRecentAlbumNames = async (event) => {
     const params = {
         TableName: table,
         IndexName: "category-index",
-        ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime, photoCount, viewCount",
+        ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime, photoCount, viewCount, description, summary, coverAlt, locationLabel, videoCount, updatedDateTime",
         FilterExpression: '#startDateTime >= :historicalDate and #production = :production',
         ExpressionAttributeNames: {
             '#collection': 'collection',
@@ -245,10 +286,7 @@ export const findRecentAlbumNames = async (event) => {
 
     const albumList = albums.map((album) => {
         const prefix = getPublicPrefix(album.category, album.subCategory, album.collection);
-        return {
-            ...album,
-            signedUrl: prefix + toSlug(album.name) + '.jpg'
-        }
+        return toPublicAlbum(album, prefix + toSlug(album.name) + '.jpg');
     });
 
     return response.createResponse(albumList, 200);
@@ -403,7 +441,7 @@ export const findAlbumCategorySubCategoryCollections = async (event) => {
     const params = {
         TableName: table,
         IndexName: "category-index",
-        ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime",
+        ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime, updatedDateTime",
         FilterExpression: '#production = :production',
         ExpressionAttributeNames: {
             '#collection': 'collection',
@@ -424,7 +462,7 @@ export const findAlbumCategorySubCategoryCollections = async (event) => {
             let subCategorizedCollections = albums.filter((item2) => {
                 return item2.subCategory === item1 && item2.category === item;
             });
-            return {category: item, subCategory: item1, collections: array.distinctValues(subCategorizedCollections, "collection")};
+            return {category: item, subCategory: item1, collections: array.distinctValues(subCategorizedCollections, "collection"), updatedDateTime: latestModified(subCategorizedCollections)};
         })
     })
 
@@ -438,7 +476,7 @@ export const findAlbumHistoricalNames = async (event) => {
     const params = {
         TableName: table,
         IndexName: "category-index",
-        ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime, photoCount, viewCount",
+        ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime, photoCount, viewCount, description, summary, coverAlt, locationLabel, videoCount, updatedDateTime",
         FilterExpression: '#category = :category and #subCategory = :subCategory and #collection = :collection and #production = :production',
         ExpressionAttributeNames: {
             '#collection': 'collection',
@@ -459,10 +497,7 @@ export const findAlbumHistoricalNames = async (event) => {
 
     const prefix = getPublicPrefix(category, subCategory, collection);
     const albumList = albums.map((album) => {
-        return {
-            ...album,
-            signedUrl: prefix + toSlug(album.name) + '.jpg'
-        }
+        return toPublicAlbum(album, prefix + toSlug(album.name) + '.jpg');
     });
 
     return response.createResponse(albumList, 200);
@@ -472,7 +507,7 @@ export const findAlbumCategorySubCategoryCollectionNames = async (event) => {
     const params = {
         TableName: table,
         IndexName: "category-index",
-        ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime",
+        ProjectionExpression: "category, subCategory, #collection, #name, startDateTime, endDateTime, updatedDateTime",
         FilterExpression: '#production = :production',
         ExpressionAttributeNames: {
             '#collection': 'collection',
@@ -497,7 +532,13 @@ export const findAlbumCategorySubCategoryCollectionNames = async (event) => {
                 let collectionNames = albums.filter((item3) => {
                     return item3.collection === item2 && item3.subCategory === item1 && item3.category === item;
                 });
-                return {category: item, subCategory: item1, collection: item2, names: array.distinctValues(collectionNames, "name")};
+                const names = array.distinctValues(collectionNames, "name");
+                return {
+                    category: item, subCategory: item1, collection: item2, names,
+                    // Per-name last modified, in the same order as names, for sitemap lastmod.
+                    updatedDateTimes: names.map((name) => latestModified(collectionNames.filter((album) => album.name === name))),
+                    updatedDateTime: latestModified(collectionNames)
+                };
             })
         })
     })
@@ -512,7 +553,7 @@ export const findAlbumWithMedia = async (event) => {
     const name = decodeURI(event.pathParameters.name);
     const params = {
         TableName: table,
-        ProjectionExpression: "id, category, subCategory, #collection, #name, startDateTime, endDateTime, description, titlePhoto, albumLocation, #searchName, photoCount, viewCount, production",
+        ProjectionExpression: "id, category, subCategory, #collection, #name, startDateTime, endDateTime, description, titlePhoto, albumLocation, #searchName, photoCount, viewCount, production, summary, coverAlt, locationLabel, videoCount, updatedDateTime",
         FilterExpression: '#searchName = :searchName and #collection = :collection and #subCategory = :subCategory and #category = :category',
         ExpressionAttributeNames: {
             "#name": 'name',
@@ -537,7 +578,6 @@ export const findAlbumWithMedia = async (event) => {
 
     const signerPrivateKey = await getSignerPrivateKey();
 
-    const coverPrefix = getPrefix(true, 'images', source, category, subCategory, collection);
 
     const photoPrefix = getPrefix(false, 'images', source, category, subCategory, collection, name);
     const photos = await storage.listFolder({ Bucket: bucketName, Delimiter: '/', Prefix: photoPrefix });
@@ -547,7 +587,7 @@ export const findAlbumWithMedia = async (event) => {
 
     const albumWithMedia = {
         ...album,
-        signedUrl: signFile(coverPrefix + toSlug(album.name) + '.jpg', signerPrivateKey),
+        signedUrl: getPublicPrefix(category, subCategory, collection) + toSlug(album.name) + '.jpg',
         photoList: photos.filter((item) => item !== '').map((item) => {
             return {
                 name: item,
@@ -602,6 +642,52 @@ const signFile = (url, signerPrivateKey, minutesToExpire = SIGNED_URL_EXPIRY_MIN
 }
 
 const toSlug = (value) => value.replace(/&/g, 'and').replace(/ /g, '-').toLowerCase();
+// ---- Gallery level text (category, sub-category, collection) ----
+// Stored in the galleryLevelMeta table: key = level + path (slugs joined by "/", like the UI routes).
+// The cover image is the existing public browse cover at gallery/<path>.jpg.
+const levelCoverUrl = (path) => process.env['MEDIA_HOST'] + '/public/images/' + source + '/' + path + '.jpg';
+
+export const createOrUpdateAlbumLevelMeta = async (event) => {
+    let caller;
+    try {
+        caller = await requirePermission(event, 'gallery:createOrUpdateLevelMeta');
+    } catch (error) {
+        return response.createErrorResponse(error.message, error.statusCode || 500);
+    }
+    const { errors, value } = validateLevelMeta(parseBody(event));
+    if (errors.length > 0) {
+        return response.createValidationErrorResponse('Invalid request', { errors });
+    }
+    await database.put({
+        TableName: table,
+        Item: { ...value, updatedDateTime: new Date().toISOString(), updatedBy: caller.sub }
+    });
+    const item = await database.get({ TableName: table, Key: { level: value.level, path: value.path } });
+    await triggerRebuild();
+    return response.createResponse(toPublicLevelMeta(item, levelCoverUrl(value.path)), 200);
+}
+
+export const findAlbumLevelMeta = async (event) => {
+    const level = decodeURIComponent(event.pathParameters?.level || '');
+    const path = decodeURIComponent(event.pathParameters?.path || '');
+    if (!LEVELS.includes(level) || validateLevelPath(level, path).length > 0) {
+        return response.createNotFoundResponse('Gallery level', path);
+    }
+    const item = await database.get({ TableName: table, Key: { level, path } });
+    if (!item) {
+        return response.createNotFoundResponse('Gallery level', path);
+    }
+    return response.createResponse(toPublicLevelMeta(item, levelCoverUrl(path)), 200);
+}
+
+export const findAlbumLevelMetaList = async (event) => {
+    const items = await database.scan({ TableName: table });
+    const list = (items || [])
+        .map((item) => toPublicLevelMeta(item, levelCoverUrl(item.path)))
+        .sort((a, b) => (a.level + '/' + a.path).localeCompare(b.level + '/' + b.path));
+    return response.createResponse(list, 200);
+}
+
 /**
  * Permissions the signed-in user holds in this service, from this service's rolePermissions table.
  * Display-only, for the UI; every endpoint still enforces its permission with requirePermission.

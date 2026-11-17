@@ -9,6 +9,7 @@ import * as response from '@taleofddh/response';
 import * as secret from '@taleofddh/secret';
 import * as storage from '@taleofddh/storage';
 import { v6 as uuidv6 } from 'uuid';
+import { latestModified, validateBlogMeta, withBlogMeta } from './seo-text.js';
 const table = process.env['ENVIRONMENT'] + '.' + process.env['APP_NAME'] + '.' + process.env['SERVICE_NAME'] + '.' + process.env['TABLE_NAME'];
 const bucket = process.env['S3_BUCKET'];
 const source = "blogs";
@@ -31,7 +32,7 @@ export const findCategorizedBlogList = async (event) => {
     };
     const blogList = await database.scan(params);
     blogList.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0) || a.date - b.date);
-    return response.createResponse(blogList, 200);
+    return response.createResponse(blogList.map(withBlogMeta), 200);
 };
 
 export const updateBlogViewCount = async (event) => {
@@ -158,7 +159,7 @@ export const findHistoricalBlogNames = async (event) => {
     const params = {
         TableName: table,
         IndexName: "category-index",
-        ProjectionExpression: "category, #name, startDateTime, endDateTime, header, title, author, titlePhoto, viewCount",
+        ProjectionExpression: "category, #name, startDateTime, endDateTime, header, title, author, titlePhoto, viewCount, summary, titlePhotoAlt, updatedDateTime",
         FilterExpression: '#category = :category and #startDateTime < :historicalDate',
         ExpressionAttributeNames: {
             '#name': 'name',
@@ -176,7 +177,7 @@ export const findHistoricalBlogNames = async (event) => {
     const prefix = getPrefix();
     const blogList = blogs.map((blog) => {
         return {
-            ...blog,
+            ...withBlogMeta(blog),
             signedUrl: prefix + getImagePath(category, blog.titlePhoto)
         }
     });
@@ -189,7 +190,7 @@ export const findBlogCategoryNames = async (event) => {
     const params = {
         TableName: table,
         IndexName: "category-index",
-        ProjectionExpression: "category, #name, startDateTime, endDateTime",
+        ProjectionExpression: "category, #name, startDateTime, endDateTime, updatedDateTime",
         FilterExpression: '#startDateTime < :historicalDate',
         ExpressionAttributeNames: {
             '#name': 'name',
@@ -205,7 +206,13 @@ export const findBlogCategoryNames = async (event) => {
         let categorizedBlogs = blogs.filter((item1) => {
             return item1.category === item;
         });
-        return {category: item, names: array.distinctValues(categorizedBlogs, "name")};
+        const names = array.distinctValues(categorizedBlogs, "name");
+        return {
+            category: item, names,
+            // Per-name last modified, in the same order as names, for sitemap lastmod.
+            updatedDateTimes: names.map((name) => latestModified(categorizedBlogs.filter((blog) => blog.name === name))),
+            updatedDateTime: latestModified(categorizedBlogs)
+        };
     })
 
     return response.createResponse(categoryNames, 200);
@@ -217,7 +224,7 @@ export const findBlog = async (event) => {
     let currentDate = new Date();
     const params = {
         TableName: table,
-        ProjectionExpression: "id, category, #name, startDateTime, endDateTime, header, title, titlePhoto, author, #searchName, viewCount, content, images",
+        ProjectionExpression: "id, category, #name, startDateTime, endDateTime, header, title, titlePhoto, author, #searchName, viewCount, content, images, summary, titlePhotoAlt, updatedDateTime",
         FilterExpression: '#searchName = :searchName and #category = :category and #startDateTime < :currentDate',
         ExpressionAttributeNames: {
             "#name": 'name',
@@ -236,7 +243,7 @@ export const findBlog = async (event) => {
     const prefix = getPrefix();
     const blogList = blogs.map((blog) => {
         return {
-            ...blog,
+            ...withBlogMeta(blog),
             signedUrl: prefix + getImagePath(category, blog.titlePhoto)
         }
     });
@@ -314,6 +321,8 @@ const validateBlogInput = (data) => {
             errors.push(`${field} must be text of at most ${max} characters`);
         }
     }
+    const meta = validateBlogMeta(data);
+    errors.push(...meta.errors);
     if (isString(data.content) && Buffer.byteLength(data.content, 'utf8') > MAX_MARKDOWN_BYTES) {
         errors.push(`content must be at most ${MAX_MARKDOWN_BYTES / 1024} KB`);
     }
@@ -342,7 +351,9 @@ const validateBlogInput = (data) => {
             author: data.author.trim(),
             startDateTime: data.startDateTime,
             endDateTime: hasEnd ? data.endDateTime : data.startDateTime,
-            content: data.content
+            content: data.content,
+            // Only present when the request carried them; absent means "leave the stored value alone" on update.
+            ...meta.value
         }
     };
 };
@@ -435,6 +446,7 @@ export const createOrUpdateBlog = async (event) => {
         return badRequest(['startDateTime cannot be changed on an existing blog']);
     }
     const now = date.dateTimeFullFormatToString(new Date());
+    const updatedDateTime = new Date().toISOString();
     const content = markdownKey(value.category, value.name);
     await storage.putObject({
         Bucket: bucket,
@@ -450,6 +462,15 @@ export const createOrUpdateBlog = async (event) => {
         titlePhoto: titlePhoto(value.category, value.name),
         content
     };
+    // summary and titlePhotoAlt are only written when the request carries them, so older clients don't blank them.
+    const seoUpdate = { expression: '', names: {}, values: {} };
+    for (const field of ['summary', 'titlePhotoAlt']) {
+        if (value[field] !== undefined) {
+            seoUpdate.expression += `, #${field} = :${field}`;
+            seoUpdate.names[`#${field}`] = field;
+            seoUpdate.values[`:${field}`] = value[field];
+        }
+    }
     let blog;
     try {
     if (!existing) {
@@ -460,6 +481,9 @@ export const createOrUpdateBlog = async (event) => {
             searchName: value.name.toUpperCase(),
             startDateTime: value.startDateTime,
             ...common,
+            summary: value.summary || '',
+            titlePhotoAlt: value.titlePhotoAlt || '',
+            updatedDateTime: updatedDateTime,
             viewCount: 0,
             createdBy: caller.sub,
             createdAt: now
@@ -476,16 +500,19 @@ export const createOrUpdateBlog = async (event) => {
             Key: { name: value.name, startDateTime: existing.startDateTime },
             ConditionExpression: 'attribute_exists(#name)',
             UpdateExpression: 'SET #header = :header, #title = :title, #author = :author, #endDateTime = :endDateTime, ' +
-                '#titlePhoto = :titlePhoto, #content = :content, #updatedBy = :updatedBy, #updatedAt = :updatedAt',
+                '#titlePhoto = :titlePhoto, #content = :content, #updatedBy = :updatedBy, #updatedAt = :updatedAt, #updatedDateTime = :updatedDateTime' +
+                seoUpdate.expression,
             ExpressionAttributeNames: {
                 '#name': 'name', '#header': 'header', '#title': 'title', '#author': 'author',
                 '#endDateTime': 'endDateTime', '#titlePhoto': 'titlePhoto', '#content': 'content',
-                '#updatedBy': 'updatedBy', '#updatedAt': 'updatedAt'
+                '#updatedBy': 'updatedBy', '#updatedAt': 'updatedAt', '#updatedDateTime': 'updatedDateTime',
+                ...seoUpdate.names
             },
             ExpressionAttributeValues: {
                 ':header': common.header, ':title': common.title, ':author': common.author,
                 ':endDateTime': common.endDateTime, ':titlePhoto': common.titlePhoto, ':content': common.content,
-                ':updatedBy': caller.sub, ':updatedAt': now
+                ':updatedBy': caller.sub, ':updatedAt': now, ':updatedDateTime': updatedDateTime,
+                ...seoUpdate.values
             },
             ReturnValues: 'ALL_NEW'
         });

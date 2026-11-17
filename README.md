@@ -428,6 +428,79 @@ module-name/
 
 ---
 
+## 🔎 SEO Metadata (blog and gallery)
+
+The UI builds static pages, so titles, descriptions, alt text and sitemap dates come from these API fields. All changes are additive: existing fields and response shapes are unchanged.
+
+### Field rules
+
+Plain-text fields are trimmed, have markdown syntax stripped, and are rejected with `400` if they contain HTML, `javascript:`/`data:` URLs, control characters (including newlines) or invisible bidi characters. `description` is markdown: it keeps markdown, but HTML, script URLs and control characters (other than newline and tab) are rejected. The UI must escape markdown on output. A field left out of an update request keeps its stored value; send `""` to clear it.
+
+| Field | Where | Rules |
+|---|---|---|
+| `summary` | blog, album, level | Meta description. 120 to 160 characters when set. Blog: the UI falls back to `title` when empty. Album: when empty, the public list responses derive it from `description` (markdown stripped, cut at a word boundary, `…` added). |
+| `titlePhotoAlt` | blog | Hero image alt text, at most 125 characters. |
+| `coverAlt` | album, level | Cover image alt text, at most 125 characters. |
+| `description` | album, level | Markdown intro, at most 3,000 characters (was 300). Aim for 150 to 300 words; only the character limit is enforced. |
+| `locationLabel` | album | Coarse public location such as "Lake District, England", at most 100 characters. `albumLocation` is unchanged and never returned publicly. |
+| `videoCount` | album | Set by the API on save from the protected `videos/` folder. Back-fill with `gallery/dataload5.js --video-count`. |
+| `updatedDateTime` | blog, album, level | ISO string set by the API on every create or update. Responses fall back to `endDateTime` when it was never set. |
+
+### Blog
+
+- `findBlog`, `findCategorizedBlogList` and `findHistoricalBlogNames` return `summary`, `titlePhotoAlt` and `updatedDateTime`. `createOrUpdateBlog` validates and stores them, and `blogForEdit` returns them.
+- Blog images are public and unsigned. `signedUrl` on blog responses is a plain URL (the name is kept for the UI list module). Use it for `og:image`. The stable format is `<MEDIA_HOST>/public/images/blogs/<category-lower>/<name>/<name>.jpg`, for example `https://media.taleofddh.com/public/images/blogs/travel/cape-town/cape-town.jpg`.
+
+### Gallery: public album data (no sign-in)
+
+`findAlbumHistoricalNames` (`albumHistoricalNames/{category}/{subCategory}/{collection}`) and `findRecentAlbumNames` (`albumRecentNames`) now also return `description`, `summary`, `coverAlt`, `locationLabel`, `videoCount` and `updatedDateTime`. No dedicated teaser endpoint was added: the UI reads the album from its collection list at build time.
+
+- The response is built from an allow-list in `gallery/seo-text.js` (`PUBLIC_ALBUM_FIELDS`), not by spreading the stored item. It never contains `photoList`, `videoList`, signed URLs, `albumLocation`, `titlePhoto`, `searchName`, `id`, `production`, `restrictedFlag` or `defaultFlag`. Only `production = true` albums are returned.
+- `signedUrl` is the public, unsigned cover: `<MEDIA_HOST>/public/images/gallery/<category>/<sub-category>/<collection>/<album>.jpg` (slugged).
+- `findAlbumWithMedia` stays `aws_iam`. Its cover now uses the same public URL (it used the signed `protected/` cover path, which breaks now that covers are in `public/`). Photos and videos are still listed from `protected/` and signed per file.
+- `createOrUpdateAlbum` sets `updatedDateTime` and `videoCount`, validates the new fields and still triggers the rebuild.
+
+### Gallery: level text (category, sub-category, collection)
+
+Table `<stage>.<app>.gallery.galleryLevelMeta` (partition key `level`, sort key `path`; create it before deploying, nothing in this repo creates tables). `level` is `category`, `subCategory` or `collection`. `path` is the slugs joined by `/`, with 1, 2 or 3 parts to match the level, for example `vacations/europe/turkey`. Fields: `title` (required, at most 120 characters), `summary`, `description`, `coverAlt`, `updatedDateTime`. The cover image is the existing `gallery/<path>.jpg`.
+
+| Endpoint | Auth | Notes |
+|---|---|---|
+| `GET /albumLevelMeta/{level}/{path+}` | none | `path` contains slashes, for example `/albumLevelMeta/collection/vacations/europe/turkey`. 404 when unknown. |
+| `GET /albumLevelMetaList` | none | All levels, for build time. |
+| `POST /createOrUpdateAlbumLevelMeta` | Cognito + `gallery:createOrUpdateLevelMeta` | Full replace of the item for `level` + `path`. Triggers the rebuild. |
+
+Responses return only `level`, `path`, `title`, `summary`, `description`, `coverAlt`, `updatedDateTime` and `signedUrl` (the public cover URL). Run `gallery/dataload4.js` to give `gallery-manager` the new permission.
+
+### Sitemap dates
+
+Existing shapes are kept; these fields are added. Each value is `updatedDateTime`, falling back to `endDateTime`.
+
+| Endpoint | Added |
+|---|---|
+| `findBlogCategoryNames` | per category: `updatedDateTime` (latest) and `updatedDateTimes` (one per entry in `names`, same order) |
+| `findAlbumCategorySubCategoryCollectionNames` | per collection: `updatedDateTime` (latest) and `updatedDateTimes` (one per entry in `names`) |
+| `findAlbumCategorySubCategoryCollections` | per sub-category: `updatedDateTime` (latest) |
+
+### Back-fill
+
+`gallery/dataload5.js` and `blog/dataload3.js`. Dry run is the default and writes nothing.
+
+```
+cd gallery
+ENVIRONMENT=dev AWS_PROFILE=taleofddh node dataload5.js                    # dry run + report
+ENVIRONMENT=dev AWS_PROFILE=taleofddh node dataload5.js --write            # apply
+ENVIRONMENT=prod AWS_PROFILE=taleofddh node dataload5.js --write --backup-confirmed
+```
+
+It sets `updatedDateTime` from `endDateTime`, stores a derived album `summary` only when the description is at least 120 characters, optionally sets `videoCount` from the protected media folder where missing or different (`--video-count`), then reports albums or blogs missing `summary`, `coverAlt`, `locationLabel` or `titlePhotoAlt`, and lists the most viewed ones (`--top=N`, default 15) for editors to rewrite first. Writing to `prod` is refused without `--backup-confirmed`. Take a backup first: `aws dynamodb create-backup --table-name prod.taleofddh.gallery.gallery --backup-name gallery-pre-seo-backfill`.
+
+### Privacy
+
+Editors must not put family member names, exact addresses or private dates in public fields. `summary`, `description`, `coverAlt`, `locationLabel` and level text all end up in public HTML and JSON.
+
+---
+
 ## 🔐 Role-Based Access (Cognito Groups)
 
 Admin endpoints are authorized by permissions. A user's Cognito groups are their roles. Each service owns a `rolePermissions` table that maps each role to that service's permissions. Adding or changing a role is a data change only, with no code change or deploy. Profile `roles` (auth service) are not used for authorization.
@@ -437,6 +510,7 @@ Admin endpoints are authorized by permissions. A user's Cognito groups are their
 | `createOrUpdateAlbum` (gallery)             | `gallery:createOrUpdateAlbum`   |
 | `album/{name}/{startDateTime}` (gallery)    | `gallery:findAlbum`             |
 | `albums` (gallery)                          | `gallery:findAlbums`            |
+| `createOrUpdateAlbumLevelMeta` (gallery)    | `gallery:createOrUpdateLevelMeta` |
 | `processMessage` (admin)                    | `messages:processStoredMessage` |
 | `messageList` (admin)                       | `messages:findMessageList`      |
 | `emailMessage` (admin)                      | `messages:getEmailMessage`      |
@@ -467,7 +541,7 @@ Authorization is per service, so each service owns `<stage>.taleofddh.<service>.
 | Table                  | Role              | Seeded permissions                                                       | Seed script                     |
 |------------------------|-------------------|--------------------------------------------------------------------------|---------------------------------|
 | `gallery.rolePermissions` | `admin`        | `*`                                                                      | `gallery/dataload4.js`          |
-|                        | `gallery-manager` | `gallery:createOrUpdateAlbum`, `gallery:findAlbum`, `gallery:findAlbums` |                                 |
+|                        | `gallery-manager` | `gallery:createOrUpdateAlbum`, `gallery:createOrUpdateLevelMeta`, `gallery:findAlbum`, `gallery:findAlbums` |                                 |
 | `admin.rolePermissions`   | `admin`        | `*`                                                                      | `admin/dataload.js`             |
 | `blog.rolePermissions` | `admin`           | `*`                                                                      | `blog/dataload2.js`             |
 |                        | `blog-manager`    | `blog:createOrUpdateBlog`, `blog:blogForEdit`, `blog:blogTitlePhotoUploadUrl` |                            |

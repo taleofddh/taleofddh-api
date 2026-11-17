@@ -8,6 +8,7 @@ const rolePermissions = [
     { role: 'admin', permissions: ['*'] },
     { role: 'gallery-manager', permissions: [
         'gallery:createOrUpdateAlbum',
+        'gallery:createOrUpdateLevelMeta',
         'gallery:findAlbum',
         'gallery:findAlbums'
     ] }
