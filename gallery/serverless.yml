@@ -318,6 +318,54 @@ functions:
     environment:
       TABLE_NAME: "gallery"
 
+  createOrUpdateAlbumLevelMeta:
+    handler: handler.createOrUpdateAlbumLevelMeta
+    timeout: 15
+    events:
+      - http:
+          path: createOrUpdateAlbumLevelMeta
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
+    environment:
+      TABLE_NAME: "galleryLevelMeta"
+      AMPLIFY_WEBHOOK_URL: ${self:custom.amplifyWebhookSecret}
+  findAlbumLevelMeta:
+    handler: handler.findAlbumLevelMeta
+    events:
+      - http:
+          path: albumLevelMeta/{level}/{path+}
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                level: true
+                path: true
+    environment:
+      TABLE_NAME: "galleryLevelMeta"
+  findAlbumLevelMetaList:
+    handler: handler.findAlbumLevelMetaList
+    events:
+      - http:
+          path: albumLevelMetaList
+          method: get
+          cors: true
+    environment:
+      TABLE_NAME: "galleryLevelMeta"
   findPermissions:
     handler: handler.findPermissions
     events:
