@@ -10,7 +10,8 @@ const rolePermissions = [
         'gallery:createOrUpdateAlbum',
         'gallery:createOrUpdateLevelMeta',
         'gallery:findAlbum',
-        'gallery:findAlbums'
+        'gallery:findAlbums',
+        'gallery:generateAlbumText'
     ] }
 ];
 await database.operation('writeItems', 'rolePermissions', rolePermissions.map(item => ({ PutRequest: { Item: item } })));

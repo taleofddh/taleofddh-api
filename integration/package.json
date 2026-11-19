@@ -1,6 +1,6 @@
 {
   "name": "integration-service",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "description": "Integration API for Tale of DDH",
   "type": "module",
   "main": "handler.js",
@@ -24,15 +24,15 @@
   },
   "homepage": "https://github.com/taleofddh/taleofddh-apii#readme",
   "dependencies": {
-    "@taleofddh/drive": "^5.2.0",
-    "@taleofddh/gmail": "^5.2.0",
-    "@taleofddh/identity": "^5.2.0",
-    "@taleofddh/notification": "^5.2.0",
-    "@taleofddh/response": "^5.2.0",
-    "@taleofddh/secret": "^5.2.0",
-    "@taleofddh/text": "^5.2.0",
-    "@taleofddh/whatsapp": "^5.2.0",
-    "@taleofddh/workbook": "^5.2.0"
+    "@taleofddh/drive": "^6.0.0",
+    "@taleofddh/gmail": "^6.0.0",
+    "@taleofddh/identity": "^6.0.0",
+    "@taleofddh/notification": "^6.0.0",
+    "@taleofddh/response": "^6.0.0",
+    "@taleofddh/secret": "^6.0.0",
+    "@taleofddh/text": "^6.0.0",
+    "@taleofddh/whatsapp": "^6.0.0",
+    "@taleofddh/workbook": "^6.0.0"
   },
   "devDependencies": {
     "@aws-sdk/client-secrets-manager": "3.1166.0",
