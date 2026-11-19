@@ -74,6 +74,11 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
       Resource: arn:aws:dynamodb:*:*:table/${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.*
+    # startAlbumText publishes draft requests to the shared genai topic (created by hand, not in this stack).
+    - Effect: "Allow"
+      Action:
+        - sns:Publish
+      Resource: ${self:custom.albumText.genaiTopicArn}
     - Effect: "Allow"
       Action:
         - s3:ListBucket
@@ -92,6 +97,9 @@ provider:
 # you can add packaging information here
 package:
   individually: true
+  patterns:
+    - '!test/**'
+    - '!resources/**'
 
 functions:
   createOrUpdateAlbum:
@@ -343,6 +351,7 @@ functions:
     environment:
       TABLE_NAME: "galleryLevelMeta"
       AMPLIFY_WEBHOOK_URL: ${self:custom.amplifyWebhookSecret}
+
   findAlbumLevelMeta:
     handler: handler.findAlbumLevelMeta
     events:
@@ -357,6 +366,7 @@ functions:
                 path: true
     environment:
       TABLE_NAME: "galleryLevelMeta"
+
   findAlbumLevelMetaList:
     handler: handler.findAlbumLevelMetaList
     events:
@@ -366,6 +376,89 @@ functions:
           cors: true
     environment:
       TABLE_NAME: "galleryLevelMeta"
+
+  startAlbumText:
+    handler: handler.startAlbumText
+    timeout: 20
+    events:
+      - http:
+          path: albumText
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
+    environment:
+      TABLE_NAME: "gallery"
+      GENAI_TOPIC_ARN: ${self:custom.albumText.genaiTopicArn}
+      ALBUM_TEXT_DAILY_LIMIT: ${self:custom.albumText.dailyLimit}
+  # Album text worker: subscribed to the shared genai topic, only for ALBUM_TEXT messages.
+  # Uses its own least-privilege role (AlbumTextWorkerRole under resources: below).
+  generateAlbumText:
+    handler: handler.generateAlbumText
+    role: AlbumTextWorkerRole
+    timeout: 300
+    memorySize: 2048
+    # SNS invokes asynchronously: no retries, so a failed run never pays for a second model call.
+    maximumRetryAttempts: 0
+    # At most 2 drafts run at once. Throttled events are kept and retried by Lambda for up to 6 hours.
+    reservedConcurrency: 2
+    events:
+      - sns:
+          arn: ${self:custom.albumText.genaiTopicArn}
+          topicName: ${self:custom.albumText.genaiTopic}
+          filterPolicyScope: MessageBody
+          filterPolicy:
+            template:
+              - ALBUM_TEXT
+    environment:
+      BEDROCK_MODEL_ID: ${self:custom.albumText.modelId}
+      DENY_LIST_SECRET: ${self:custom.albumText.denyListSecret}
+      MAX_PHOTOS: '12'
+      IMAGE_LONG_EDGE: '1024'
+      MAX_INPUT_TOKENS: '30000'
+      MAX_OUTPUT_TOKENS: '1500'
+
+  findAlbumTextDraft:
+    handler: handler.findAlbumTextDraft
+    events:
+      - http:
+          path: albumText/{name}/{startDateTime}
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Correlation-ID
+          authorizer:
+            name: cognitoUserPoolAuthorizer
+            type: COGNITO_USER_POOLS
+            arn: ${self:custom.userPoolArns.${self:custom.stage}}
+            identitySource: method.request.header.Authorization
+          request:
+            parameters:
+              paths:
+                name: true
+                startDateTime: true
+    environment:
+      TABLE_NAME: "gallery"
+
   findPermissions:
     handler: handler.findPermissions
     events:
@@ -387,10 +480,70 @@ functions:
             type: COGNITO_USER_POOLS
             arn: ${self:custom.userPoolArns.${self:custom.stage}}
             identitySource: method.request.header.Authorization
+
 # you can add CloudFormation resource templates here
 resources:
   # API Gateway Errors
   - ${file(resources/api-gateway-errors.yml)}
+  # Album text worker role
+  - Resources:
+      # The worker can read the album table and the album folders, write the draft table, call one model, read the
+      # deny list secret and write its logs. It has no access to public/ and cannot write the album
+      # table or the bucket. It does not use the service's shared role. The draft tables (<stage>.taleofddh.gallery.albumDraft)
+      # were created by hand and are not in this stack.
+      AlbumTextWorkerRole:
+        Type: AWS::IAM::Role
+        Properties:
+          RoleName: ${self:service}-${self:provider.stage}-album-text-worker
+          AssumeRolePolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Principal:
+                  Service: lambda.amazonaws.com
+                Action: sts:AssumeRole
+          Policies:
+            - PolicyName: album-text-worker
+              PolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                  - Sid: ListAlbumFolders
+                    Effect: Allow
+                    Action: s3:ListBucket
+                    Resource: arn:aws:s3:::${self:custom.albumText.mediaBucket}
+                    Condition:
+                      StringLike:
+                        s3:prefix:
+                          - protected/images/gallery/*
+                          - protected/videos/gallery/*
+                  - Sid: ReadAlbumPhotos
+                    Effect: Allow
+                    Action: s3:GetObject
+                    Resource: arn:aws:s3:::${self:custom.albumText.mediaBucket}/protected/images/gallery/*
+                  - Sid: ReadAlbum
+                    Effect: Allow
+                    Action: dynamodb:GetItem
+                    Resource: arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.albumText.albumTable}
+                  - Sid: WriteDraft
+                    Effect: Allow
+                    Action: dynamodb:UpdateItem
+                    Resource: arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:custom.albumText.draftTable}
+                  - Sid: InvokeModel
+                    Effect: Allow
+                    Action: bedrock:InvokeModel
+                    Resource:
+                      - arn:aws:bedrock:${aws:region}:${aws:accountId}:inference-profile/${self:custom.albumText.modelId}
+                      - arn:aws:bedrock:*::foundation-model/${self:custom.albumText.foundationModelId}
+                  - Sid: ReadDenyList
+                    Effect: Allow
+                    Action: secretsmanager:GetSecretValue
+                    Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:custom.albumText.denyListSecret}-*
+                  - Sid: Logs
+                    Effect: Allow
+                    Action:
+                      - logs:CreateLogStream
+                      - logs:PutLogEvents
+                    Resource: arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${self:provider.stage}-generateAlbumText:*
 #  Resources:
 #    NewResource:
 #      Type: AWS::S3::Bucket
@@ -409,6 +562,22 @@ custom:
   stage: ${opt:stage, self:provider.stage}
   # One Secrets Manager secret with a webhook URL per stage: {"dev": "https://...", "prod": "https://..."} (shared with the blog service)
   amplifyWebhookSecret: ${env:AMPLIFY_WEBHOOK_URL, 'AMPLIFY_WEBHOOK_URL'}
+  # Album text generation (see the Album Text Generation section of the root README). Everything has a default,
+  # so a plain deploy works.
+  albumText:
+    mediaBucket: ${env:S3_MEDIA_BUCKET, 'taleofddh-media'}
+    albumTable: ${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.gallery
+    draftTable: ${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.albumDraft
+    # Inference profile used by the worker, and the foundation model behind it (for the IAM policy).
+    modelId: ${env:BEDROCK_MODEL_ID, 'eu.anthropic.claude-sonnet-4-6'}
+    foundationModelId: ${env:BEDROCK_FOUNDATION_MODEL_ID, 'anthropic.claude-sonnet-4-6'}
+    # One Secrets Manager secret with the names that must never appear in public text, per stage:
+    # {"dev": ["..."], "prod": ["..."]} (same pattern as AMPLIFY_WEBHOOK_URL). Created once by hand.
+    denyListSecret: ${env:ALBUM_TEXT_DENY_LIST, 'ALBUM_TEXT_DENY_LIST'}
+    # Shared SNS topic for generative AI work, one per stage. Created by hand in the console, not in any stack.
+    genaiTopic: ${env:GENAI_TOPIC, 'taleofddh-genai'}-${self:provider.stage}
+    genaiTopicArn: arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.albumText.genaiTopic}
+    dailyLimit: ${env:ALBUM_TEXT_DAILY_LIMIT, '20'}
   # Cognito user pools that issue the ID tokens checked by the admin endpoints
   userPoolArns:
     dev: ${env:USER_POOL_ARN_DEV, 'arn:aws:cognito-idp:eu-west-1:216439337168:userpool/eu-west-1_Bp47pzJru'}

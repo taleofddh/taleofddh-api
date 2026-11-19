@@ -1,16 +1,14 @@
-<div align="center">
 
 # 🚀 Tale of DDH API
 
 **Multi-module serverless Lambda repository with automated deployment scripts and comprehensive CI/CD workflows**
 
 [![Node.js](https://img.shields.io/badge/Node.js-24.0.0+-green.svg)](https://nodejs.org/)
-[![Version](https://img.shields.io/badge/Version-5.1.0-orange.svg)](package.json)
+[![Version](https://img.shields.io/badge/Version-5.2.0-orange.svg)](package.json)
 [![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-orange.svg)](https://aws.amazon.com/lambda/)
 [![Serverless](https://img.shields.io/badge/Serverless-Framework-red.svg)](https://www.serverless.com/)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 
-</div>
 
 ---
 
@@ -36,6 +34,7 @@
 - [🔄 GitHub Actions Workflow](#-github-actions-workflow)
 - [📁 Project Structure](#-project-structure)
 - [📋 Module Details](#-module-details)
+- [🤖 Album Text Generation (gallery)](#-album-text-generation-gallery)
 - [🔐 Role-Based Access (Cognito Groups)](#-role-based-access-cognito-groups)
 - [🔧 Troubleshooting](#-troubleshooting)
 - [🤝 Contributing](#-contributing)
@@ -411,7 +410,7 @@ module-name/
 ### 🖼️ Gallery Service (gallery)
 - **🎯 Purpose**: Image gallery and media management
 - **📦 Dependencies**: @taleofddh/database, @taleofddh/storage, @taleofddh/distribution, @taleofddh/date, @taleofddh/array, @taleofddh/secret, fast-csv, uuid
-- **✨ Key Features**: Image galleries, CloudFront distribution, media storage, CSV data management
+- **✨ Key Features**: Image galleries, CloudFront distribution, media storage, CSV data management, AI-drafted album text (see [Album Text Generation](#-album-text-generation-gallery))
 
 ### 🔗 Integration Service (integration)
 - **🎯 Purpose**: Third-party service integrations
@@ -501,6 +500,117 @@ Editors must not put family member names, exact addresses or private dates in pu
 
 ---
 
+## 🤖 Album Text Generation (gallery)
+The gallery manager has a **Generate text** button. A worker Lambda reads the album photos and returns a **draft** of `summary`, `description`, `coverAlt` and `locationLabel`. The editor edits the draft and saves it with the normal `createOrUpdateAlbum`. The worker never writes to the album record. The full story is in `stories/album-text-generation.md`.
+### Flow
+1. **Offline, unchanged.** The editor syncs photos to `protected/images/gallery/<category>/<subCategory>/<collection>/<name>/` with `aws s3 sync`. Videos go to `protected/videos/gallery/...`.
+2. The editor creates or opens the album in the gallery manager and saves it.
+3. **Generate text** calls `POST /albumText` (`startAlbumText`). The Lambda checks the Cognito token and the `gallery:generateAlbumText` permission, applies the per-user daily limit, writes a draft with status `running`, publishes one message with `template: "ALBUM_TEXT"` to the SNS topic `taleofddh-genai-<stage>`, and returns `202 { draftId }`. It does not wait.
+4. The worker (`generateAlbumText`) is subscribed to that topic for `ALBUM_TEXT` messages only. It reads the album, lists the folder, picks up to 12 photos spread through it, resizes them to a long edge of 1024 px, and makes one Bedrock Converse call. Each photo is sent with its file name in the text before it. It validates the answer, retries once with the error message, runs the privacy scan, and writes the draft to the draft table as `ready` or `failed`.
+5. The UI polls `GET /albumText/{name}/{startDateTime}` (`findAlbumTextDraft`) every few seconds.
+6. The editor edits and saves through `createOrUpdateAlbum`. That endpoint applies the same length rules and the same privacy patterns, so the generated path and the manual path give the same data.
+
+If the folder has fewer than 3 photos, the draft is `failed` with "No photos found in the album folder. Finish the S3 sync and try again." and no model call is made. A draft that stays `running` for more than 5 minutes is reported as `failed`.
+### Where things live
+All gallery code is in `gallery/handler.js`, the same as every other service. Shared AWS access comes from the `@taleofddh/*` lib packages.
+
+| What | Where |
+|---|---|
+| Start and status endpoints (`startAlbumText`, `findAlbumTextDraft`), save-path privacy check in `createOrUpdateAlbum` | `gallery/handler.js` |
+| Worker (`generateAlbumText`): routes SNS messages by `template`, runs the pipeline (photos, image resize, model call, validation, privacy scan, draft write, cost estimate) | `gallery/handler.js`, section "Album text worker" |
+| Privacy scan, shared by the endpoints and the worker | `gallery/handler.js`, section "Privacy scan" |
+| Prompt and prompt version | `gallery/handler.js` (`SYSTEM_PROMPT`, `PROMPT_VERSION`) |
+| Text length rules (also used by the worker) | `gallery/seo-text.js` |
+| Worker IAM role (`AlbumTextWorkerRole`) | `gallery/serverless.yml`, under `resources:` |
+### The `taleofddh-genai` SNS topic (created by hand)
+Generation requests go through one shared SNS topic per stage, following the event → integration pattern of `adda-slough-api`: a sender publishes a JSON message with a `template` field, and each subscribed Lambda handles only the templates it knows.
+
+| Stage | Topic | Region |
+|---|---|---|
+| dev | `taleofddh-genai-dev` | `eu-west-1` |
+| prod | `taleofddh-genai-prod` | `eu-west-1` |
+
+- **Both topics were created by hand in the SNS console** (standard topics, no subscriptions). They are **not in any CloudFormation stack**, so deploying or removing a service can never delete them. Do not add them to a stack.
+- Services reference a topic by name: `arn:aws:sns:<region>:<account>:taleofddh-genai-<stage>` (`custom.albumText.genaiTopicArn` in `gallery/serverless.yml`; override the base name with `GENAI_TOPIC`).
+- **Subscriptions are added by `serverless deploy`**, not by hand. The gallery deploy adds the `generateAlbumText` subscription with a filter policy on the message body, `{"template": ["ALBUM_TEXT"]}`, so the worker is not invoked for other templates. The worker also ignores (and logs) any other template.
+- **Message format:**
+  ```json
+  { "template": "ALBUM_TEXT", "draftId": "...", "name": "...", "startDateTime": "...", "notes": "..." }
+  ```
+- **Adding another template** (for example blog text): publish to the same topic with a new `template` value, and add a Lambda in the consuming service with an `sns` event on the same ARN and its own filter policy. Each consumer keeps its own role, timeout and limits.
+- If a topic is ever recreated by hand, redeploy every subscribed service so its subscription is added again.
+### Hosting
+- One extra Lambda in the gallery service, `generateAlbumText`: `nodejs24.x`, timeout 300 seconds, memory 2048 MB, its own IAM role. No queue, container, AgentCore or other runtime.
+- SNS invokes the worker asynchronously. `maximumRetryAttempts: 0`, so a failed run is never retried and never pays for a second model call. The worker's own single retry with the error message is the only retry. There is no dead-letter queue: a crash marks the draft `failed`, and a draft stuck in `running` is reported as `failed` after 5 minutes.
+- `reservedConcurrency: 2`: at most 2 drafts run at once. Requests over the limit are not lost; Lambda keeps throttled asynchronous events and retries them for up to 6 hours. The account's Lambda concurrency limit must leave at least 100 unreserved after this; check with `aws lambda get-account-settings --profile taleofddh --region eu-west-1`.
+- Images are resized with Jimp, which is pure JavaScript, so there are no native binaries to match the Lambda runtime.
+- All AWS access goes through `@taleofddh/*` 6.0.0: `genai` (Bedrock Converse), `notification` (SNS publish), `database`, `storage`, `secret`. Nothing is billed while no drafts are requested.
+### Stages and deployment
+Gallery deploys like every other service:
+```bash
+npm run deploy:dev
+npm run deploy:prod
+```
+or `serverless deploy --stage dev` in `gallery/`. A prompt or worker change is deployed the same way.
+
+Before the first deploy of a stage:
+1. The SNS topic `taleofddh-genai-<stage>` and the draft table `<stage>.taleofddh.gallery.albumDraft` must exist (see above and below). Both stages are done.
+2. Create the deny list secret `ALBUM_TEXT_DENY_LIST` with a key for the stage, if it does not exist yet (see below).
+3. Seed the permission: run `node dataload4.js` in `gallery/` for the stage. `admin` already has `*`; `gallery-manager` gets `gallery:generateAlbumText`.
+4. Confirm the model is enabled in `eu-west-1` for the account and that the model, region and inference profile meet the data handling rules. Photos and editor notes go only to this model, in this account and region.
+### Configuration
+All values have defaults in `gallery/serverless.yml` (`custom.albumText`) and can be set with environment variables at deploy time.
+
+| Setting | Default | Notes |
+|---|---|---|
+| `BEDROCK_MODEL_ID` | `eu.anthropic.claude-sonnet-4-6` | Inference profile id. Confirm the exact id in the Bedrock console before the first deploy. |
+| `BEDROCK_FOUNDATION_MODEL_ID` | `anthropic.claude-sonnet-4-6` | Foundation model behind the profile, for the worker's IAM policy. |
+| `GENAI_TOPIC` | `taleofddh-genai` | Base name of the SNS topic; the stage is appended. |
+| Region | `eu-west-1` | Same region as the media bucket, the gallery tables and the topic. |
+| `ALBUM_TEXT_DAILY_LIMIT` | `20` | Drafts per user per day (`429` after that). |
+
+Per-request caps are set as worker environment variables in `gallery/serverless.yml`: `MAX_PHOTOS` 12, `IMAGE_LONG_EDGE` 1024, `MAX_INPUT_TOKENS` 30000, `MAX_OUTPUT_TOKENS` 1500. There is one retry. The worker also reads `MODEL_INPUT_PRICE_PER_M` (3.3) and `MODEL_OUTPUT_PRICE_PER_M` (16.5), used only for the stored cost estimate.
+### Deny list
+Names that must never appear in public text (family names) are stored in **one** AWS Secrets Manager secret, `ALBUM_TEXT_DENY_LIST`, in `eu-west-1`. It holds a list per stage, the same pattern as `AMPLIFY_WEBHOOK_URL`, and the endpoints and the worker each read the key matching their stage. It is not in the repo and not on a laptop. A stage's value is a JSON array of names, or one string of names separated by commas or new lines. Create it once:
+```bash
+aws secretsmanager create-secret --profile taleofddh --region eu-west-1 \
+  --name ALBUM_TEXT_DENY_LIST \
+  --secret-string '{"dev": ["Name One", "Name Two"], "prod": ["Name One", "Name Two"]}'
+```
+Update it with `aws secretsmanager put-secret-value` (send the whole object, both stages). Matching ignores case and is on whole words only. The endpoints cache the list for 5 minutes. The worker reads it on every draft and **fails the draft** if the secret cannot be read, is not an object keyed by stage, or has no key for its stage, because a draft without the privacy scan is not safe. The save path (`createOrUpdateAlbum`) falls back to the pattern checks in those cases.
+### Draft table (created by hand)
+`dev.taleofddh.gallery.albumDraft` and `prod.taleofddh.gallery.albumDraft` were **created by hand with the AWS CLI** and are **not in any stack**, like the other gallery tables. Pay per request, keyed like the album table (`name` partition key, `startDateTime` sort key), DynamoDB TTL on `expiresAt`. To recreate one:
+```bash
+aws dynamodb create-table --profile taleofddh --region eu-west-1 \
+  --table-name dev.taleofddh.gallery.albumDraft \
+  --attribute-definitions AttributeName=name,AttributeType=S AttributeName=startDateTime,AttributeType=S \
+  --key-schema AttributeName=name,KeyType=HASH AttributeName=startDateTime,KeyType=RANGE \
+  --billing-mode PAY_PER_REQUEST
+aws dynamodb update-time-to-live --profile taleofddh --region eu-west-1 \
+  --table-name dev.taleofddh.gallery.albumDraft \
+  --time-to-live-specification Enabled=true,AttributeName=expiresAt
+```
+Each item holds the latest draft for an album: status, model id, prompt version, token counts, estimated cost, warnings and facts to check. Drafts expire after 30 days. The same table holds the per-user daily counters (`name` = `#usage#<user>`, `startDateTime` = the date), which expire after 2 days.
+### Budget alarm (created by hand)
+A monthly AWS Budgets alarm on the Bedrock model's cost, **created by hand in the console** and **not in any stack**. Email alerts at 80% of actual and 100% of forecast spend. The Lambdas are left out of the filter, because a Lambda filter covers every function in the account; the worker costs about $0.003 a draft.
+### Security
+- Only users with `gallery:generateAlbumText` can start a draft or read one. Requests without a valid Cognito token are rejected by the API Gateway authorizer.
+- The gallery service may publish only to `taleofddh-genai-<stage>` (`sns:Publish` on its ARN).
+- The worker's role (`AlbumTextWorkerRole`) allows: list and read on `protected/images/gallery/*` and list on `protected/videos/gallery/*`, `GetItem` on the gallery table, `UpdateItem` on the draft table, `bedrock:InvokeModel` on the one model, `GetSecretValue` on the `ALBUM_TEXT_DENY_LIST` secret, and logs for its own log group. It has no access to `public/`, and it cannot write the gallery table or the bucket.
+- Logs hold the album key, status, timings, token counts and warning counts only. `writeLog` in `gallery/handler.js` drops every field that is not on its allow list, so photo content, editor notes and draft text cannot be logged.
+### Cost
+About $0.08 per album, or $0.10 with long editor notes. The model is about 96% of that; the worker Lambda is about $0.003. SNS to Lambda delivery is free. Each draft stores its token counts and `estimatedCostUsd`. Compare the first ten drafts with this estimate.
+### Tests
+```bash
+cd gallery && npm test   # endpoints, helpers, privacy rules, worker routing and pipeline
+```
+### Verify on dev
+1. Confirm the topic, the deny list secret and the model; run `dataload4.js`; deploy dev.
+2. Check that the `taleofddh-genai-dev` topic now has one subscription (the `generateAlbumText` Lambda) with the `ALBUM_TEXT` filter policy.
+3. Generate drafts for three existing albums. Compare quality and the stored cost with the estimate. Adjust the prompt and bump `PROMPT_VERSION`.
+4. Test three new albums, including one with videos and one with a long editor note.
+5. Release the gallery form changes to prod first, then deploy prod.
+---
 ## 🔐 Role-Based Access (Cognito Groups)
 
 Admin endpoints are authorized by permissions. A user's Cognito groups are their roles. Each service owns a `rolePermissions` table that maps each role to that service's permissions. Adding or changing a role is a data change only, with no code change or deploy. Profile `roles` (auth service) are not used for authorization.
@@ -751,20 +861,18 @@ git push origin feature/your-feature-name
 | 📂 **Repository** | https://github.com/taleofddh/taleofddh-api |
 | 🐛 **Issues** | https://github.com/taleofddh/taleofddh-api/issues |
 | 👨‍💻 **Author** | Devadyuti Das |
-| 🏷️ **Version** | 5.1.0 |
+| 🏷️ **Version** | 5.2.0 |
 | 🟢 **Node.js** | &gt;= 24.0.0 |
 | 📦 **npm** | &gt;= 11.0.0 |
 
 ---
 
-<div align="center">
 
 **Made with ❤️ for serverless development**
 
 [![GitHub stars](https://img.shields.io/github/stars/taleofddh/taleofddh-api?style=social)](https://github.com/taleofddh/taleofddh-api/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/taleofddh/taleofddh-api?style=social)](https://github.com/taleofddh/taleofddh-api/network/members)
 
-</div>
 
 ### ✍ Blog Management (blog service)
 Cognito-protected, `blog-manager` and `admin` only. `admin` has `*`, so it is implied. Send `Authorization: <idToken>`.
