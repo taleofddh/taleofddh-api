@@ -504,11 +504,11 @@ Editors must not put family member names, exact addresses or private dates in pu
 The gallery manager has a **Generate text** button. A worker Lambda reads the album photos and returns a **draft** of `summary`, `description`, `coverAlt` and `locationLabel`. The editor edits the draft and saves it with the normal `createOrUpdateAlbum`. The worker never writes to the album record. The full story is in `stories/album-text-generation.md`.
 ### Flow
 1. **Offline, unchanged.** The editor syncs photos to `protected/images/gallery/<category>/<subCategory>/<collection>/<name>/` with `aws s3 sync`. Videos go to `protected/videos/gallery/...`.
-2. The editor creates or opens the album in the gallery manager and saves it.
+2. The editor creates or opens the album in the gallery manager and saves it. For a new album, leave **Ready for Production?** unticked on this first save: the album is not public yet, so no Amplify build runs. `createOrUpdateAlbum` starts a build only when the album is production now or was before the save.
 3. **Generate text** calls `POST /albumText` (`startAlbumText`). The Lambda checks the Cognito token and the `gallery:generateAlbumText` permission, applies the per-user daily limit, writes a draft with status `running`, publishes one message with `template: "ALBUM_TEXT"` to the SNS topic `taleofddh-genai-<stage>`, and returns `202 { draftId }`. It does not wait.
 4. The worker (`generateAlbumText`) is subscribed to that topic for `ALBUM_TEXT` messages only. It reads the album, lists the folder, picks up to 12 photos spread through it, resizes them to a long edge of 1024 px, and makes one Bedrock Converse call. Each photo is sent with its file name in the text before it. It validates the answer, retries once with the error message, runs the privacy scan, and writes the draft to the draft table as `ready` or `failed`.
 5. The UI polls `GET /albumText/{name}/{startDateTime}` (`findAlbumTextDraft`) every few seconds.
-6. The editor edits and saves through `createOrUpdateAlbum`. That endpoint applies the same length rules and the same privacy patterns, so the generated path and the manual path give the same data.
+6. The editor edits the draft, ticks **Ready for Production?** and saves through `createOrUpdateAlbum`, which runs the one Amplify build. That endpoint applies the same length rules and the same privacy patterns, so the generated path and the manual path give the same data.
 
 If the folder has fewer than 3 photos, the draft is `failed` with "No photos found in the album folder. Finish the S3 sync and try again." and no model call is made. A draft that stays `running` for more than 5 minutes is reported as `failed`.
 ### Where things live
@@ -598,6 +598,8 @@ A monthly AWS Budgets alarm on the Bedrock model's cost, **created by hand in th
 - The gallery service may publish only to `taleofddh-genai-<stage>` (`sns:Publish` on its ARN).
 - The worker's role (`AlbumTextWorkerRole`) allows: list and read on `protected/images/gallery/*` and list on `protected/videos/gallery/*`, `GetItem` on the gallery table, `UpdateItem` on the draft table, `bedrock:InvokeModel` on the one model, `GetSecretValue` on the `ALBUM_TEXT_DENY_LIST` secret, and logs for its own log group. It has no access to `public/`, and it cannot write the gallery table or the bucket.
 - Logs hold the album key, status, timings, token counts and warning counts only. `writeLog` in `gallery/handler.js` drops every field that is not on its allow list, so photo content, editor notes and draft text cannot be logged.
+### Copying text between stages
+To reuse reviewed text in the other stage, open the same album (same name and start date) in the gallery manager there, paste `summary`, `description`, `coverAlt` and `locationLabel`, and save. Do not click **Regenerate**, so no tokens are spent twice.
 ### Cost
 About $0.08 per album, or $0.10 with long editor notes. The model is about 96% of that; the worker Lambda is about $0.003. SNS to Lambda delivery is free. Each draft stores its token counts and `estimatedCostUsd`. Compare the first ten drafts with this estimate.
 ### Tests
