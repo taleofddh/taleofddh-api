@@ -538,6 +538,11 @@ resources:
                     Effect: Allow
                     Action: secretsmanager:GetSecretValue
                     Resource: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${self:custom.albumText.denyListSecret}-*
+                  - Sid: DecryptKey
+                    Effect: Allow
+                    Action:
+                      - kms:Decrypt
+                    Resource: arn:aws:kms:${aws:region}:${aws:accountId}:key/0cde1d72-ed2a-4145-958f-efd1eb26c18d
                   - Sid: Logs
                     Effect: Allow
                     Action:

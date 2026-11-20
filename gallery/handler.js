@@ -205,9 +205,14 @@ export const createOrUpdateAlbum = async (event) => {
         album = await updateAlbum(data, userId, meta, videoCount);
     }
 
-    await triggerRebuild();
+    // The public pages list production albums only, so a save can change the site only when the album is production
+    // now or was before. Saving a new album with "Ready for Production?" unticked (to generate its text first) skips the build.
+    if (isProduction(data.production) || isProduction(existingAlbum?.production)) {
+        await triggerRebuild();
+    }
     return response.createResponse(album, 200);
 }
+const isProduction = (value) => value === true || value === 'true';
 
 const parseBody = (event) => {
     try {
@@ -980,7 +985,7 @@ export const findPermissions = async (event) => {
 // messages only. A fixed pipeline: read the album, find photos, prepare images, call the model, validate, privacy
 // scan, save the draft. All AWS access arrives through `deps` (the @taleofddh/* services), so it is unit tested
 // without AWS. The prompt is code: bump PROMPT_VERSION on any change to the text; it is stored with each draft.
-export const PROMPT_VERSION = '1.0.0';
+export const PROMPT_VERSION = '1.1.0';
 export const SYSTEM_PROMPT = `You write the public web description of a family photo album for the Tale of DDH travel and family website.
 You are given the album facts, optional editor notes and a set of photos. Each photo is preceded by its file name.
 
@@ -998,9 +1003,36 @@ Rules:
 
 Length rules:
 - summary: 120 to 160 characters, one plain sentence, no markdown.
-- description: 150 to 300 words, markdown allowed (short paragraphs, no headings, no HTML).
+- description: 150 to 300 words of markdown in the layout below. No HTML.
 - coverAlt: at most 125 characters, describes the suggested cover photo for a screen reader.
 - locationLabel: at most 100 characters, for example "Lulworth Cove, Dorset, England". Use only places given in the album fields or notes, or clearly identifiable in the photos.
+
+Description layout (the same for every album on the site, so follow it exactly):
+## <A short title: what and where, for example "A day trip to Lulworth on the Dorset coast">
+<One paragraph: when (month and year), where, and what the album shows. Say how many photos it has, using the photo count you are given.>
+### Highlights
+- **<Highlight one>.** <One or two sentences about it.>
+- **<Highlight two>.** <One or two sentences about it.>
+- **<Highlight three, optional>.** <One or two sentences about it.>
+### About the photos
+<One paragraph: the weather, light and kinds of shot (wide views, close-ups, a few of us).>
+<One closing paragraph: who the place suits, or one practical tip for a similar trip.>
+
+Layout notes:
+- Each highlight is something visible in the photos. The bold label is two to four words and ends with a full stop.
+
+Example of the layout (the content is for a different album; do not reuse its facts):
+## A day trip to Lulworth on the Dorset coast
+In July 2008 we spent a day at Lulworth on the Dorset coast in southern England. This album has 16 photos of the clifftops, the pebble beaches and one of the best known rock formations on the English coast.
+### Highlights
+- **Durdle Door.** A natural limestone arch that stands in the sea. We photographed it from the cliff path above and from the pebble beach below, where the water turns green and clear close to the rock.
+- **Coastal walking.** A well worn path crosses the grassy hills above the sea. The views run along the coast to headlands in the distance, and many other walkers were out on the day.
+- **Pebble coves.** The beaches here are made of small stones rather than sand. The cliffs behind them show layers of pale rock and green slopes.
+### About the photos
+The weather was mixed, with heavy grey clouds and some brighter spells, which gives the pictures a moody look. The album includes wide views of the coast, close shots of the arch and a few of us on the beach.
+Lulworth makes an easy day out for families and walkers who want sea views and fresh air. If you are planning a similar short trip, bring sturdy shoes for the steep paths and the loose pebbles.
+
+The highlights field holds the same two or three highlight labels as the description, without the markdown.
 
 Return the result by calling the submit_album_text tool.`;
 export const TOOL = {
@@ -1027,14 +1059,16 @@ export const monthYear = (startDateTime) => {
     if (Number.isNaN(date.getTime())) return undefined;
     return new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date);
 };
-/** The text sent before the photos. Only the fields the story allows. */
-export const albumFacts = (album, notes) => {
+/** The text sent before the photos. Only the fields the story allows, plus the counts from the album folder. */
+export const albumFacts = (album, notes, counts = {}) => {
     const lines = [
         `Album name: ${album.name}`,
         album.category && `Category: ${album.category}`,
         album.subCategory && `Sub-category: ${album.subCategory}`,
         album.collection && `Collection: ${album.collection}`,
         monthYear(album.startDateTime) && `Month and year: ${monthYear(album.startDateTime)}`,
+        counts.photoCount !== undefined && `Photo count (the whole album, not only the photos shown here): ${counts.photoCount}`,
+        counts.videoCount ? `Video count: ${counts.videoCount}` : undefined,
         album.description && `Current description (may be replaced):\n${album.description}`,
         notes && `Editor notes (facts from the editor):\n${notes}`
     ].filter(Boolean);
@@ -1074,6 +1108,22 @@ export const callModel = async (genai, { modelId, maxOutputTokens, facts, photos
 export const MIN_WORDS = 150;
 export const MAX_WORDS = 300;
 export const MAX_HIGHLIGHTS = 3;
+// The layout every album description on the site follows (see SYSTEM_PROMPT): a ## title first, a ### Highlights
+// section with two or three bold bullets, and a ### About the photos section.
+export const layoutErrors = (markdown) => {
+    const errors = [];
+    const text = String(markdown || '').replace(/\r\n?/g, '\n').trim();
+    if (!/^## \S/.test(text)) errors.push('description must start with a "## " title line');
+    const highlights = text.match(/^### Highlights\n([\s\S]*?)(?=^### |(?![\s\S]))/m);
+    if (!highlights) {
+        errors.push('description must have a "### Highlights" section');
+    } else {
+        const bullets = (highlights[1].match(/^- \*\*[^*\n]+\*\*/gm) || []).length;
+        if (bullets < 2 || bullets > MAX_HIGHLIGHTS) errors.push('the Highlights section must have two or three "- **Label.** text" bullets');
+    }
+    if (!/^### About the photos$/m.test(text)) errors.push('description must have a "### About the photos" section');
+    return errors;
+};
 export const countWords = (markdown) => {
     const plain = stripMarkdown(markdown);
     return plain === '' ? 0 : plain.split(/\s+/).length;
@@ -1102,6 +1152,7 @@ export const validateDraft = (result, photoNames) => {
         if (words < MIN_WORDS || words > MAX_WORDS) {
             errors.push(`description must be ${MIN_WORDS} to ${MAX_WORDS} words, it has ${words}`);
         }
+        errors.push(...layoutErrors(value.description));
     }
     if (typeof result.suggestedCover !== 'string' || !photoNames.includes(result.suggestedCover)) {
         errors.push('suggestedCover must be exactly one of the photo file names that were provided');
@@ -1282,7 +1333,7 @@ export const runDraft = async (request, deps) => {
     }
     const prepared = await preparePhotos(deps, photos, config);
     if (prepared.length < config.minPhotos) return fail('The photos could not be read. Check the files and try again.', counts);
-    const facts = albumFacts(album, request.notes);
+    const facts = albumFacts(album, request.notes, counts);
     const { kept, fits } = fitInputCap(prepared, facts.length, config);
     if (!fits) return fail('The request is too large for one draft. Shorten the editor notes and try again.', counts);
     const names = photos.map((photo) => photo.name);
