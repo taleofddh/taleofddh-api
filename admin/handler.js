@@ -53,22 +53,26 @@ export const processStoredMessage = async (event) => {
             }
         }
         let messageExists = await database.get(params);
-        if(!messageExists) {
-            const object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + messageId});
-
-            let message = await email.parse(object);
-            message.messageId = messageId;
-
-            const params = {
-                TableName: table,
-                Item: message
+        // A row without a sender was written by the old @taleofddh/email parse bug (< 6.0.1): parse it again.
+        if(!messageExists || !messageExists.from) {
+            try {
+                const object = await storage.getObject({Bucket: bucket, Key: prefix + "/" + messageId});
+                let message = await email.parse(object);
+                message.messageId = messageId;
+                const params = {
+                    TableName: table,
+                    Item: message
+                }
+                await database.put(params);
+                console.log('Processed ' + messageId);
+                processedMessageList.push(message);
+            } catch (error) {
+                // One unreadable email must not stop the rest. Only the id and error name are logged, never content.
+                console.error('Could not process ' + messageId, error.name);
             }
-            const inboxMsg = await database.put(params);
-            console.log('Processed ' + messageId);
-            processedMessageList.push(message);
         }
     }
-    console.log("List", processedMessageList);
+    console.log('Processed ' + processedMessageList.length + ' messages');
     return {
         statusCode: 200,
         body: JSON.stringify(processedMessageList),
