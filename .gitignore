@@ -71,6 +71,9 @@ typings/
 # dotenv environment variables file
 .env
 .env.test
+# Secrets: private keys must never be committed
+*.pem
+*.key
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
