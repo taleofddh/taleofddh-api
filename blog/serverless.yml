@@ -67,6 +67,11 @@ provider:
       Action:
         - secretsmanager:GetSecretValue
       Resource: arn:aws:secretsmanager:${self:provider.region}:*:secret:${self:custom.amplifyWebhookSecret}-*
+    # Content deny list (names that must not appear in public text), shared with gallery
+    - Effect: "Allow"
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource: arn:aws:secretsmanager:${self:provider.region}:*:secret:${self:custom.blogText.denyListSecret}-*
     - Effect: "Allow"
       Action:
         - s3:ListBucket
@@ -258,6 +263,7 @@ functions:
       TABLE_NAME: "blog"
       S3_BUCKET: ${env:S3_BUCKET, 'taleofddh-blogs'}
       AMPLIFY_WEBHOOK_URL: ${self:custom.amplifyWebhookSecret}
+      CONTENT_DENY_LIST: ${self:custom.blogText.denyListSecret}
   
   blogForEdit:
     handler: handler.blogForEdit
@@ -360,6 +366,21 @@ custom:
     prod: ${env:USER_POOL_ARN_PROD, 'arn:aws:cognito-idp:eu-west-1:216439337168:userpool/eu-west-1_EV9nheb0T'}
   # One Secrets Manager secret with a webhook URL per stage: {"dev": "https://...", "prod": "https://..."}
   amplifyWebhookSecret: ${env:AMPLIFY_WEBHOOK_URL, 'AMPLIFY_WEBHOOK_URL'}
+  # Blog text generation (see the Blog Text Generation section of the root README). Everything has a default,
+  # so a plain deploy works. The deny list secret and the SNS topic are shared with the gallery service.
+  blogText:
+    # One Secrets Manager secret with the names that must never appear in public text, per stage:
+    # {"dev": ["..."], "prod": ["..."]} (same pattern as AMPLIFY_WEBHOOK_URL). Shared with gallery (was ALBUM_TEXT_DENY_LIST).
+    denyListSecret: ${env:CONTENT_DENY_LIST, 'CONTENT_DENY_LIST'}
+    # Shared SNS topic for generative AI work, one per stage. Created by hand in the console, not in any stack.
+    genaiTopic: ${env:GENAI_TOPIC, 'taleofddh-genai'}-${self:provider.stage}
+    genaiTopicArn: arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.blogText.genaiTopic}
+    blogTable: ${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.blog
+    draftTable: ${self:provider.stage}.${env:APP_NAME, 'taleofddh'}.${self:service}.blogDraft
+    # Inference profile used by the worker, and the foundation model behind it (for the IAM policy).
+    modelId: ${env:BEDROCK_MODEL_ID, 'eu.anthropic.claude-sonnet-4-6'}
+    foundationModelId: ${env:BEDROCK_FOUNDATION_MODEL_ID, 'anthropic.claude-sonnet-4-6'}
+    dailyLimit: ${env:BLOG_TEXT_DAILY_LIMIT, '5'}
   domains:
     prod: ${env:API_DOMAIN, 'api.taleofddh.com'}
     dev: ${self:custom.stage}-${env:API_DOMAIN, 'api.taleofddh.com'}

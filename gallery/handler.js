@@ -13,90 +13,10 @@ import { Jimp } from 'jimp';
 import { v6 as uuidv6 } from 'uuid';
 import { cleanText, latestModified, toPublicAlbum, toPublicLevelMeta, validateAlbumMeta, validateLevelMeta, validateLevelPath, LEVELS, stripMarkdown } from './seo-text.js';
 // ---- Privacy scan for public album text ----
-// Shared by createOrUpdateAlbum (rejects) and the album text worker (masks). Matched text is never returned or
-// logged: results carry the field and the kind of match only.
-export const MASK = '[removed]';
-const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)+/gi;
-// UK postcode, e.g. SW1A 1AA, M1 1AE, DT5 1DD.
-const POSTCODE = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/gi;
-// A run of digits (with optional +, spaces, dots, dashes, brackets) holding at least 9 digits.
-const PHONE = /(?<![\w])\+?\(?\d[\d\s().-]{7,}\d(?![\w])/g;
-// Booking references: a keyword followed by a code that contains a digit, e.g. "booking ref: AB12CD", "PNR X7Y8Z9".
-const BOOKING = /\b(?:booking|reservation|confirmation|itinerary|pnr|order|ticket)(?:\s+(?:ref(?:erence)?|number|no\.?|id|code))?\s*[:#-]?\s*(?=[A-Z0-9]*\d)[A-Z0-9]{5,10}\b/gi;
-const digits = (text) => (text.match(/\d/g) || []).length;
-const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const cleanNames = (names) => [...new Set(names.map((name) => String(name).trim()).filter((name) => name.length >= 2))];
-/**
- * Parses the deny list secret. One secret holds a list per stage, like the Amplify webhook secret:
- * {"dev": ["Name One", "Name Two"], "prod": ["Name One"]}. A stage's value may also be one string of names
- * separated by commas or new lines. Throws when the secret is not that shape or has no entry for the stage,
- * so a misconfigured secret is never read as "no names".
- */
-export const parseDenyList = (raw, stage) => {
-    let parsed;
-    try {
-        parsed = JSON.parse(raw);
-    } catch {
-        throw new Error('Deny list secret is not JSON');
-    }
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        throw new Error('Deny list secret must be an object keyed by stage');
-    }
-    const entry = parsed[stage];
-    if (Array.isArray(entry)) return cleanNames(entry);
-    if (typeof entry === 'string') return cleanNames(entry.split(/[\n,]/));
-    throw new Error('Deny list secret has no list for this stage');
-};
-const denyPattern = (denyList) => {
-    const names = (denyList || []).filter((name) => typeof name === 'string' && name.trim().length >= 2);
-    if (names.length === 0) return null;
-    // Longest first so "Anna Maria" wins over "Anna".
-    names.sort((a, b) => b.length - a.length);
-    return new RegExp(`(?<![\\p{L}\\p{N}])(?:${names.map((name) => escapeRegExp(name.trim())).join('|')})(?![\\p{L}\\p{N}])`, 'giu');
-};
-const rules = (denyList) => [
-    { type: 'email', pattern: EMAIL },
-    { type: 'booking reference', pattern: BOOKING },
-    { type: 'postcode', pattern: POSTCODE },
-    { type: 'phone number', pattern: PHONE, accept: (match) => digits(match) >= 9 },
-    { type: 'name on deny list', pattern: denyPattern(denyList) }
-].filter((rule) => rule.pattern);
-/**
- * Scans one text. Returns { text, matches } where `text` has every match replaced by MASK and `matches`
- * lists the kinds found (one entry per match).
- */
-export const scanText = (value, denyList = []) => {
-    if (typeof value !== 'string' || value.length === 0) return { text: value, matches: [] };
-    let text = value;
-    const matches = [];
-    for (const { type, pattern, accept } of rules(denyList)) {
-        text = text.replace(new RegExp(pattern.source, pattern.flags), (match) => {
-            if (accept && !accept(match)) return match;
-            matches.push(type);
-            return MASK;
-        });
-    }
-    return { text, matches };
-};
-/**
- * Scans a set of fields. Returns { values, warnings } where `values` holds the masked text of each field
- * and `warnings` is a list of { field, type } (a field appears once per kind found).
- */
-export const scanFields = (fields, denyList = []) => {
-    const values = {};
-    const warnings = [];
-    for (const [field, value] of Object.entries(fields || {})) {
-        const { text, matches } = scanText(value, denyList);
-        values[field] = text;
-        for (const type of new Set(matches)) warnings.push({ field, type });
-    }
-    return { values, warnings };
-};
-/** Save path: errors for each field that holds a private detail. Same rules as the agent's scan. */
-export const privacyErrors = (fields, denyList = []) => {
-    const { warnings } = scanFields(fields, denyList);
-    return warnings.map(({ field, type }) => `${field} must not contain private details (${type})`);
-};
+// Imported from @taleofddh/privacy and re-exported so existing tests that import from this module continue to work.
+// Shared by createOrUpdateAlbum (rejects) and the album text worker (masks).
+import { MASK, parseDenyList, scanText, scanFields, privacyErrors } from '@taleofddh/privacy';
+export { MASK, parseDenyList, scanText, scanFields, privacyErrors };
 
 // ---- Album text draft helpers ----
 export const ALBUM_TEXT_TEMPLATE = 'ALBUM_TEXT';

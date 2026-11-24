@@ -578,7 +578,8 @@ custom:
     foundationModelId: ${env:BEDROCK_FOUNDATION_MODEL_ID, 'anthropic.claude-sonnet-4-6'}
     # One Secrets Manager secret with the names that must never appear in public text, per stage:
     # {"dev": ["..."], "prod": ["..."]} (same pattern as AMPLIFY_WEBHOOK_URL). Created once by hand.
-    denyListSecret: ${env:ALBUM_TEXT_DENY_LIST, 'ALBUM_TEXT_DENY_LIST'}
+    # Shared with the blog service (was ALBUM_TEXT_DENY_LIST, renamed to CONTENT_DENY_LIST).
+    denyListSecret: ${env:CONTENT_DENY_LIST, 'CONTENT_DENY_LIST'}
     # Shared SNS topic for generative AI work, one per stage. Created by hand in the console, not in any stack.
     genaiTopic: ${env:GENAI_TOPIC, 'taleofddh-genai'}-${self:provider.stage}
     genaiTopicArn: arn:aws:sns:${aws:region}:${aws:accountId}:${self:custom.albumText.genaiTopic}

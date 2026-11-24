@@ -5,6 +5,7 @@ import * as array from '@taleofddh/array';
 import { getCaller, loadRolePermissionsFromTable, requirePermission } from '@taleofddh/auth';
 import * as database from '@taleofddh/database';
 import * as date from '@taleofddh/date';
+import { parseDenyList, privacyErrors } from '@taleofddh/privacy';
 import * as response from '@taleofddh/response';
 import * as secret from '@taleofddh/secret';
 import * as storage from '@taleofddh/storage';
@@ -16,19 +17,53 @@ const source = "blogs";
 // Blog images are public: plain CloudFront URLs under /public/images/blogs/..., no signing.
 // The field is still named signedUrl because the shared UI list-module reads it.
 
+// ---- Privacy scan for public blog text ----
+// Shared by createOrUpdateBlog (rejects) and the blog text worker (masks).
+// Names that must never appear in public text (family names). One Secrets Manager secret holds a list per stage:
+// {"dev": [...], "prod": [...]} (same pattern as the Amplify webhook secret), read through @taleofddh/secret.
+// CONTENT_DENY_LIST is shared with the gallery service.
+const createDenyListReader = (getValue, stage, { ttlMs = 5 * 60 * 1000, now = Date.now, onError = () => {} } = {}) => {
+    let cached;
+    let readAt = 0;
+    return async () => {
+        if (cached && now() - readAt < ttlMs) return cached;
+        try {
+            const value = await getValue();
+            if (value === null || value === undefined) throw new Error('Deny list unavailable');
+            cached = parseDenyList(value, stage);
+            readAt = now();
+        } catch (error) {
+            onError(error);
+            return cached || [];
+        }
+    };
+};
+const readDenyList = createDenyListReader(
+    () => secret.getSecretValue({ SecretId: process.env['CONTENT_DENY_LIST'] }),
+    process.env['ENVIRONMENT'],
+    { onError: () => console.error('Deny list unavailable, pattern checks only') }
+);
+
 export const findCategorizedBlogList = async (event) => {
     const category = decodeURI(event.pathParameters.category);
     const homePageFlag = decodeURI(event.pathParameters.category) === 'true';
+    // Only published blogs (production = true) or blogs without the flag (pre-existing records).
+    const productionFilter = '(attribute_not_exists(#production) OR #production = :production)';
     const params = {
         TableName: table,
-        FilterExpression: homePageFlag ? '#category = :category and #homePageFlag = :homePageFlag' : '#category = :category',
-        ExpressionAttributeNames: homePageFlag ? {
+        FilterExpression: homePageFlag
+            ? `#category = :category and #homePageFlag = :homePageFlag and ${productionFilter}`
+            : `#category = :category and ${productionFilter}`,
+        ExpressionAttributeNames: {
             '#category': 'category',
-            '#homePageFlag': 'homePageFlag'
-        } : {
-            '#category': 'category'
+            '#production': 'production',
+            ...(homePageFlag ? { '#homePageFlag': 'homePageFlag' } : {})
         },
-        ExpressionAttributeValues: homePageFlag ? {':category': category, ':homePageFlag': homePageFlag} : {':category': category}
+        ExpressionAttributeValues: {
+            ':category': category,
+            ':production': true,
+            ...(homePageFlag ? { ':homePageFlag': homePageFlag } : {})
+        }
     };
     const blogList = await database.scan(params);
     blogList.sort((a,b) => (a.sequence > b.sequence) ? 1 : ((b.sequence > a.sequence) ? -1 : 0) || a.date - b.date);
@@ -160,15 +195,17 @@ export const findHistoricalBlogNames = async (event) => {
         TableName: table,
         IndexName: "category-index",
         ProjectionExpression: "category, #name, startDateTime, endDateTime, header, title, author, titlePhoto, viewCount, summary, titlePhotoAlt, updatedDateTime",
-        FilterExpression: '#category = :category and #startDateTime < :historicalDate',
+        FilterExpression: '#category = :category and #startDateTime < :historicalDate and (attribute_not_exists(#production) OR #production = :production)',
         ExpressionAttributeNames: {
             '#name': 'name',
             '#category': 'category',
-            '#startDateTime': "startDateTime"
+            '#startDateTime': "startDateTime",
+            '#production': 'production'
         },
         ExpressionAttributeValues: {
             ':category': category,
-            ':historicalDate': date.dateTimeFullFormatToString(historicalDate)
+            ':historicalDate': date.dateTimeFullFormatToString(historicalDate),
+            ':production': true
         }
     };
     const blogs = await database.scan(params);
@@ -225,17 +262,19 @@ export const findBlog = async (event) => {
     const params = {
         TableName: table,
         ProjectionExpression: "id, category, #name, startDateTime, endDateTime, header, title, titlePhoto, author, #searchName, viewCount, content, images, summary, titlePhotoAlt, updatedDateTime",
-        FilterExpression: '#searchName = :searchName and #category = :category and #startDateTime < :currentDate',
+        FilterExpression: '#searchName = :searchName and #category = :category and #startDateTime < :currentDate and (attribute_not_exists(#production) OR #production = :production)',
         ExpressionAttributeNames: {
             "#name": 'name',
             '#category': 'category',
             '#startDateTime': "startDateTime",
-            '#searchName': 'searchName'
+            '#searchName': 'searchName',
+            '#production': 'production'
         },
         ExpressionAttributeValues: {
             ':searchName': name.toUpperCase(),
             ':category': category,
-            ':currentDate': date.dateTimeFullFormatToString(currentDate)
+            ':currentDate': date.dateTimeFullFormatToString(currentDate),
+            ':production': true
         }
     };
     const blogs = await database.scan(params);
@@ -301,6 +340,8 @@ const validateName = (name, errors = []) => {
  * Validate the createOrUpdateBlog body. Returns { errors: string[], value }.
  * `value` holds only the fields the handler may write, trimmed.
  */
+const isPublished = (v) => v === true;
+
 const validateBlogInput = (data) => {
     const errors = [];
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
@@ -352,6 +393,7 @@ const validateBlogInput = (data) => {
             startDateTime: data.startDateTime,
             endDateTime: hasEnd ? data.endDateTime : data.startDateTime,
             content: data.content,
+            production: data.production === true,
             // Only present when the request carried them; absent means "leave the stored value alone" on update.
             ...meta.value
         }
@@ -431,6 +473,8 @@ export const createOrUpdateBlog = async (event) => {
     const { caller, failure } = await authorize(event, 'blog:createOrUpdateBlog');
     if (failure) return failure;
     const { errors, value } = validateBlogInput(parseBody(event));
+    // The same private-detail rules as the worker's scan: emails, phone numbers, postcodes, booking references, deny list names.
+    errors.push(...privacyErrors({ content: value.content, summary: value.summary, titlePhotoAlt: value.titlePhotoAlt }, await readDenyList()));
     if (errors.length > 0) {
         return badRequest(errors);
     }
@@ -483,6 +527,7 @@ export const createOrUpdateBlog = async (event) => {
             ...common,
             summary: value.summary || '',
             titlePhotoAlt: value.titlePhotoAlt || '',
+            production: value.production,
             updatedDateTime: updatedDateTime,
             viewCount: 0,
             createdBy: caller.sub,
@@ -500,18 +545,21 @@ export const createOrUpdateBlog = async (event) => {
             Key: { name: value.name, startDateTime: existing.startDateTime },
             ConditionExpression: 'attribute_exists(#name)',
             UpdateExpression: 'SET #header = :header, #title = :title, #author = :author, #endDateTime = :endDateTime, ' +
-                '#titlePhoto = :titlePhoto, #content = :content, #updatedBy = :updatedBy, #updatedAt = :updatedAt, #updatedDateTime = :updatedDateTime' +
+                '#titlePhoto = :titlePhoto, #content = :content, #updatedBy = :updatedBy, #updatedAt = :updatedAt, #updatedDateTime = :updatedDateTime, ' +
+                '#production = :production' +
                 seoUpdate.expression,
             ExpressionAttributeNames: {
                 '#name': 'name', '#header': 'header', '#title': 'title', '#author': 'author',
                 '#endDateTime': 'endDateTime', '#titlePhoto': 'titlePhoto', '#content': 'content',
                 '#updatedBy': 'updatedBy', '#updatedAt': 'updatedAt', '#updatedDateTime': 'updatedDateTime',
+                '#production': 'production',
                 ...seoUpdate.names
             },
             ExpressionAttributeValues: {
                 ':header': common.header, ':title': common.title, ':author': common.author,
                 ':endDateTime': common.endDateTime, ':titlePhoto': common.titlePhoto, ':content': common.content,
                 ':updatedBy': caller.sub, ':updatedAt': now, ':updatedDateTime': updatedDateTime,
+                ':production': value.production,
                 ...seoUpdate.values
             },
             ReturnValues: 'ALL_NEW'
@@ -526,7 +574,11 @@ export const createOrUpdateBlog = async (event) => {
         }
         throw error;
     }
-    const rebuildTriggered = await triggerRebuild();
+    // Trigger a rebuild only when the blog is published now or was published before this save.
+    // Saving an unpublished blog (e.g. to generate its text) runs no build.
+    const rebuildTriggered = (isPublished(value.production) || isPublished(existing?.production))
+        ? await triggerRebuild()
+        : false;
     return response.createResponse({ blog, rebuildTriggered }, 200);
 };
 export const blogForEdit = async (event) => {

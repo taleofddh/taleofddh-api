@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 2400 2000" width="2400" height="2000">
+  <defs>
+    <style>
+      .text { fill: #232F3E; font-family: Arial, sans-serif; font-size: 16px; }
+      .title { fill: #232F3E; font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; }
+      .service-label { fill: #232F3E; font-family: Arial, sans-serif; font-size: 14px; text-anchor: middle; }
+      .arrow { stroke: #879196; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .group-box { fill: #F7F9FA; stroke: #AAB7B8; stroke-width: 3; }
+      .client-box { fill: #232F3E; stroke: #232F3E; stroke-width: 2; }
+    </style>
+    <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#879196" />
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="1200" y="50" class="title" text-anchor="middle" font-size="32" font-weight="bold">Tale of DDH - AWS Serverless Architecture</text>
+  
+  <!-- Client Layer -->
+  <rect x="50" y="100" width="2300" height="140" class="group-box"/>
+  <text x="80" y="135" class="title">Client Layer</text>
+  <rect x="1000" y="155" width="400" height="70" rx="8" class="client-box"/>
+  <text x="1200" y="197" fill="white" font-size="20" font-weight="bold" text-anchor="middle">Web/Mobile Clients</text>
+  
+  <!-- Arrow from Client to API Gateway Layer -->
+  <path d="M 1200 225 L 1200 270" class="arrow"/>
+
+  <!-- API Gateway Layer -->
+  <rect x="50" y="270" width="2300" height="200" class="group-box"/>
+  <text x="80" y="305" class="title">API Gateway Layer (Regional)</text>
+  
+  <!-- API Gateway Services with Icons -->
+  <image x="130" y="330" width="64" height="64" xlink:href="Arch_Amazon-API-Gateway_64.svg"/>
+  <text x="162" y="410" class="service-label" font-weight="bold">Auth API</text>
+  <text x="162" y="430" class="service-label" font-size="12">/auth</text>
+  
+  <image x="330" y="330" width="64" height="64" xlink:href="Arch_Amazon-API-Gateway_64.svg"/>
+  <text x="362" y="410" class="service-label" font-weight="bold">Blog API</text>
+  <text x="362" y="430" class="service-label" font-size="12">/blog</text>
+  
+  <image x="530" y="330" width="64" height="64" xlink:href="Arch_Amazon-API-Gateway_64.svg"/>
+  <text x="562" y="410" class="service-label" font-weight="bold">Gallery API</text>
+  <text x="562" y="430" class="service-label" font-size="12">/gallery</text>
+  
+  <image x="730" y="330" width="64" height="64" xlink:href="Arch_Amazon-API-Gateway_64.svg"/>
+  <text x="762" y="410" class="service-label" font-weight="bold">Core API</text>
+  <text x="762" y="430" class="service-label" font-size="12">/core</text>
+  
+  <image x="930" y="330" width="64" height="64" xlink:href="Arch_Amazon-API-Gateway_64.svg"/>
+  <text x="962" y="410" class="service-label" font-weight="bold">Request API</text>
+  <text x="962" y="430" class="service-label" font-size="12">/request</text>
+  
+  <image x="1130" y="330" width="64" height="64" xlink:href="Arch_Amazon-API-Gateway_64.svg"/>
+  <text x="1162" y="410" class="service-label" font-weight="bold">Email API</text>
+  <text x="1162" y="430" class="service-label" font-size="12">/email</text>
+  
+  <image x="1330" y="330" width="64" height="64" xlink:href="Arch_Amazon-API-Gateway_64.svg"/>
+  <text x="1362" y="410" class="service-label" font-weight="bold">Link API</text>
+  <text x="1362" y="430" class="service-label" font-size="12">/link</text>
+  
+  <image x="1530" y="330" width="64" height="64" xlink:href="Arch_Amazon-API-Gateway_64.svg"/>
+  <text x="1562" y="410" class="service-label" font-weight="bold">Org API</text>
+  <text x="1562" y="430" class="service-label" font-size="12">/org</text>
+  
+  <image x="1730" y="330" width="64" height="64" xlink:href="Arch_Amazon-API-Gateway_64.svg"/>
+  <text x="1762" y="410" class="service-label" font-weight="bold">Admin API</text>
+  <text x="1762" y="430" class="service-label" font-size="12">/admin</text>
+  
+  <!-- Arrow from API Gateway to Lambda Layer -->
+  <path d="M 1200 470 L 1200 500" class="arrow"/>
+
+  <!-- Lambda Layer -->
+  <rect x="50" y="500" width="2300" height="250" class="group-box"/>
+  <text x="80" y="535" class="title">Lambda Functions (Node.js 22.x)</text>
+  
+  <!-- Lambda Functions with Icons -->
+  <image x="130" y="560" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="162" y="640" class="service-label" font-weight="bold">Auth</text>
+  <text x="162" y="660" class="service-label" font-size="12">findIdentity</text>
+  
+  <image x="330" y="560" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="362" y="640" class="service-label" font-weight="bold">Blog</text>
+  <text x="362" y="660" class="service-label" font-size="12">findBlog</text>
+  
+  <image x="530" y="560" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="562" y="640" class="service-label" font-weight="bold">Gallery</text>
+  <text x="562" y="660" class="service-label" font-size="12">findAlbum</text>
+  
+  <image x="730" y="560" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="762" y="640" class="service-label" font-weight="bold">Core</text>
+  <text x="762" y="660" class="service-label" font-size="12">findMenu</text>
+  
+  <image x="930" y="560" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="962" y="640" class="service-label" font-weight="bold">Request</text>
+  <text x="962" y="660" class="service-label" font-size="12">createRequest</text>
+  
+  <image x="1130" y="560" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="1162" y="640" class="service-label" font-weight="bold">Email</text>
+  <text x="1162" y="660" class="service-label" font-size="12">sendEmail</text>
+  
+  <image x="1330" y="560" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="1362" y="640" class="service-label" font-weight="bold">Link</text>
+  <text x="1362" y="660" class="service-label" font-size="12">findLink</text>
+  
+  <image x="1530" y="560" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="1562" y="640" class="service-label" font-weight="bold">Org</text>
+  <text x="1562" y="660" class="service-label" font-size="12">findAboutUs</text>
+  
+  <image x="1730" y="560" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="1762" y="640" class="service-label" font-weight="bold">Admin</text>
+  <text x="1762" y="660" class="service-label" font-size="12">processMsg</text>
+  
+  <!-- Integration Lambda -->
+  <image x="930" y="670" width="64" height="64" xlink:href="Arch_AWS-Lambda_64.svg"/>
+  <text x="962" y="685" class="service-label" font-weight="bold">Integration</text>
+  <text x="962" y="705" class="service-label" font-size="12">sendEmailMsg</text>
+  
+  <!-- Arrow from Lambda to Data Storage Layer -->
+  <path d="M 1200 750 L 1200 780" class="arrow"/>
+
+  <!-- Data Storage Layer -->
+  <rect x="50" y="780" width="2300" height="380" class="group-box"/>
+  <text x="80" y="815" class="title">Data Storage Layer</text>
+  
+  <!-- DynamoDB Tables -->
+  <text x="80" y="860" class="text" font-weight="bold" font-size="18">DynamoDB Tables:</text>
+  
+  <image x="130" y="880" width="64" height="64" xlink:href="Arch_Amazon-DynamoDB_64.svg"/>
+  <text x="162" y="960" class="service-label" font-weight="bold">Auth</text>
+  <text x="162" y="980" class="service-label" font-size="12">userProfile</text>
+  
+  <image x="280" y="880" width="64" height="64" xlink:href="Arch_Amazon-DynamoDB_64.svg"/>
+  <text x="312" y="960" class="service-label" font-weight="bold">Blog</text>
+  <text x="312" y="980" class="service-label" font-size="12">blog, comment</text>
+  
+  <image x="430" y="880" width="64" height="64" xlink:href="Arch_Amazon-DynamoDB_64.svg"/>
+  <text x="462" y="960" class="service-label" font-weight="bold">Gallery</text>
+  <text x="462" y="980" class="service-label" font-size="12">gallery, photo</text>
+  
+  <image x="580" y="880" width="64" height="64" xlink:href="Arch_Amazon-DynamoDB_64.svg"/>
+  <text x="612" y="960" class="service-label" font-weight="bold">Request</text>
+  <text x="612" y="980" class="service-label" font-size="12">request, sub</text>
+  
+  <image x="730" y="880" width="64" height="64" xlink:href="Arch_Amazon-DynamoDB_64.svg"/>
+  <text x="762" y="960" class="service-label" font-weight="bold">Link</text>
+  <text x="762" y="980" class="service-label" font-size="12">link, country</text>
+  
+  <image x="880" y="880" width="64" height="64" xlink:href="Arch_Amazon-DynamoDB_64.svg"/>
+  <text x="912" y="960" class="service-label" font-weight="bold">Org</text>
+  <text x="912" y="980" class="service-label" font-size="12">people, menu</text>
+  
+  <image x="1030" y="880" width="64" height="64" xlink:href="Arch_Amazon-DynamoDB_64.svg"/>
+  <text x="1062" y="960" class="service-label" font-weight="bold">Admin</text>
+  <text x="1062" y="980" class="service-label" font-size="12">inbox</text>
+  
+  <!-- S3 Buckets -->
+  <text x="80" y="1025" class="text" font-weight="bold" font-size="18">S3 Buckets:</text>
+  
+  <image x="130" y="1040" width="64" height="64" xlink:href="Arch_Amazon-Simple-Storage-Service_64.svg"/>
+  <text x="162" y="1120" class="service-label" font-size="12">taleofddh-blogs</text>
+  
+  <image x="280" y="1040" width="64" height="64" xlink:href="Arch_Amazon-Simple-Storage-Service_64.svg"/>
+  <text x="312" y="1120" class="service-label" font-size="12">taleofddh-media</text>
+  
+  <image x="430" y="1040" width="64" height="64" xlink:href="Arch_Amazon-Simple-Storage-Service_64.svg"/>
+  <text x="462" y="1120" class="service-label" font-size="12">taleofddh-data</text>
+  
+  <image x="580" y="1040" width="64" height="64" xlink:href="Arch_Amazon-Simple-Storage-Service_64.svg"/>
+  <text x="612" y="1120" class="service-label" font-size="12">taleofddh-docs</text>
+  
+  <image x="730" y="1040" width="64" height="64" xlink:href="Arch_Amazon-Simple-Storage-Service_64.svg"/>
+  <text x="762" y="1120" class="service-label" font-size="12">taleofddh-messages</text>
+  
+  <!-- CloudFront -->
+  <image x="1330" y="880" width="64" height="64" xlink:href="Arch_Amazon-CloudFront_64.svg"/>
+  <text x="1362" y="960" class="service-label" font-weight="bold">CloudFront CDN</text>
+  <text x="1362" y="980" class="service-label" font-size="12">media-protected</text>
+  
+  <!-- Secrets Manager -->
+  <image x="1530" y="880" width="64" height="64" xlink:href="Arch_AWS-Secrets-Manager_64.svg"/>
+  <text x="1562" y="960" class="service-label" font-weight="bold">Secrets Manager</text>
+  <text x="1562" y="980" class="service-label" font-size="12">API Keys, Creds</text>
+
+  <!-- Messaging Layer -->
+  <rect x="50" y="1190" width="1100" height="230" class="group-box"/>
+  <text x="80" y="1225" class="title">Messaging &amp; Notification Layer</text>
+  
+  <!-- SQS -->
+  <image x="130" y="1250" width="64" height="64" xlink:href="Arch_Amazon-Simple-Queue-Service_64.svg"/>
+  <text x="162" y="1330" class="service-label" font-weight="bold">SQS Queue</text>
+  <text x="162" y="1350" class="service-label" font-size="12">taleofddh-message</text>
+  
+  <!-- SNS Topics -->
+  <image x="350" y="1250" width="64" height="64" xlink:href="Arch_Amazon-Simple-Notification-Service_64.svg"/>
+  <text x="382" y="1330" class="service-label" font-weight="bold">SNS Topic</text>
+  <text x="382" y="1350" class="service-label" font-size="12">whatsapp</text>
+  
+  <image x="570" y="1250" width="64" height="64" xlink:href="Arch_Amazon-Simple-Notification-Service_64.svg"/>
+  <text x="602" y="1330" class="service-label" font-weight="bold">SNS Topic</text>
+  <text x="602" y="1350" class="service-label" font-size="12">google-drive</text>
+  
+  <!-- SES -->
+  <image x="790" y="1250" width="64" height="64" xlink:href="Arch_Amazon-Simple-Notification-Service_64.svg"/>
+  <text x="822" y="1330" class="service-label" font-weight="bold">Amazon SES</text>
+  <text x="822" y="1350" class="service-label" font-size="12">Email Service</text>
+  
+  <!-- Arrow from Lambda to Messaging Layer -->
+  <path d="M 962 734 L 600 1190" class="arrow"/>
+  
+  <!-- External Services Layer -->
+  <rect x="1200" y="1190" width="1150" height="230" class="group-box"/>
+  <text x="1230" y="1225" class="title">External Integrations &amp; Infrastructure</text>
+  
+  <!-- Gmail -->
+  <rect x="1280" y="1250" width="64" height="64" rx="8" fill="#EA4335"/>
+  <text x="1312" y="1290" class="service-label" fill="white" font-size="24" font-weight="bold">G</text>
+  <text x="1312" y="1330" class="service-label" font-weight="bold">Gmail API</text>
+  <text x="1312" y="1350" class="service-label" font-size="12">Email Processing</text>
+  
+  <!-- Google Drive -->
+  <rect x="1480" y="1250" width="64" height="64" rx="8" fill="#4285F4"/>
+  <text x="1512" y="1290" class="service-label" fill="white" font-size="24" font-weight="bold">D</text>
+  <text x="1512" y="1330" class="service-label" font-weight="bold">Google Drive</text>
+  <text x="1512" y="1350" class="service-label" font-size="12">File Storage</text>
+  
+  <!-- WhatsApp -->
+  <rect x="1680" y="1250" width="64" height="64" rx="8" fill="#25D366"/>
+  <text x="1712" y="1290" class="service-label" fill="white" font-size="24" font-weight="bold">W</text>
+  <text x="1712" y="1330" class="service-label" font-weight="bold">WhatsApp API</text>
+  <text x="1712" y="1350" class="service-label" font-size="12">Messaging</text>
+  
+  <!-- Route 53 -->
+  <image x="1880" y="1250" width="64" height="64" xlink:href="Arch_Amazon-Route-53_64.svg"/>
+  <text x="1912" y="1330" class="service-label" font-weight="bold">Route 53</text>
+  <text x="1912" y="1350" class="service-label" font-size="12">DNS</text>
+  
+  <!-- Certificate Manager -->
+  <image x="2080" y="1250" width="64" height="64" xlink:href="Arch_AWS-Certificate-Manager_64.svg"/>
+  <text x="2112" y="1330" class="service-label" font-weight="bold">ACM</text>
+  <text x="2112" y="1350" class="service-label" font-size="12">SSL/TLS</text>
+  
+  <!-- Arrow from Lambda to External Services -->
+  <path d="M 962 734 L 1700 1190" class="arrow"/>
+
+  <!-- Security & IAM Layer -->
+  <rect x="50" y="1450" width="2300" height="180" class="group-box"/>
+  <text x="80" y="1485" class="title">Security &amp; Access Control</text>
+  
+  <image x="130" y="1510" width="64" height="64" xlink:href="Arch_AWS-Identity-and-Access-Management_64.svg"/>
+  <text x="162" y="1590" class="service-label" font-weight="bold">IAM</text>
+  <text x="162" y="1610" class="service-label" font-size="12">Roles &amp; Policies</text>
+  
+  <image x="380" y="1510" width="64" height="64" xlink:href="Arch_AWS-Identity-and-Access-Management_64.svg"/>
+  <text x="412" y="1590" class="service-label" font-weight="bold">IAM Authorizer</text>
+  <text x="412" y="1610" class="service-label" font-size="12">API Gateway Auth</text>
+  
+  <image x="630" y="1510" width="64" height="64" xlink:href="Arch_AWS-Key-Management-Service_64.svg"/>
+  <text x="662" y="1590" class="service-label" font-weight="bold">KMS</text>
+  <text x="662" y="1610" class="service-label" font-size="12">Encryption</text>
+  
+  <image x="880" y="1510" width="64" height="64" xlink:href="Arch_Amazon-CloudWatch_64.svg"/>
+  <text x="912" y="1590" class="service-label" font-weight="bold">CloudWatch</text>
+  <text x="912" y="1610" class="service-label" font-size="12">Monitoring</text>
+  
+  <image x="1130" y="1510" width="64" height="64" xlink:href="Arch_AWS-CloudFormation_64.svg"/>
+  <text x="1162" y="1590" class="service-label" font-weight="bold">CloudFormation</text>
+  <text x="1162" y="1610" class="service-label" font-size="12">IaC</text>
+  
+  <image x="1380" y="1510" width="64" height="64" xlink:href="Arch_AWS-X-Ray_64.svg"/>
+  <text x="1412" y="1590" class="service-label" font-weight="bold">X-Ray</text>
+  <text x="1412" y="1610" class="service-label" font-size="12">Tracing</text>
+  
+  <!-- Legend -->
+  <rect x="50" y="1660" width="2300" height="360" class="group-box"/>
+  <text x="80" y="1695" class="title">Architecture Legend &amp; Key Features</text>
+  
+  <text x="100" y="1740" class="text" font-weight="bold" font-size="18">Microservices Architecture:</text>
+  <text x="100" y="1770" class="text">• 9 Independent API Services (Auth, Blog, Gallery, Core, Request, Email, Link, Org, Admin)</text>
+  <text x="100" y="1800" class="text">• Each service has dedicated Lambda functions, DynamoDB tables, and API Gateway endpoints</text>
+  <text x="100" y="1830" class="text">• Serverless Framework v4 for deployment automation</text>
+  <text x="100" y="1860" class="text">• Event-driven architecture with SQS and SNS for asynchronous processing</text>
+  
+  <text x="100" y="1905" class="text" font-weight="bold" font-size="18">Key Features:</text>
+  <text x="100" y="1935" class="text">• Regional API Gateway with custom domain (api.taleofddh.com) and TLS 1.2</text>
+  <text x="100" y="1965" class="text">• Node.js 22.x runtime for all Lambda functions</text>
+  <text x="100" y="1995" class="text">• Multi-bucket S3 strategy: blogs, media, data, documents, messages</text>
+  
+  <text x="1250" y="1740" class="text" font-weight="bold" font-size="18">Integration Patterns:</text>
+  <text x="1250" y="1770" class="text">• External integrations: Gmail API, Google Drive API, WhatsApp API</text>
+  <text x="1250" y="1800" class="text">• SES for transactional email delivery</text>
+  <text x="1250" y="1830" class="text">• SNS topics for fan-out messaging patterns</text>
+  <text x="1250" y="1860" class="text">• SQS queues for reliable message processing</text>
+  
+  <text x="1250" y="1905" class="text" font-weight="bold" font-size="18">Security:</text>
+  <text x="1250" y="1935" class="text">• IAM-based API authorization for protected endpoints</text>
+  <text x="1250" y="1965" class="text">• KMS encryption for sensitive data at rest</text>
+  <text x="1250" y="1995" class="text">• Secrets Manager for API keys and credentials</text>
+  
+</svg>

@@ -24,8 +24,8 @@
   },
   "homepage": "https://github.com/taleofddh/taleofddh-api#readme",
   "dependencies": {
-    "@taleofddh/email": "^6.0.1",
-    "@taleofddh/response": "^6.0.1"
+    "@taleofddh/email": "^6.1.0",
+    "@taleofddh/response": "^6.1.0"
   },
   "devDependencies": {
     "serverless-domain-manager": "^10.0.0",
